@@ -1,11 +1,10 @@
 require('dotenv').config();
 const express = require('express');
-const { initDatabase } = require('./config/database');
+const { initDatabase } = require('../config/database');
 const cors = require('cors');
 const path = require('path');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
 
 // Middlewares
 app.use(cors({
@@ -20,10 +19,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Servir arquivos estáticos (uploads)
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Rotas
-const routes = require('./routes');
+const routes = require('../routes');
 app.use('/api', routes);
 
 // Rota raiz
@@ -69,29 +68,45 @@ app.use((req, res) => {
   });
 });
 
-// Inicializar banco de dados e servidor
-const startServer = async () => {
-  try {
+// Inicializar banco de dados
+let isInitialized = false;
+const ensureDatabase = async () => {
+  if (!isInitialized) {
     await initDatabase();
-    console.log('✓ Banco de dados inicializado');
-
-    app.listen(PORT, () => {
-      console.log(`\n🚀 Servidor rodando na porta ${PORT}`);
-      console.log(`📍 URL: http://localhost:${PORT}`);
-      console.log(`📊 API Health: http://localhost:${PORT}/api/health`);
-      
-      // Verificação correta da conexão
-      const conexao = process.env.DATABASE_URL ? 'NEON (nuvem)' : 'PostgreSQL LOCAL';
-      console.log(`🔌 Banco: ${conexao}`);
-      console.log('\n✨ Conecta Lagoa - Sistema de Recrutamento\n');
-    }); // Fechamento do app.listen
-      
-  } catch (error) {
-    console.error('Erro ao iniciar servidor:', error);
-    process.exit(1);
+    isInitialized = true;
   }
 };
 
-startServer();
+// Handler para Vercel
+module.exports = async (req, res) => {
+  await ensureDatabase();
+  return app(req, res);
+};
 
-module.exports = app;
+// Para desenvolvimento local
+if (require.main === module) {
+  const PORT = process.env.PORT || 5000;
+  
+  const startServer = async () => {
+    try {
+      await initDatabase();
+      console.log('✓ Banco de dados inicializado');
+
+      app.listen(PORT, () => {
+        console.log(`\n🚀 Servidor rodando na porta ${PORT}`);
+        console.log(`📍 URL: http://localhost:${PORT}`);
+        console.log(`📊 API Health: http://localhost:${PORT}/api/health`);
+        
+        const conexao = process.env.DATABASE_URL ? 'NEON (nuvem)' : 'PostgreSQL LOCAL';
+        console.log(`🔌 Banco: ${conexao}`);
+        console.log('\n✨ Conecta Lagoa - Sistema de Recrutamento\n');
+      });
+        
+    } catch (error) {
+      console.error('Erro ao iniciar servidor:', error);
+      process.exit(1);
+    }
+  };
+
+  startServer();
+}
