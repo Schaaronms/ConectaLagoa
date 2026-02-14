@@ -1,0 +1,73 @@
+.sobre-landing {
+  background: linear-gradient(90deg, #004a99, #d9770f);
+  color: white;
+  padding: 80px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 40px;
+  flex-wrap: wrap;
+  font-family: Arial, sans-serif;
+}
+
+.sobre-landing h1 {
+  font-size: 3.5rem;
+  font-weight: bold;
+  color: #f16522;
+  margin: 0;
+  flex-basis: 30%;
+}
+
+.sobre-landing p {
+  flex-basis: 50%;
+  font-size: 1.2rem;
+  margin: 0;
+}
+
+.sobre-landing .btn-primary {
+  background-color: #f16522;
+  color: white;
+  padding: 14px 30px;
+  border-radius: 6px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  flex-basis: 15%;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.sobre-landing .btn-primary:hover {
+  background-color: #d35400;
+}
+
+/* Se quiser ajustar a seção "Missão" e "Valores" */
+.sobre-missao-valores {
+  max-width: 900px;
+  margin: 40px auto;
+  text-align: center;
+  color: #333;
+}
+
+.sobre-missao-valores h2 {
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.sobre-missao-valores p, 
+.sobre-missao-valores ul {
+  font-weight: 400;
+  margin-bottom: 30px;
+  list-style-position: inside;
+  padding-left: 0;
+}
+
+.sobre-missao-valores ul {
+  list-style-type: disc;
+  display: inline-block;
+  text-align: left;
+}
+.sobre-missao-valores ul li {
+  margin-bottom: 8px;
+}

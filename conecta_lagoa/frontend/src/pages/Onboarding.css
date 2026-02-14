@@ -1,0 +1,267 @@
+.onboarding {
+  min-height: calc(100vh - 80px);
+  padding: 40px 0;
+  background: var(--light-gray);
+}
+
+.onboarding-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.onboarding-header h1 {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--dark);
+  margin-bottom: 12px;
+}
+
+.onboarding-header p {
+  font-size: 18px;
+  color: var(--gray);
+}
+
+/* Progress Bar */
+.progress-bar {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 40px;
+  padding: 0 20px;
+  position: relative;
+}
+
+.progress-bar::before {
+  content: '';
+  position: absolute;
+  top: 20px;
+  left: 10%;
+  right: 10%;
+  height: 2px;
+  background: var(--border);
+  z-index: 0;
+}
+
+.progress-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  z-index: 1;
+  flex: 1;
+}
+
+.step-number {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--white);
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  color: var(--gray);
+  transition: var(--transition);
+}
+
+.progress-step.active .step-number {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--white);
+}
+
+.progress-step span {
+  font-size: 14px;
+  color: var(--gray);
+  font-weight: 500;
+}
+
+.progress-step.active span {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* Step Content */
+.step-title {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--dark);
+}
+
+.step-subtitle {
+  color: var(--gray);
+  margin-bottom: 30px;
+}
+
+/* Dynamic Sections */
+.dynamic-section {
+  margin-bottom: 30px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.section-header h4 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--dark);
+  margin: 0;
+}
+
+.section-divider {
+  border: none;
+  border-top: 2px solid var(--light-gray);
+  margin: 30px 0;
+}
+
+/* Remove Buttons */
+.btn-remove {
+  background: transparent;
+  border: 1px solid var(--danger);
+  color: var(--danger);
+  padding: 6px 12px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 14px;
+  transition: var(--transition);
+}
+
+.btn-remove:hover {
+  background: var(--danger);
+  color: var(--white);
+}
+
+.btn-remove-inline {
+  background: transparent;
+  border: none;
+  color: var(--danger);
+  cursor: pointer;
+  font-size: 20px;
+  padding: 8px;
+  margin-left: 8px;
+  transition: var(--transition);
+}
+
+.btn-remove-inline:hover {
+  color: var(--danger);
+  transform: scale(1.2);
+}
+
+/* Habilidade Input Group */
+.habilidade-input-group {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.habilidade-input-group .form-input {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+/* Button Group */
+.button-group {
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  margin-top: 30px;
+}
+
+.button-group .btn {
+  flex: 1;
+}
+
+/* Utilities */
+.mt-2 {
+  margin-top: 20px;
+}
+
+.mt-3 {
+  margin-top: 30px;
+}
+
+/* Checkbox Label */
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.checkbox-label span {
+  user-select: none;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .onboarding-header h1 {
+    font-size: 24px;
+  }
+
+  .onboarding-header p {
+    font-size: 16px;
+  }
+
+  .progress-bar {
+    padding: 0;
+    overflow-x: auto;
+  }
+
+  .progress-step span {
+    font-size: 12px;
+    text-align: center;
+  }
+
+  .step-number {
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
+  }
+
+  .button-group {
+    flex-direction: column;
+  }
+
+  .button-group .btn {
+    width: 100%;
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .btn-remove {
+    align-self: flex-start;
+  }
+}
+
+/* Animation */
+.card {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
