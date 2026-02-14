@@ -1,14 +1,3 @@
-#!/usr/bin/env node
-
-/**
- * Script de Migração: SQLite → PostgreSQL
- * 
- * Este script automaticamente migra todos os dados do SQLite para PostgreSQL
- * 
- * USO:
- * 1. Configure o .env com credenciais PostgreSQL
- * 2. Execute: node migrate-to-postgres.js
- */
 
 require('dotenv').config();
 const sqlite3 = require('sqlite3').verbose();
