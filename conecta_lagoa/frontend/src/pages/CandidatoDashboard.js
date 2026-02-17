@@ -180,30 +180,31 @@ const CandidatoDashboard = () => {
           </p>
         </div>
 
-        {/* Experiências */}
-        <div className="card">
-          <div className="card-header">
-            <h3 className="card-title">Experiências Profissionais</h3>
-          </div>
-          {perfil?.experiencias && perfil.experiencias.length > 0 ? (
-            <div className="experiencias-list">
-              {perfil.experiencias.map((exp) => (
-                <div key={exp.id} className="experiencia-item">
-                  <h4>{exp.cargo}</h4>
-                  <p className="empresa">{exp.empresa}</p>
-                  <p className="periodo">
-  {exp.data_inicio ? new Date(exp.data_inicio).toLocaleDateString('pt-BR') : ''} 
-  {' - '}
-  {exp.trabalho_atual ? 'Atual' : (exp.data_termino ? new Date(exp.data_termino).toLocaleDateString('pt-BR') : '')}
-</p>
-                  {exp.descricao && <p className="descricao">{exp.descricao}</p>}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-muted">Nenhuma experiência cadastrada</p>
-          )}
+       {/* Experiências */}
+<div className="card">
+  <div className="card-header">
+    <h3 className="card-title">Experiências Profissionais</h3>
+  </div>
+  {perfil?.experiencias && perfil.experiencias.length > 0 ? (
+    <div className="experiencias-list">
+      {perfil.experiencias.map((exp) => (
+        <div key={exp.id} className="experiencia-item">
+          <h4>{exp.cargo}</h4>
+          <p className="empresa">{exp.empresa}</p>
+          <p className="periodo">
+            {/* Formata a data de AAAA-MM-DD para DD/MM/AAAA */}
+            {exp.data_inicio ? new Date(exp.data_inicio).toLocaleDateString('pt-BR') : ''} 
+            {' - '}
+            {exp.trabalho_atual ? 'Atual' : (exp.data_termino ? new Date(exp.data_termino).toLocaleDateString('pt-BR') : '')}
+          </p>
+          {exp.descricao && <p className="descricao">{exp.descricao}</p>}
         </div>
+      ))}
+    </div>
+  ) : (
+    <p className="text-muted">Nenhuma experiência cadastrada</p>
+  )}
+</div>
 
         {/* Habilidades */}
         <div className="card">
