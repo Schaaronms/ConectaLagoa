@@ -192,8 +192,10 @@ const CandidatoDashboard = () => {
                   <h4>{exp.cargo}</h4>
                   <p className="empresa">{exp.empresa}</p>
                   <p className="periodo">
-                    {exp.data_inicio} - {exp.atual ? 'Atual' : exp.data_fim}
-                  </p>
+  {exp.data_inicio ? new Date(exp.data_inicio).toLocaleDateString('pt-BR') : ''} 
+  {' - '}
+  {exp.trabalho_atual ? 'Atual' : (exp.data_termino ? new Date(exp.data_termino).toLocaleDateString('pt-BR') : '')}
+</p>
                   {exp.descricao && <p className="descricao">{exp.descricao}</p>}
                 </div>
               ))}
