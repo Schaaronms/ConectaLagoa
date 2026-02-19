@@ -12,9 +12,9 @@ const EmpresaDashboard = () => {
     page: 1
   });
 
-  useEffect(() => {
-    loadDados();
-  }, []);
+ useEffect(() => {
+  loadDados();
+}, [loadDados]);
 
   const loadDados = async () => {
     try {
