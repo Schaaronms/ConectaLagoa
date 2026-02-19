@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { authAPI } from '../services/api';
+import './Auth.css';
+
 
 const EsqueceuSenha = () => {
   const [email, setEmail] = useState('');
@@ -25,9 +27,10 @@ const EsqueceuSenha = () => {
   };
 
   return (
-    <div className="auth-container">
+    <div className="auth-page">
+        <div className='auth-container'>
       <h2>Esqueceu sua senha?</h2>
-      <p>Informe seu email e enviaremos as instruções para redefinir sua senha.</p>
+      <p>Informe o seu email e enviaremos as instruções para redefinir sua senha.</p>
 
       {mensagem && <div className="alert success">{mensagem}</div>}
       {erro && <div className="alert error">{erro}</div>}
@@ -52,6 +55,7 @@ const EsqueceuSenha = () => {
       </form>
 
       <a href="/login">Voltar ao login</a>
+    </div>
     </div>
   );
 };

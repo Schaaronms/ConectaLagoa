@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authAPI } from '../services/api';
+import './Auth.css';
 
 const RedefinirSenha = () => {
   const navigate = useNavigate();
