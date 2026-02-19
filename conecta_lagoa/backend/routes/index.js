@@ -45,6 +45,11 @@ router.get('/empresa/favoritos', authMiddleware, isEmpresa, empresaController.li
 router.get('/empresa/historico', authMiddleware, isEmpresa, empresaController.historicoVisualizacoes);
 router.get('/empresa/estatisticas', authMiddleware, isEmpresa, empresaController.getEstatisticas);
 
+// ==================== ROTA RECUPERAÇÃO SENHA EMAIL ====================
+router.post('/auth/esqueceu-senha', authController.esqueceuSenha);
+router.post('/auth/redefinir-senha', authController.redefinirSenha);
+
+
 // ==================== ROTA DE SAÚDE ====================
 router.get('/health', (req, res) => {
   res.json({ 

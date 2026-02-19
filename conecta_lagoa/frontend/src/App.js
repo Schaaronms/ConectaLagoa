@@ -10,7 +10,10 @@ import Onboarding from './pages/Onboarding';
 import CandidatoDashboard from './pages/CandidatoDashboard';
 import EditarPerfil from './pages/EditarPerfil';
 import EmpresaDashboard from './pages/EmpresaDashboard';
+import EsqueceuSenha from './pages/EsqueceuSenha';
+import RedefinirSenha from './pages/RedefinirSenha';
 import './index.css';
+
 
 // Componente de rota protegida
 const PrivateRoute = ({ children, allowedType }) => {
@@ -46,6 +49,8 @@ function AppContent() {
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/registro" element={<Registro />} />
+            <Route path="/esqueceu-senha" element={<EsqueceuSenha />} />
+            <Route path="/redefinir-senha" element={<RedefinirSenha />} />
             <Route path="/sobre" element={<Sobre />} />
 
             {/* Rotas do Candidato */}

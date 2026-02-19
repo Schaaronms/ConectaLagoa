@@ -102,6 +102,9 @@ const Login = () => {
 
           <div className="auth-footer">
             <p>
+             <Link to={`/esqueceu-senha?tipo=${formData.tipo}`}>Esqueceu sua senha?</Link>
+           </p>
+            <p>
               Não tem conta? <Link to="/registro">Cadastre-se grátis</Link>
             </p>
           </div>

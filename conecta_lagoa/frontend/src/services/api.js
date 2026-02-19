@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.REACT_APP_API_URL || 'https://conectalagoa.onrender.com/api';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -41,7 +41,9 @@ export const authAPI = {
   registroCandidato: (data) => api.post('/auth/registro/candidato', data),
   registroEmpresa: (data) => api.post('/auth/registro/empresa', data),
   login: (data) => api.post('/auth/login', data),
-  getProfile: () => api.get('/auth/profile')
+  getProfile: () => api.get('/auth/profile'),
+  esqueceuSenha: (data) => api.post('/auth/esqueceu-senha', data),
+  redefinirSenha: (data) => api.post('/auth/redefinir-senha', data),
 };
 
 // ==================== CANDIDATOS ====================
