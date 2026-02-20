@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import './Auth.css';
+import './Registro.css';
 
 const Registro = () => {
   const [searchParams] = useSearchParams();
@@ -249,6 +249,7 @@ const Registro = () => {
           </form>
 
           <div className="auth-footer">
+            <p></p>
             <p>
               Já tem conta? <Link to="/login">Fazer login</Link>
             </p>

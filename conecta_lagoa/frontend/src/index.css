@@ -118,6 +118,16 @@ code {
   width: 100%;
 }
 
+.tipo-btn.active {
+  background: #004a8d;
+  color: white;
+}
+
+.tipo-btn:hover {
+  background: #e6f0ff;
+}
+
+
 
 /* Cards */
 .card {
