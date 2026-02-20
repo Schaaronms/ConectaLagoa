@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { empresaAPI } from '../services/api';
 import './Dashboard.css';
 
@@ -12,11 +12,8 @@ const EmpresaDashboard = () => {
     page: 1
   });
 
- useEffect(() => {
-  loadDados();
-}, [loadDados]);
-
-  const loadDados = async () => {
+  // ✅ FIX 1 e 2: useCallback garante que a função não muda a cada render
+  const loadDados = useCallback(async () => {
     try {
       const [candidatosRes, estatRes] = await Promise.all([
         empresaAPI.buscarCandidatos(searchParams),
@@ -30,7 +27,12 @@ const EmpresaDashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchParams]);
+
+  // ✅ FIX 1: useEffect vem depois da declaração da função
+  useEffect(() => {
+    loadDados();
+  }, [loadDados]);
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -55,13 +57,13 @@ const EmpresaDashboard = () => {
   const visualizarCandidato = async (candidatoId) => {
     try {
       await empresaAPI.visualizarCandidato(candidatoId);
-      // Abrir perfil completo
       window.open(`/candidato/${candidatoId}`, '_blank');
     } catch (error) {
       console.error('Erro ao visualizar:', error);
     }
   };
 
+  // ✅ FIX 3: toggleFavorito agora é usado no botão de favorito no card
   const toggleFavorito = async (candidatoId, isFavorito) => {
     try {
       if (isFavorito) {
@@ -138,7 +140,6 @@ const EmpresaDashboard = () => {
                   <option value="MG">MG</option>
                   <option value="RS">RS</option>
                   <option value="BA">BA</option>
-                  {/* Adicionar outros estados conforme necessário */}
                 </select>
               </div>
 
@@ -159,7 +160,7 @@ const EmpresaDashboard = () => {
               <div key={candidato.id} className="candidato-card">
                 <div className="candidato-header">
                   {candidato.foto_url ? (
-                    <img 
+                    <img
                       src={`http://localhost:5000${candidato.foto_url}`}
                       alt={candidato.nome_completo}
                       className="candidato-foto"
@@ -196,7 +197,15 @@ const EmpresaDashboard = () => {
                   >
                     Ver Perfil Completo
                   </button>
-                  
+
+                  {/* ✅ FIX 3: botão de favorito agora usa toggleFavorito */}
+                  <button
+                    onClick={() => toggleFavorito(candidato.id, candidato.is_favorito)}
+                    className="btn btn-outline"
+                  >
+                    {candidato.is_favorito ? '⭐ Desfavoritar' : '☆ Favoritar'}
+                  </button>
+
                   {candidato.curriculo_url && (
                     <a
                       href={`http://localhost:5000${candidato.curriculo_url}`}
