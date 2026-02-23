@@ -155,4 +155,5 @@ const redefinirSenha = async (req, res) => {
   }
 };
 
+
 module.exports = { registroCandidato, registroEmpresa, login, getProfile, esqueceuSenha, redefinirSenha };
