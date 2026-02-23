@@ -9,11 +9,14 @@ const transporter = nodemailer.createTransport({
     pass: process.env.EMAIL_PASS
   },
   // Adicione estas linhas para evitar o erro de timeout no Render
-  connectionTimeout: 10000, // 10 segundos para conectar
+  connectionTimeout: 15000, // 10 segundos para conectar
   greetingTimeout: 10000,   // 10 segundos para o servidor responder "olá"
   socketTimeout: 15000,     // 15 segundos de inatividade permitida
 });
 
+  tls: {
+    rejectUnauthorized: false // Ajuda a evitar bloqueios de handshake
+ };
 const enviarEmail = async ({ para, assunto, html }) => {
   try {
     await transporter.sendMail({
@@ -28,5 +31,6 @@ const enviarEmail = async ({ para, assunto, html }) => {
     throw error; // Repassa o erro para o controlador tratar
   }
 };
+
 
 module.exports = { enviarEmail };
