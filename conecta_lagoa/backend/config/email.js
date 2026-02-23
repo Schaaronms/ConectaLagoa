@@ -1,36 +1,27 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
-const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST,
-  port: Number(process.env.EMAIL_PORT), // Converte a string do .env para número
-  secure: true, 
-  auth: { 
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  },
-  // Adicione estas linhas para evitar o erro de timeout no Render
-  connectionTimeout: 15000, // 10 segundos para conectar
-  greetingTimeout: 10000,   // 10 segundos para o servidor responder "olá"
-  socketTimeout: 15000,     // 15 segundos de inatividade permitida
-});
+// Inicializa com a chave que você colocou no Render
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-  tls: {
-    rejectUnauthorized: false // Ajuda a evitar bloqueios de handshake
- };
 const enviarEmail = async ({ para, assunto, html }) => {
   try {
-    await transporter.sendMail({
-      from: `"Conecta Lagoa" <${process.env.EMAIL_USER}>`,
+    const data = await resend.emails.send({
+      from: 'Conecta Lagoa <contato@conectalagoa.com.br>', // Use o e-mail que você validou
       to: para,
       subject: assunto,
-      html
+      html: html,
     });
-    console.log("E-mail enviado com sucesso para:", para);
+
+    if (data.error) {
+      console.error("Erro retornado pelo Resend:", data.error);
+      throw new Error(data.error.message);
+    }
+
+    console.log("E-mail enviado com sucesso! ID:", data.data.id);
   } catch (error) {
-    console.error("Erro detalhado no sendMail:", error);
-    throw error; // Repassa o erro para o controlador tratar
+    console.error("Falha ao enviar e-mail via API:", error);
+    throw error;
   }
 };
-
 
 module.exports = { enviarEmail };
