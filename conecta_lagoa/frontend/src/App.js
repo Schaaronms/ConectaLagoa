@@ -13,6 +13,7 @@ import EmpresaDashboard from './pages/EmpresaDashboard';
 import EsqueceuSenha from './pages/EsqueceuSenha';
 import RedefinirSenha from './pages/RedefinirSenha';
 import Vagas from './pages/Vagas';           // ← importe sua página de vagas aqui
+import { Blog} from './pages/Blog';               
 import { Link } from 'react-router-dom';
 import './index.css';
 
@@ -56,6 +57,7 @@ function AppContent() {
             <Route path="/esqueceu-senha" element={<EsqueceuSenha />} />
             <Route path="/redefinir-senha" element={<RedefinirSenha />} />
             <Route path="/sobre" element={<Sobre />} />
+            <Route path="/blog" element={<Blog />} />
 
             {/* Rotas do Candidato (protegidas) */}
             <Route
