@@ -37,4 +37,20 @@ const isCandidato = (req, res, next) => {
   next();
 };
 
+function authMiddleware(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1]; // Bearer <token>
+
+  if (!token) {
+    return res.status(401).json({ erro: 'Token não fornecido. Faça login.' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.empresa = decoded; // { id, nome, email, plano }
+    next();
+  } catch (err) {
+    return res.status(403).json({ erro: 'Token inválido ou expirado. Faça login novamente.' });
+  }
+}
 module.exports = { authMiddleware, isEmpresa, isCandidato };

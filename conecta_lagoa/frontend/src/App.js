@@ -9,11 +9,11 @@ import Sobre from './pages/Sobre';
 import Onboarding from './pages/Onboarding';
 import CandidatoDashboard from './pages/CandidatoDashboard';
 import EditarPerfil from './pages/EditarPerfil';
-import EmpresaDashboard from './pages/EmpresaDashboard';
 import EsqueceuSenha from './pages/EsqueceuSenha';
 import RedefinirSenha from './pages/RedefinirSenha';
 import Vagas from './pages/Vagas';
-import { Blog } from './pages/Blog';
+import EmpresaDashboard from "./pages/EmpresaDashboard";
+import  Blog  from './pages/Blog';
 import Footer from './components/Footer';
 import './index.css';
 
@@ -64,6 +64,8 @@ function AppContent() {
             <Route path="/redefinir-senha" element={<RedefinirSenha />} />
             <Route path="/sobre" element={<Sobre />} />
             <Route path="/blog" element={<Blog />} />
+            <Route path="/empresadashboard" element={<EmpresaDashboard />} />
+           
 
             {/* Rotas do Candidato (protegidas) */}
             <Route

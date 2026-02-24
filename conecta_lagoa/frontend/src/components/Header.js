@@ -11,6 +11,7 @@ const Header = () => {
     navigate('/');
   };
 
+
   const styles = {
     header: {
       position: "sticky",
@@ -167,6 +168,8 @@ const Header = () => {
 
       <header style={styles.header}>
         <div style={styles.container}>
+          <span data-empresa-nome></span>
+            <span data-empresa-plano></span>
 
           {/* LOGO */}
           <Link to="/" style={styles.logoWrapper}>

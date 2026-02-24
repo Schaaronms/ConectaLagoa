@@ -5,10 +5,10 @@ const cors = require('cors');
 const path = require('path');
 
 const app = express();
-const vagasRoutes = require('./routes/vagas');
-app.use('/api/vagas', vagasRoutes);
 
-// Middlewares
+// ==============================
+// MIDDLEWARES
+// ==============================
 app.use(cors({
   origin: [
     process.env.FRONTEND_URL || 'http://localhost:3000',
@@ -23,10 +23,25 @@ app.use(express.urlencoded({ extended: true }));
 // Servir arquivos estáticos (uploads)
 app.use('/uploads', express.static(path.join(__dirname, './uploads')));
 
-// Rotas
+// Log de requisições (dev)
+if (process.env.NODE_ENV !== 'production') {
+  app.use((req, _res, next) => {
+    console.log(`[${new Date().toLocaleTimeString('pt-BR')}] ${req.method} ${req.path}`);
+    next();
+  });
+}
+
+// ==============================
+// ROTAS
+// ==============================
+
+// Suas rotas originais
 const routes = require('./routes');
 app.use('/api', routes);
-app.use('/api/contato', require('./routes/email'));
+
+// Rotas novas adicionadas
+app.use('/api/contato',   require('./routes/email'));
+app.use('/api/dashboard', require('./routes/dashboard'));
 
 // Rota raiz
 app.get('/', (req, res) => {
@@ -34,45 +49,49 @@ app.get('/', (req, res) => {
     message: 'Bem-vindo à API Conecta Lagoa',
     version: '1.0.0',
     endpoints: {
-      health: '/api/health',
-      docs: '/api-docs'
+      health:     '/api/health',
+      contato:    '/api/contato',
+      dashboard:  '/api/dashboard/resumo',
     }
   });
 });
 
-// Tratamento de erros
+// ==============================
+// TRATAMENTO DE ERROS
+// ==============================
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  
+
   if (err.name === 'MulterError') {
     if (err.code === 'LIMIT_FILE_SIZE') {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Arquivo muito grande. Tamanho máximo: 5MB' 
+      return res.status(400).json({
+        success: false,
+        message: 'Arquivo muito grande. Tamanho máximo: 5MB'
       });
     }
-    return res.status(400).json({ 
-      success: false, 
-      message: 'Erro no upload: ' + err.message 
+    return res.status(400).json({
+      success: false,
+      message: 'Erro no upload: ' + err.message
     });
   }
 
-  res.status(500).json({ 
-    success: false, 
-    message: err.message || 'Erro interno do servidor' 
+  res.status(500).json({
+    success: false,
+    message: err.message || 'Erro interno do servidor'
   });
 });
-
 
 // Rota 404
 app.use((req, res) => {
-  res.status(404).json({ 
-    success: false, 
-    message: 'Rota não encontrada' 
+  res.status(404).json({
+    success: false,
+    message: 'Rota não encontrada'
   });
 });
 
-// Inicializar banco de dados
+// ==============================
+// INICIALIZAÇÃO DO BANCO
+// ==============================
 let isInitialized = false;
 const ensureDatabase = async () => {
   if (!isInitialized) {
@@ -81,16 +100,20 @@ const ensureDatabase = async () => {
   }
 };
 
-// Handler para Vercel
+// ==============================
+// HANDLER VERCEL
+// ==============================
 module.exports = async (req, res) => {
   await ensureDatabase();
   return app(req, res);
 };
 
-// Para desenvolvimento local
+// ==============================
+// DESENVOLVIMENTO LOCAL
+// ==============================
 if (require.main === module) {
   const PORT = process.env.PORT || 5000;
-  
+
   const startServer = async () => {
     try {
       await initDatabase();
@@ -99,15 +122,22 @@ if (require.main === module) {
       app.listen(PORT, () => {
         console.log(`\n🚀 Servidor rodando na porta ${PORT}`);
         console.log(`📍 URL: http://localhost:${PORT}`);
-        console.log(`📊 API Health: http://localhost:${PORT}/api/health`);
-        
+        console.log(`📊 Health: http://localhost:${PORT}/api/health`);
+        console.log('\n📋 Rotas disponíveis:');
+        console.log(`   POST  /api/contato`);
+        console.log(`   GET   /api/dashboard/resumo`);
+        console.log(`   GET   /api/dashboard/grafico-candidaturas`);
+        console.log(`   GET   /api/dashboard/vagas-por-area`);
+        console.log(`   GET   /api/dashboard/vagas-por-mes`);
+        console.log(`   GET   /api/dashboard/candidatos-recentes`);
+
         const conexao = process.env.DATABASE_URL ? 'NEON (nuvem)' : 'PostgreSQL LOCAL';
-        console.log(`🔌 Banco: ${conexao}`);
+        console.log(`\n🔌 Banco: ${conexao}`);
         console.log('\n✨ Conecta Lagoa - Sistema de Recrutamento\n');
       });
-        
+
     } catch (error) {
-      console.error('Erro ao iniciar servidor:', error);
+      console.error('❌ Erro ao iniciar servidor:', error);
       process.exit(1);
     }
   };
