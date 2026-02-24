@@ -700,36 +700,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* FOOTER */}
-      <footer style={styles.footer}>
-        <div style={styles.footerTop}>
-          <div>
-            <div style={styles.footerLogo}>Conecta Lagoa</div>
-            <p style={styles.footerDesc}>A plataforma de recrutamento que conecta talentos locais com as melhores oportunidades da nossa região.</p>
-          </div>
-          <div>
-            <div style={styles.footerHeading}>Candidatos</div>
-            {["Criar Perfil", "Buscar Vagas", "Como Funciona", "Dicas de Carreira"].map((l) => (
-              <a key={l} style={styles.footerLink}>{l}</a>
-            ))}
-          </div>
-          <div>
-            <div style={styles.footerHeading}>Empresas</div>
-            {["Publicar Vaga", "Buscar Candidatos", "Planos", "Cases de Sucesso"].map((l) => (
-              <a key={l} style={styles.footerLink}>{l}</a>
-            ))}
-          </div>
-          <div>
-            <div style={styles.footerHeading}>Empresa</div>
-            {["Sobre Nós", "Blog", "Parceiros", "Contato"].map((l) => (
-              <a key={l} style={styles.footerLink}>{l}</a>
-            ))}
-          </div>
-        </div>
-        <div style={styles.footerBottom}>
-          © 2026 Conecta Lagoa. Todos os direitos reservados. Feito com ❤️ em Lagoa da Vermelha - RS.
-        </div>
-      </footer>
+     
     </div>
   );
 }

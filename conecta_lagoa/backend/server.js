@@ -26,6 +26,7 @@ app.use('/uploads', express.static(path.join(__dirname, './uploads')));
 // Rotas
 const routes = require('./routes');
 app.use('/api', routes);
+app.use('/api/contato', require('./routes/email'));
 
 // Rota raiz
 app.get('/', (req, res) => {

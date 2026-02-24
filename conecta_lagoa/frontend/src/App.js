@@ -12,9 +12,9 @@ import EditarPerfil from './pages/EditarPerfil';
 import EmpresaDashboard from './pages/EmpresaDashboard';
 import EsqueceuSenha from './pages/EsqueceuSenha';
 import RedefinirSenha from './pages/RedefinirSenha';
-import Vagas from './pages/Vagas';           // ← importe sua página de vagas aqui
-import { Blog} from './pages/Blog';               
-import { Link } from 'react-router-dom';
+import Vagas from './pages/Vagas';
+import { Blog } from './pages/Blog';
+import Footer from './components/Footer';
 import './index.css';
 
 // Componente de rota protegida
@@ -41,23 +41,30 @@ const PrivateRoute = ({ children, allowedType }) => {
 };
 
 function AppContent() {
+  const { user } = useAuth();
+
+  // Páginas que NÃO devem mostrar o footer (dashboards internos)
+  const semFooter = user && (
+    user.tipo === 'candidato' || user.tipo === 'empresa'
+  );
+
   return (
     <Router>
       <div className="app min-h-screen flex flex-col">
         <Header />
-        
-        
+
         <main className="flex-grow">
           <Routes>
             {/* Rotas Públicas */}
             <Route path="/" element={<Home />} />
-            <Route path="/vagas" element={<Vagas />} />               
+            <Route path="/vagas" element={<Vagas />} />
             <Route path="/login" element={<Login />} />
             <Route path="/registro" element={<Registro />} />
             <Route path="/esqueceu-senha" element={<EsqueceuSenha />} />
             <Route path="/redefinir-senha" element={<RedefinirSenha />} />
             <Route path="/sobre" element={<Sobre />} />
             <Route path="/blog" element={<Blog />} />
+
             {/* Rotas do Candidato (protegidas) */}
             <Route
               path="/candidato/onboarding"
@@ -98,6 +105,9 @@ function AppContent() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
+
+        {/* ✅ Footer aparece em todas as páginas públicas */}
+        {!semFooter && <Footer />}
       </div>
     </Router>
   );
@@ -111,4 +121,4 @@ function App() {
   );
 }
 
-export default App;
+export default App;  // ← apenas UM export default
