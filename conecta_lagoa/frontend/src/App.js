@@ -13,7 +13,7 @@ import EsqueceuSenha from './pages/EsqueceuSenha';
 import RedefinirSenha from './pages/RedefinirSenha';
 import Vagas from './pages/Vagas';
 import EmpresaDashboard from "./pages/EmpresaDashboard";
-import  Blog  from './pages/Blog';
+import Blog  from './pages/Blog';
 import Footer from './components/Footer';
 import './index.css';
 
