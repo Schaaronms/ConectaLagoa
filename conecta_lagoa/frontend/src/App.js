@@ -51,14 +51,13 @@ function AppContent() {
           <Routes>
             {/* Rotas Públicas */}
             <Route path="/" element={<Home />} />
-            <Route path="/vagas" element={<Vagas />} />               {/* ← página de vagas pública */}
+            <Route path="/vagas" element={<Vagas />} />               
             <Route path="/login" element={<Login />} />
             <Route path="/registro" element={<Registro />} />
             <Route path="/esqueceu-senha" element={<EsqueceuSenha />} />
             <Route path="/redefinir-senha" element={<RedefinirSenha />} />
             <Route path="/sobre" element={<Sobre />} />
             <Route path="/blog" element={<Blog />} />
-
             {/* Rotas do Candidato (protegidas) */}
             <Route
               path="/candidato/onboarding"

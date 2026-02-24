@@ -9,7 +9,7 @@ const api = axios.create({
   }
 });
 
-// Interceptor para adicionar token em todas as requisições
+// Interceptor para adicionar token
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -18,12 +18,10 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Interceptor para tratar erros
+// Interceptor para tratar 401 (logout automático)
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -90,4 +88,3 @@ export const empresaAPI = {
 };
 
 export default api;
-
