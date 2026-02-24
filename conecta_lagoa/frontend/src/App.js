@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Header from './components/Header';
+import Footer from './components/Footer';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Registro from './pages/Registro';
@@ -12,25 +13,25 @@ import EditarPerfil from './pages/EditarPerfil';
 import EsqueceuSenha from './pages/EsqueceuSenha';
 import RedefinirSenha from './pages/RedefinirSenha';
 import Vagas from './pages/Vagas';
-import EmpresaDashboard from "./pages/EmpresaDashboard";
-import Blog  from './pages/Blog';
-import Footer from './components/Footer';
+import EmpresaDashboard from './pages/EmpresaDashboard';
+import Blog from './pages/Blog';
 import './index.css';
 
-// Componente de rota protegida
+// Rota protegida com verificação de tipo
 const PrivateRoute = ({ children, allowedType }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
     return (
-      <div className="loading min-h-screen flex items-center justify-center">
-        <div className="spinner border-4 border-t-blue-600 rounded-full w-12 h-12 animate-spin"></div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="spinner border-4 border-t-blue-600 border-solid rounded-full w-12 h-12 animate-spin"></div>
       </div>
     );
   }
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    // Preserva a URL desejada para redirecionar após login
+    return <Navigate to="/login" state={{ from: window.location.pathname }} replace />;
   }
 
   if (allowedType && user.tipo !== allowedType) {
@@ -43,10 +44,8 @@ const PrivateRoute = ({ children, allowedType }) => {
 function AppContent() {
   const { user } = useAuth();
 
-  // Páginas que NÃO devem mostrar o footer (dashboards internos)
-  const semFooter = user && (
-    user.tipo === 'candidato' || user.tipo === 'empresa'
-  );
+  // Footer só aparece em páginas públicas (sem usuário logado como candidato/empresa)
+  const showFooter = !user || (user.tipo !== 'candidato' && user.tipo !== 'empresa');
 
   return (
     <Router>
@@ -64,8 +63,6 @@ function AppContent() {
             <Route path="/redefinir-senha" element={<RedefinirSenha />} />
             <Route path="/sobre" element={<Sobre />} />
             <Route path="/blog" element={<Blog />} />
-            <Route path="/empresadashboard" element={<EmpresaDashboard />} />
-           
 
             {/* Rotas do Candidato (protegidas) */}
             <Route
@@ -103,13 +100,15 @@ function AppContent() {
               }
             />
 
-            {/* Rota 404 / fallback */}
+            {/* Redirecionamento de rota antiga/errada (opcional) */}
+            <Route path="/empresadashboard" element={<Navigate to="/empresa/dashboard" replace />} />
+
+            {/* 404 */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
 
-        {/* ✅ Footer aparece em todas as páginas públicas */}
-        {!semFooter && <Footer />}
+        {showFooter && <Footer />}
       </div>
     </Router>
   );
@@ -123,4 +122,4 @@ function App() {
   );
 }
 
-export default App;  // ← apenas UM export default
+export default App;

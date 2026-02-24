@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+
 const { authMiddleware, isEmpresa, isCandidato } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 
@@ -8,54 +9,56 @@ const authController = require('../controllers/authController');
 const candidatoController = require('../controllers/candidatoController');
 const empresaController = require('../controllers/empresaController');
 
-// ==================== ROTAS DE AUTENTICAÇÃO ====================
+// ==================== AUTENTICAÇÃO ====================
 router.post('/auth/registro/candidato', authController.registroCandidato);
-router.post('/auth/registro/empresa', authController.registroEmpresa);
-router.post('/auth/login', authController.login);
-router.get('/auth/profile', authMiddleware, authController.getProfile);
+router.post('/auth/registro/empresa',   authController.registroEmpresa);
+router.post('/auth/login',              authController.login);
+router.get( '/auth/profile', authMiddleware, authController.getProfile);
 
-// ==================== ROTAS DE CANDIDATOS ====================
-// Perfil
-router.put('/candidato/perfil', authMiddleware, isCandidato, candidatoController.atualizarPerfil);
-router.get('/candidato/perfil', authMiddleware, isCandidato, candidatoController.getPerfilCompleto);
-router.get('/candidato/:id', authMiddleware, candidatoController.getPerfilCompleto);
+// Recuperação de senha
+router.post('/auth/esqueceu-senha',  authController.esqueceuSenha);
+router.post('/auth/redefinir-senha', authController.redefinirSenha);
+
+// ==================== CANDIDATOS ====================
+// Perfil próprio
+router.get( '/candidato/meu-perfil', authMiddleware, isCandidato, candidatoController.getMeuPerfil);
+router.put('/candidato/perfil',      authMiddleware, isCandidato, candidatoController.atualizarPerfil);
+
+// Perfil público (visualizado por empresas)
+router.get('/candidato/:id', authMiddleware, candidatoController.getPerfilPorId);
 
 // Uploads
 router.post('/candidato/curriculo', authMiddleware, isCandidato, upload.single('curriculo'), candidatoController.uploadCurriculo);
-router.post('/candidato/foto', authMiddleware, isCandidato, upload.single('foto'), candidatoController.uploadFoto);
+router.post('/candidato/foto',      authMiddleware, isCandidato, upload.single('foto'),      candidatoController.uploadFoto);
 
-// Experiências e formação
+// Dados complementares
 router.post('/candidato/experiencia', authMiddleware, isCandidato, candidatoController.adicionarExperiencia);
-router.post('/candidato/formacao', authMiddleware, isCandidato, candidatoController.adicionarFormacao);
-router.post('/candidato/habilidade', authMiddleware, isCandidato, candidatoController.adicionarHabilidade);
+router.post('/candidato/formacao',    authMiddleware, isCandidato, candidatoController.adicionarFormacao);
+router.post('/candidato/habilidade',  authMiddleware, isCandidato, candidatoController.adicionarHabilidade);
 
-// Busca de candidatos (para empresas)
+// Busca (para empresas)
 router.get('/candidatos', authMiddleware, isEmpresa, candidatoController.buscarCandidatos);
 
-// ==================== ROTAS DE EMPRESAS ====================
+// ==================== EMPRESAS ====================
 // Perfil
 router.put('/empresa/perfil', authMiddleware, isEmpresa, empresaController.atualizarPerfil);
-router.post('/empresa/logo', authMiddleware, isEmpresa, upload.single('logo'), empresaController.uploadLogo);
+router.post('/empresa/logo',  authMiddleware, isEmpresa, upload.single('logo'), empresaController.uploadLogo);
 
-// Visualizações e favoritos
-router.post('/empresa/visualizar/:candidatoId', authMiddleware, isEmpresa, empresaController.visualizarCandidato);
-router.post('/empresa/favorito/:candidatoId', authMiddleware, isEmpresa, empresaController.adicionarFavorito);
-router.delete('/empresa/favorito/:candidatoId', authMiddleware, isEmpresa, empresaController.removerFavorito);
-router.get('/empresa/favoritos', authMiddleware, isEmpresa, empresaController.listarFavoritos);
-router.get('/empresa/historico', authMiddleware, isEmpresa, empresaController.historicoVisualizacoes);
-router.get('/empresa/estatisticas', authMiddleware, isEmpresa, empresaController.getEstatisticas);
+// Interações com candidatos
+router.post(  '/empresa/visualizar/:candidatoId', authMiddleware, isEmpresa, empresaController.visualizarCandidato);
+router.post(  '/empresa/favorito/:candidatoId',   authMiddleware, isEmpresa, empresaController.adicionarFavorito);
+router.delete('/empresa/favorito/:candidatoId',   authMiddleware, isEmpresa, empresaController.removerFavorito);
+router.get(   '/empresa/favoritos',               authMiddleware, isEmpresa, empresaController.listarFavoritos);
+router.get(   '/empresa/historico-visualizacoes', authMiddleware, isEmpresa, empresaController.historicoVisualizacoes);
+router.get(   '/empresa/estatisticas',            authMiddleware, isEmpresa, empresaController.getEstatisticas);
 
-// ==================== ROTA RECUPERAÇÃO SENHA EMAIL ====================
-router.post('/auth/esqueceu-senha', authController.esqueceuSenha);
-router.post('/auth/redefinir-senha', authController.redefinirSenha);
-
-
-// ==================== ROTA DE SAÚDE ====================
+// ==================== HEALTH CHECK ====================
 router.get('/health', (req, res) => {
-  res.json({ 
+  res.status(200).json({ 
     success: true, 
-    message: 'API Emprega Lagoa funcionando!',
-    timestamp: new Date().toISOString()
+    message: 'API Conecta Lagoa rodando normalmente',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
   });
 });
 
