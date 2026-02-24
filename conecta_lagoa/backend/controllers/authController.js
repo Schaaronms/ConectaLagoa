@@ -122,7 +122,7 @@ const esqueceuSenha = async (req, res) => {
       `
     });
 
-    res.json({ success: true, message: 'Se o email existir, você receberá as instruções' });
+    res.json({ success: true, message: 'Se este e-mail estiver cadastrado, você receberá um link de redefinição de senha em alguns minutos. Verifique também sua caixa de spam.' });
   } catch (error) {
     console.error('Erro em esqueceuSenha:', error);
     res.status(500).json({ success: false, message: 'Erro no servidor' });

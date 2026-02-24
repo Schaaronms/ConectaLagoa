@@ -12,8 +12,9 @@ import EditarPerfil from './pages/EditarPerfil';
 import EmpresaDashboard from './pages/EmpresaDashboard';
 import EsqueceuSenha from './pages/EsqueceuSenha';
 import RedefinirSenha from './pages/RedefinirSenha';
+import Vagas from './pages/Vagas';           // ← importe sua página de vagas aqui
+import { Link } from 'react-router-dom';
 import './index.css';
-
 
 // Componente de rota protegida
 const PrivateRoute = ({ children, allowedType }) => {
@@ -21,18 +22,18 @@ const PrivateRoute = ({ children, allowedType }) => {
 
   if (loading) {
     return (
-      <div className="loading">
-        <div className="spinner"></div>
+      <div className="loading min-h-screen flex items-center justify-center">
+        <div className="spinner border-4 border-t-blue-600 rounded-full w-12 h-12 animate-spin"></div>
       </div>
     );
   }
 
   if (!user) {
-    return <Navigate to="/login" />;
+    return <Navigate to="/login" replace />;
   }
 
   if (allowedType && user.tipo !== allowedType) {
-    return <Navigate to="/" />;
+    return <Navigate to="/" replace />;
   }
 
   return children;
@@ -41,19 +42,22 @@ const PrivateRoute = ({ children, allowedType }) => {
 function AppContent() {
   return (
     <Router>
-      <div className="app">
+      <div className="app min-h-screen flex flex-col">
         <Header />
-        <main>
+        
+        
+        <main className="flex-grow">
           <Routes>
             {/* Rotas Públicas */}
             <Route path="/" element={<Home />} />
+            <Route path="/vagas" element={<Vagas />} />               {/* ← página de vagas pública */}
             <Route path="/login" element={<Login />} />
             <Route path="/registro" element={<Registro />} />
             <Route path="/esqueceu-senha" element={<EsqueceuSenha />} />
             <Route path="/redefinir-senha" element={<RedefinirSenha />} />
             <Route path="/sobre" element={<Sobre />} />
 
-            {/* Rotas do Candidato */}
+            {/* Rotas do Candidato (protegidas) */}
             <Route
               path="/candidato/onboarding"
               element={
@@ -79,7 +83,7 @@ function AppContent() {
               }
             />
 
-            {/* Rotas da Empresa */}
+            {/* Rotas da Empresa (protegidas) */}
             <Route
               path="/empresa/dashboard"
               element={
@@ -88,25 +92,11 @@ function AppContent() {
                 </PrivateRoute>
               }
             />
-            <Route
-              path="/empresa/candidatos"
-              element={
-                <PrivateRoute allowedType="empresa">
-                  <EmpresaDashboard />
-                </PrivateRoute>
-              }
-            />
 
-            {/* Rota 404 */}
-            <Route path="*" element={<Navigate to="/" />} />
+            {/* Rota 404 / fallback */}
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
-
-        <footer className="footer">
-          <div className="container">
-            <p>&copy; 2026 Conecta Lagoa. Todos os direitos reservados.</p>
-          </div>
-        </footer>
       </div>
     </Router>
   );

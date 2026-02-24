@@ -5,6 +5,8 @@ const cors = require('cors');
 const path = require('path');
 
 const app = express();
+const vagasRoutes = require('./routes/vagas');
+app.use('/api/vagas', vagasRoutes);
 
 // Middlewares
 app.use(cors({
