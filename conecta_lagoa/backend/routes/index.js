@@ -63,6 +63,10 @@ router.get(   '/empresa/candidatos-contratados',  authMiddleware, isEmpresa, emp
 
 
 
+// ==================== DASHBOARD ====================
+const dashboardRoutes = require('./dashboard');
+router.use('/dashboard', dashboardRoutes);
+
 // ==================== HEALTH CHECK ====================
 router.get('/health', (req, res) => {
   res.status(200).json({ 

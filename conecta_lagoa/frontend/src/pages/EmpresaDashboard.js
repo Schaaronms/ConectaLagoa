@@ -73,8 +73,12 @@ export default function ConectaLagoaDashboard() {
         setLoading(true);
         setError(null);
 
-        const { resumo, grafico, areas, vagasMes, candidatosRecentes } =
-          await dashboardService.carregarDadosCompletos();
+        const raw = await dashboardService.carregarDadosCompletos();
+        const resumo = raw.resumo?.data || raw.resumo || {};
+        const grafico = raw.grafico?.data || raw.grafico || [];
+        const areas = raw.areas?.data || raw.areas || [];
+        const vagasMes = raw.vagasMes?.data || raw.vagasMes || [];
+        const candidatosRecentes = raw.candidatosRecentes?.data || raw.candidatosRecentes || [];
 
         /* ===== KPIs ===== */
         setKpis([

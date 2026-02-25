@@ -38,7 +38,6 @@ const routes = require('./routes');
 app.use('/api', routes);
 
 app.use('/api/contato', require('./routes/email'));
-app.use('/api/dashboard', require('./routes/dashboard'));
 
 
 // Rota raiz
