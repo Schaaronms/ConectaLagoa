@@ -293,6 +293,8 @@ module.exports = {
   adicionarExperiencia,
   adicionarFormacao,
   adicionarHabilidade,
-  getPerfilCompleto,
+  // Ajuste aqui: a rota espera 'getMeuPerfil' e 'getPerfilPorId'
+  getMeuPerfil: getPerfilCompleto, 
+  getPerfilPorId: getPerfilCompleto, 
   buscarCandidatos
 };
