@@ -6,6 +6,7 @@ const router  = express.Router();
 const { db }  = require('../config/database');
 const { authMiddleware, isEmpresa } = require('../middleware/auth');
 
+
 const auth = [authMiddleware, isEmpresa];
 
 // ==============================
