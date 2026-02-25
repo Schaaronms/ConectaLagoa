@@ -3,7 +3,7 @@
 // Apenas lógica de dados. Sem manipulação de DOM/HTML.
 // =====================================================
 
-const API_URL = 'https://www.conectalagoa.com.br/api';
+const API_URL = 'https://conectalagoa.onrender.com/api';
 
 export const Auth = {
     getToken: () => localStorage.getItem('cl_token'),
