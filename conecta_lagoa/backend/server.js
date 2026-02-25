@@ -3,7 +3,6 @@ const express = require('express');
 const { initDatabase } = require('./config/database');
 const cors = require('cors');
 const path = require('path');
-
 const app = express();
 
 // ==============================
@@ -34,14 +33,11 @@ if (process.env.NODE_ENV !== 'production') {
 // ==============================
 // ROTAS
 // ==============================
-
-// Suas rotas originais
 const routes = require('./routes');
 app.use('/api', routes);
 
-// Rotas novas adicionadas
-app.use('/api/contato',   require('./routes/email'));
-app.use('/api/dashboard', require('./routes/dashboard'));
+app.use('/api/contato', require('./routes/email'));
+
 
 // Rota raiz
 app.get('/', (req, res) => {
