@@ -417,6 +417,106 @@ const candidatosContratados = async (req, res) => {
   }
 };
 
+// ==================== DASHBOARD AVANÇADO ====================
+
+// Gráfico de candidaturas por mês
+const graficoCandidaturas = async (req, res) => {
+  try {
+    const empresaId = req.user.id;
+
+    const dados = await db.all(
+      `SELECT 
+         TO_CHAR(ca.created_at, 'YYYY-MM') as mes,
+         COUNT(*) as total
+       FROM candidaturas ca
+       INNER JOIN vagas v ON ca.vaga_id = v.id
+       WHERE v.empresa_id = $1
+         AND ca.created_at >= NOW() - INTERVAL '6 months'
+       GROUP BY mes
+       ORDER BY mes ASC`,
+      [empresaId]
+    );
+
+    res.json({ success: true, dados });
+  } catch (error) {
+    console.error('Erro em graficoCandidaturas:', error);
+    res.status(500).json({ success: false, message: 'Erro ao buscar gráfico de candidaturas' });
+  }
+};
+
+// Vagas agrupadas por área/modalidade
+const vagasPorArea = async (req, res) => {
+  try {
+    const empresaId = req.user.id;
+
+    const dados = await db.all(
+      `SELECT 
+         modalidade as area,
+         COUNT(*) as total
+       FROM vagas
+       WHERE empresa_id = $1
+       GROUP BY modalidade
+       ORDER BY total DESC`,
+      [empresaId]
+    );
+
+    res.json({ success: true, dados });
+  } catch (error) {
+    console.error('Erro em vagasPorArea:', error);
+    res.status(500).json({ success: false, message: 'Erro ao buscar vagas por área' });
+  }
+};
+
+// Vagas criadas por mês
+const vagasPorMes = async (req, res) => {
+  try {
+    const empresaId = req.user.id;
+
+    const dados = await db.all(
+      `SELECT 
+         TO_CHAR(created_at, 'YYYY-MM') as mes,
+         COUNT(*) as total
+       FROM vagas
+       WHERE empresa_id = $1
+         AND created_at >= NOW() - INTERVAL '6 months'
+       GROUP BY mes
+       ORDER BY mes ASC`,
+      [empresaId]
+    );
+
+    res.json({ success: true, dados });
+  } catch (error) {
+    console.error('Erro em vagasPorMes:', error);
+    res.status(500).json({ success: false, message: 'Erro ao buscar vagas por mês' });
+  }
+};
+
+// Candidatos que se candidataram recentemente
+const candidatosRecentes = async (req, res) => {
+  try {
+    const empresaId = req.user.id;
+
+    const candidatos = await db.all(
+      `SELECT 
+         c.id, c.nome_completo, c.email, c.cidade, c.estado, c.foto_url,
+         v.titulo as vaga_titulo,
+         ca.created_at as data_candidatura
+       FROM candidaturas ca
+       INNER JOIN candidatos c ON ca.candidato_id = c.id
+       INNER JOIN vagas v ON ca.vaga_id = v.id
+       WHERE v.empresa_id = $1
+       ORDER BY ca.created_at DESC
+       LIMIT 10`,
+      [empresaId]
+    );
+
+    res.json({ success: true, candidatos });
+  } catch (error) {
+    console.error('Erro em candidatosRecentes:', error);
+    res.status(500).json({ success: false, message: 'Erro ao buscar candidatos recentes' });
+  }
+};
+
 module.exports = {
   // Perfil
   atualizarPerfil,
@@ -440,4 +540,8 @@ module.exports = {
   candidatosPorVaga,
   candidatosAtivos,
   candidatosContratados,
+  graficoCandidaturas,
+  vagasPorArea,
+  vagasPorMes,
+  candidatosRecentes,
 };

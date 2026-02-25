@@ -43,15 +43,12 @@ router.get('/candidatos', authMiddleware, isEmpresa, candidatoController.buscarC
 // Perfil
 router.put('/empresa/perfil', authMiddleware, isEmpresa, empresaController.atualizarPerfil);
 router.post('/empresa/logo',  authMiddleware, isEmpresa, upload.single('logo'), empresaController.uploadLogo);
-router.get('/empresa/:id', authMiddleware, empresaController.getPerfilPorId);
 router.get('/empresa/meu-perfil', authMiddleware, isEmpresa, empresaController.getMeuPerfil);
 router.get('/empresa/vagas', authMiddleware, isEmpresa, empresaController.listarVagas);
 router.post('/empresa/vagas', authMiddleware, isEmpresa, empresaController.criarVaga);
 router.put('/empresa/vagas/:vagaId', authMiddleware, isEmpresa, empresaController.atualizarVaga);
 router.delete('/empresa/vagas/:vagaId', authMiddleware, isEmpresa, empresaController.excluirVaga);
-
-// Dashboard
-router.get('/dashboard/resumo', authMiddleware, isEmpresa, empresaController.getResumoDashboard);
+router.get('/empresa/:id', authMiddleware, empresaController.getPerfilPorId);
 
 // Interações com candidatos
 router.post(  '/empresa/visualizar/:candidatoId', authMiddleware, isEmpresa, empresaController.visualizarCandidato);
@@ -60,9 +57,16 @@ router.delete('/empresa/favorito/:candidatoId',   authMiddleware, isEmpresa, emp
 router.get(   '/empresa/favoritos',               authMiddleware, isEmpresa, empresaController.listarFavoritos);
 router.get(   '/empresa/historico-visualizacoes', authMiddleware, isEmpresa, empresaController.historicoVisualizacoes);
 router.get(   '/empresa/estatisticas',            authMiddleware, isEmpresa, empresaController.getEstatisticas);
-router.get(   '/empresa/candidatos-vagas',       authMiddleware, isEmpresa, empresaController.candidatosPorVaga);
-router.get(   '/empresa/candidatos-ativos',     authMiddleware, isEmpresa, empresaController.candidatosAtivos);
-router.get(   '/empresa/candidatos-contratados', authMiddleware, isEmpresa, empresaController.candidatosContratados);
+router.get(   '/empresa/candidatos-vagas',        authMiddleware, isEmpresa, empresaController.candidatosPorVaga);
+router.get(   '/empresa/candidatos-ativos',       authMiddleware, isEmpresa, empresaController.candidatosAtivos);
+router.get(   '/empresa/candidatos-contratados',  authMiddleware, isEmpresa, empresaController.candidatosContratados);
+
+// ==================== DASHBOARD ====================
+router.get('/dashboard/resumo',                authMiddleware, isEmpresa, empresaController.getResumoDashboard);
+router.get('/dashboard/grafico-candidaturas',  authMiddleware, isEmpresa, empresaController.graficoCandidaturas);
+router.get('/dashboard/vagas-por-area',        authMiddleware, isEmpresa, empresaController.vagasPorArea);
+router.get('/dashboard/vagas-por-mes',         authMiddleware, isEmpresa, empresaController.vagasPorMes);
+router.get('/dashboard/candidatos-recentes',   authMiddleware, isEmpresa, empresaController.candidatosRecentes);
 
 // ==================== HEALTH CHECK ====================
 router.get('/health', (req, res) => {
