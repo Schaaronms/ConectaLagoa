@@ -6,13 +6,13 @@
 const API_URL = 'https://conectalagoa.onrender.com/api';
 
 export const Auth = {
-    getToken: () => localStorage.getItem('cl_token'),
-    setToken: (token) => localStorage.setItem('cl_token', token),
-    getEmpresa: () => JSON.parse(localStorage.getItem('cl_empresa') || 'null'),
-    setEmpresa: (empresa) => localStorage.setItem('cl_empresa', JSON.stringify(empresa)),
+    getToken: () => localStorage.getItem('token'),       
+    setToken: (token) => localStorage.setItem('token', token),
+    getEmpresa: () => JSON.parse(localStorage.getItem('user') || 'null'), 
+    setEmpresa: (empresa) => localStorage.setItem('user', JSON.stringify(empresa)),
     logout: () => {
-        localStorage.removeItem('cl_token');
-        localStorage.removeItem('cl_empresa');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
         window.location.href = '/login'; 
     }
 };
