@@ -18,14 +18,14 @@ router.get('/resumo', auth, async (req, res) => {
   try {
     const vagasAtivas = await db.get(
       `SELECT COUNT(*) AS total FROM vagas
-       WHERE empresa_id = $1 AND status = 'ativa'`,
+       WHERE empresa_id = $1 AND ativa = true`,
       [empresaId]
     );
 
     const vagasSemana = await db.get(
       `SELECT COUNT(*) AS total FROM vagas
-       WHERE empresa_id = $1 AND status = 'ativa'
-         AND data_publicacao >= NOW() - INTERVAL '7 days'`,
+       WHERE empresa_id = $1 AND ativa = true
+         AND created_at >= NOW() - INTERVAL '7 days'`,
       [empresaId]
     );
 
@@ -40,7 +40,7 @@ router.get('/resumo', auth, async (req, res) => {
       `SELECT COUNT(*) AS total FROM candidaturas c
        JOIN vagas v ON v.id = c.vaga_id
        WHERE v.empresa_id = $1
-         AND c.data_candidatura >= NOW() - INTERVAL '1 day'`,
+         AND c.created_at >= NOW() - INTERVAL '1 day'`,
       [empresaId]
     );
 
@@ -56,7 +56,7 @@ router.get('/resumo', auth, async (req, res) => {
        JOIN vagas v ON v.id = c.vaga_id
        WHERE v.empresa_id = $1
          AND c.status = 'contratado'
-         AND c.data_candidatura >= DATE_TRUNC('month', NOW())`,
+         AND c.created_at >= DATE_TRUNC('month', NOW())`,
       [empresaId]
     );
 
@@ -70,8 +70,8 @@ router.get('/resumo', auth, async (req, res) => {
       `SELECT COUNT(*) AS total FROM candidaturas c
        JOIN vagas v ON v.id = c.vaga_id
        WHERE v.empresa_id = $1
-         AND c.data_candidatura >= DATE_TRUNC('month', NOW() - INTERVAL '1 month')
-         AND c.data_candidatura <  DATE_TRUNC('month', NOW())`,
+         AND c.created_at >= DATE_TRUNC('month', NOW() - INTERVAL '1 month')
+         AND c.created_at <  DATE_TRUNC('month', NOW())`,
       [empresaId]
     );
     const contMesAnt = await db.get(
@@ -79,8 +79,8 @@ router.get('/resumo', auth, async (req, res) => {
        JOIN vagas v ON v.id = c.vaga_id
        WHERE v.empresa_id = $1
          AND c.status = 'contratado'
-         AND c.data_candidatura >= DATE_TRUNC('month', NOW() - INTERVAL '1 month')
-         AND c.data_candidatura <  DATE_TRUNC('month', NOW())`,
+         AND c.created_at >= DATE_TRUNC('month', NOW() - INTERVAL '1 month')
+         AND c.created_at <  DATE_TRUNC('month', NOW())`,
       [empresaId]
     );
 
@@ -117,15 +117,15 @@ router.get('/grafico-candidaturas', auth, async (req, res) => {
   try {
     const dados = await db.all(
       `SELECT
-         TO_CHAR(DATE_TRUNC('month', c.data_candidatura), 'Mon') AS mes,
-         DATE_TRUNC('month', c.data_candidatura) AS mes_data,
+         TO_CHAR(DATE_TRUNC('month', c.created_at), 'Mon') AS mes,
+         DATE_TRUNC('month', c.created_at) AS mes_data,
          COUNT(*) AS candidaturas,
          COUNT(*) FILTER (WHERE c.status = 'contratado') AS contratacoes
        FROM candidaturas c
        JOIN vagas v ON v.id = c.vaga_id
        WHERE v.empresa_id = $1
-         AND c.data_candidatura >= NOW() - INTERVAL '7 months'
-       GROUP BY DATE_TRUNC('month', c.data_candidatura)
+         AND c.created_at >= NOW() - INTERVAL '7 months'
+       GROUP BY DATE_TRUNC('month', c.created_at)
        ORDER BY mes_data ASC`,
       [empresaId]
     );
@@ -157,7 +157,7 @@ router.get('/vagas-por-area', auth, async (req, res) => {
          COALESCE(area, 'Outros') AS area,
          COUNT(*) AS total
        FROM vagas
-       WHERE empresa_id = $1 AND status = 'ativa'
+       WHERE empresa_id = $1 AND ativa = true
        GROUP BY area
        ORDER BY total DESC`,
       [empresaId]
@@ -191,13 +191,13 @@ router.get('/vagas-por-mes', auth, async (req, res) => {
   try {
     const dados = await db.all(
       `SELECT
-         TO_CHAR(DATE_TRUNC('month', data_publicacao), 'Mon') AS mes,
-         DATE_TRUNC('month', data_publicacao) AS mes_data,
+         TO_CHAR(DATE_TRUNC('month', created_at), 'Mon') AS mes,
+         DATE_TRUNC('month', created_at) AS mes_data,
          COUNT(*) AS total
        FROM vagas
        WHERE empresa_id = $1
-         AND data_publicacao >= NOW() - INTERVAL '6 months'
-       GROUP BY DATE_TRUNC('month', data_publicacao)
+         AND created_at >= NOW() - INTERVAL '6 months'
+       GROUP BY DATE_TRUNC('month', created_at)
        ORDER BY mes_data ASC`,
       [empresaId]
     );
@@ -230,13 +230,13 @@ router.get('/candidatos-recentes', auth, async (req, res) => {
          cd.email,
          cd.cidade,
          c.status,
-         c.data_candidatura AS criado_em,
+         c.created_at AS criado_em,
          v.titulo         AS vaga_titulo
        FROM candidaturas c
        JOIN vagas v       ON v.id = c.vaga_id
        JOIN candidatos cd ON cd.id = c.candidato_id
        WHERE v.empresa_id = $1
-       ORDER BY c.data_candidatura DESC
+       ORDER BY c.created_at DESC
        LIMIT 10`,
       [empresaId]
     );
