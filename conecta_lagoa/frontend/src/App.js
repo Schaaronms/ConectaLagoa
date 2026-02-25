@@ -55,15 +55,22 @@ function AppContent() {
         <main className="flex-grow">
           <Routes>
             {/* Rotas Públicas */}
-            <Route path="/" element={<Home />} />
-            <Route path="/vagas" element={<Vagas />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/registro" element={<Registro />} />
-            <Route path="/esqueceu-senha" element={<EsqueceuSenha />} />
-            <Route path="/redefinir-senha" element={<RedefinirSenha />} />
-            <Route path="/sobre" element={<Sobre />} />
-            <Route path="/blog" element={<Blog />} />
-
+<Route path="/" element={<Home />} />
+<Route path="/vagas" element={<Vagas />} />
+<Route path="/login" element={<Login />} />
+<Route path="/registro" element={<Registro />} />
+<Route path="/esqueceu-senha" element={<EsqueceuSenha />} />
+<Route path="/redefinir-senha" element={<RedefinirSenha />} />
+<Route path="/sobre" element={<Sobre />} />
+<Route path="/blog" element={<Blog />} />
+<Route path="/candidato/registro" element={<Registro tipo="candidato" />} />
+<Route path="/empresa/registro" element={<Registro tipo="empresa" />} />
+<Route path="/candidato/login" element={<Login tipo="candidato" />} />
+<Route path="/empresa/login" element={<Login tipo="empresa" />} />
+<Route path="/candidato/esqueceu-senha" element={<EsqueceuSenha tipo="candidato" />} />
+<Route path="/empresa/esqueceu-senha" element={<EsqueceuSenha tipo="empresa" />} />
+<Route path="/candidato/redefinir-senha" element={<RedefinirSenha tipo="candidato" />} />
+       
             {/* Rotas do Candidato (protegidas) */}
             <Route
               path="/candidato/onboarding"
@@ -102,7 +109,7 @@ function AppContent() {
 
             {/* Redirecionamento de rota antiga/errada (opcional) */}
             <Route path="/empresadashboard" element={<Navigate to="/empresa/dashboard" replace />} />
-
+            <Route path="*" element={<Navigate to="/" replace />} />
             {/* 404 */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
