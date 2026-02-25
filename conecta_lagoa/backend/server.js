@@ -100,47 +100,26 @@ const ensureDatabase = async () => {
   }
 };
 
-// ==============================
-// HANDLER VERCEL
-// ==============================
-module.exports = async (req, res) => {
-  await ensureDatabase();
-  return app(req, res);
-};
 
 // ==============================
 // DESENVOLVIMENTO LOCAL
 // ==============================
-if (require.main === module) {
-  const PORT = process.env.PORT || 5000;
+// Substitui o if (require.main === module) por isso:
+const PORT = process.env.PORT || 5000;
 
-  const startServer = async () => {
-    try {
-      await initDatabase();
-      console.log('✓ Banco de dados inicializado');
+const startServer = async () => {
+  try {
+    await initDatabase();
+    console.log('✓ Banco de dados inicializado');
 
-      app.listen(PORT, () => {
-        console.log(`\n🚀 Servidor rodando na porta ${PORT}`);
-        console.log(`📍 URL: http://localhost:${PORT}`);
-        console.log(`📊 Health: http://localhost:${PORT}/api/health`);
-        console.log('\n📋 Rotas disponíveis:');
-        console.log(`   POST  /api/contato`);
-        console.log(`   GET   /api/dashboard/resumo`);
-        console.log(`   GET   /api/dashboard/grafico-candidaturas`);
-        console.log(`   GET   /api/dashboard/vagas-por-area`);
-        console.log(`   GET   /api/dashboard/vagas-por-mes`);
-        console.log(`   GET   /api/dashboard/candidatos-recentes`);
+    app.listen(PORT, () => {
+      console.log(`🚀 Servidor rodando na porta ${PORT}`);
+    });
 
-        const conexao = process.env.DATABASE_URL ? 'NEON (nuvem)' : 'PostgreSQL LOCAL';
-        console.log(`\n🔌 Banco: ${conexao}`);
-        console.log('\n✨ Conecta Lagoa - Sistema de Recrutamento\n');
-      });
+  } catch (error) {
+    console.error('❌ Erro ao iniciar servidor:', error);
+    process.exit(1);
+  }
+};
 
-    } catch (error) {
-      console.error('❌ Erro ao iniciar servidor:', error);
-      process.exit(1);
-    }
-  };
-
-  startServer();
-}
+startServer();
