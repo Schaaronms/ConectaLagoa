@@ -3,7 +3,7 @@
 // Apenas lógica de dados. Sem manipulação de DOM/HTML.
 // =====================================================
 
-const API_URL = 'http://localhost:3001/api';
+const API_URL = 'http://localhost:5000/api/health'; // Ajuste para a URL correta do backend
 
 export const Auth = {
     getToken: () => localStorage.getItem('cl_token'),
