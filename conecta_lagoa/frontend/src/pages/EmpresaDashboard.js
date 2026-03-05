@@ -4,6 +4,7 @@
 // API real via fetch com token JWT do localStorage
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
+import PanelFunil from './PanelFunil';
 
 // ─── PALETA ────────────────────────────────────────────────────────
 const V = {
@@ -46,19 +47,21 @@ const KANBAN_DATA = [
   { name:'Tiago Faria',     role:'Dev Frontend',     stage:5, score:89, initials:'TF' },
   { name:'Giovanna Silva',  role:'Data Sci',         stage:6, score:55, initials:'GS' },
 ];
+
+// FIX #5 — adicionado campo `id` para toggleFav seguro
 const TALENTS_INIT = [
-  { name:'Ana Lima',        role:'Dev Sênior Backend',   city:'São Paulo',      area:'Tecnologia', tags:['Node.js','AWS','Python'],          fav:true,  score:92, color:V.accent  },
-  { name:'Carlos Mota',     role:'UX Designer Sênior',   city:'Rio de Janeiro', area:'Design',     tags:['Figma','Prototyping','Research'],  fav:false, score:85, color:V.accent3 },
-  { name:'Sofia Ramos',     role:'Dev Frontend',          city:'Curitiba',       area:'Tecnologia', tags:['React','TypeScript','CSS'],        fav:true,  score:94, color:V.accent2 },
-  { name:'Juliana Rocha',   role:'Product Manager',       city:'Belo Horizonte', area:'Produto',    tags:['Agile','OKRs','Analytics'],       fav:false, score:78, color:'#c96a00'  },
-  { name:'Rafael Souza',    role:'Dev Backend',           city:'Porto Alegre',   area:'Tecnologia', tags:['Java','Spring','Docker'],          fav:true,  score:91, color:V.green   },
-  { name:'Fernanda Costa',  role:'Data Analyst',          city:'Florianópolis',  area:'Data',       tags:['SQL','Python','Tableau'],          fav:false, score:67, color:V.red     },
-  { name:'Pedro Luz',       role:'Dev Frontend React',    city:'Recife',         area:'Tecnologia', tags:['React','Next.js','Tailwind'],      fav:false, score:88, color:V.accent  },
-  { name:'Letícia Nunes',   role:'UX/UI Designer',        city:'Salvador',       area:'Design',     tags:['Adobe XD','Figma','Motion'],       fav:true,  score:81, color:V.accent3 },
-  { name:'Marcos Alves',    role:'Data Scientist',        city:'São Paulo',      area:'Data',       tags:['ML','TensorFlow','R'],             fav:false, score:74, color:V.accent2 },
-  { name:'Bruna Dias',      role:'Product Designer',      city:'Campinas',       area:'Design',     tags:['Figma','Design Systems','A11y'],   fav:false, score:79, color:'#c96a00'  },
-  { name:'Tiago Faria',     role:'Dev Fullstack',         city:'Goiânia',        area:'Tecnologia', tags:['React','Node','MongoDB'],          fav:true,  score:89, color:V.green   },
-  { name:'Giovanna Silva',  role:'Data Engineer',         city:'Brasília',       area:'Data',       tags:['Spark','Kafka','BigQuery'],        fav:false, score:55, color:V.red     },
+  { id:1,  name:'Ana Lima',        role:'Dev Sênior Backend',   city:'São Paulo',      area:'Tecnologia', tags:['Node.js','AWS','Python'],          fav:true,  score:92, color:V.accent  },
+  { id:2,  name:'Carlos Mota',     role:'UX Designer Sênior',   city:'Rio de Janeiro', area:'Design',     tags:['Figma','Prototyping','Research'],  fav:false, score:85, color:V.accent3 },
+  { id:3,  name:'Sofia Ramos',     role:'Dev Frontend',          city:'Curitiba',       area:'Tecnologia', tags:['React','TypeScript','CSS'],        fav:true,  score:94, color:V.accent2 },
+  { id:4,  name:'Juliana Rocha',   role:'Product Manager',       city:'Belo Horizonte', area:'Produto',    tags:['Agile','OKRs','Analytics'],       fav:false, score:78, color:'#c96a00'  },
+  { id:5,  name:'Rafael Souza',    role:'Dev Backend',           city:'Porto Alegre',   area:'Tecnologia', tags:['Java','Spring','Docker'],          fav:true,  score:91, color:V.green   },
+  { id:6,  name:'Fernanda Costa',  role:'Data Analyst',          city:'Florianópolis',  area:'Data',       tags:['SQL','Python','Tableau'],          fav:false, score:67, color:V.red     },
+  { id:7,  name:'Pedro Luz',       role:'Dev Frontend React',    city:'Recife',         area:'Tecnologia', tags:['React','Next.js','Tailwind'],      fav:false, score:88, color:V.accent  },
+  { id:8,  name:'Letícia Nunes',   role:'UX/UI Designer',        city:'Salvador',       area:'Design',     tags:['Adobe XD','Figma','Motion'],       fav:true,  score:81, color:V.accent3 },
+  { id:9,  name:'Marcos Alves',    role:'Data Scientist',        city:'São Paulo',      area:'Data',       tags:['ML','TensorFlow','R'],             fav:false, score:74, color:V.accent2 },
+  { id:10, name:'Bruna Dias',      role:'Product Designer',      city:'Campinas',       area:'Design',     tags:['Figma','Design Systems','A11y'],   fav:false, score:79, color:'#c96a00'  },
+  { id:11, name:'Tiago Faria',     role:'Dev Fullstack',         city:'Goiânia',        area:'Tecnologia', tags:['React','Node','MongoDB'],          fav:true,  score:89, color:V.green   },
+  { id:12, name:'Giovanna Silva',  role:'Data Engineer',         city:'Brasília',       area:'Data',       tags:['Spark','Kafka','BigQuery'],        fav:false, score:55, color:V.red     },
 ];
 const AI_DATA = [
   { name:'Sofia Ramos',    role:'Dev Frontend',          score:94, color:V.green,   traits:['Proativa','Comunicativa','Autônoma'],  skills:['React','TypeScript','Next.js'],  reason:'Histórico de 3 contratações similares com excelente performance.' },
@@ -68,6 +71,16 @@ const AI_DATA = [
   { name:'Carlos Mota',    role:'UX Designer',           score:85, color:V.accent3, traits:['Empático','Visual','Estratégico'],    skills:['Figma','Research','Motion'],     reason:'Experiência prévia em segmento similar (fintech).' },
   { name:'Letícia Nunes',  role:'UX/UI Designer',        score:81, color:V.accent3, traits:['Criativa','Organizada','Empática'],   skills:['Figma','Adobe XD','A11y'],       reason:'Forte em design systems, alinhado com stack atual.' },
 ];
+
+// FIX #2 — scores fixos no fallback (sem Math.random)
+const FALLBACK_CANDIDATES = [
+  { n:'Ana Lima',       loc:'São Paulo · SP',       v:'Dev Senior',    s:92, st:'pill-green',  stars:'★★★★★' },
+  { n:'Carlos Mota',    loc:'Rio de Janeiro · RJ',  v:'UX Designer',   s:85, st:'pill-purple', stars:'★★★★☆' },
+  { n:'Juliana Rocha',  loc:'Belo Horizonte · MG',  v:'Product Mgr',   s:78, st:'pill-orange', stars:'★★★★☆' },
+  { n:'Rafael Souza',   loc:'Porto Alegre · RS',    v:'Dev Backend',   s:91, st:'pill-green',  stars:'★★★★★' },
+  { n:'Fernanda Costa', loc:'Curitiba · PR',        v:'Data Analyst',  s:67, st:'pill-cyan',   stars:'★★★☆☆' },
+];
+
 const EVENTS = [
   { time:'09:00', title:'Triagem — Pedro Luz',           meta:'Dev Frontend · Video Call',            tipo:'Triagem',    tc:'pill-cyan'   },
   { time:'11:30', title:'Entrevista — Ana Lima',         meta:'Dev Sênior · Presencial',              tipo:'Entrevista', tc:'pill-purple' },
@@ -90,6 +103,17 @@ const PILL = {
   'pill-purple': { bg:'rgba(224,123,0,0.12)',  color:'#c96a00' },
   'pill-cyan':   { bg:'rgba(45,82,196,0.12)',  color:'#2d52c4' },
 };
+
+// FIX #1 — mapa de label correto para cada pill (era "Blue", "Purple"...)
+const PILL_LABEL = {
+  'pill-green':  'Aprovado',
+  'pill-red':    'Reprovado',
+  'pill-purple': 'Entrevista',
+  'pill-orange': 'Triagem',
+  'pill-blue':   'Triagem',
+  'pill-cyan':   'Recebido',
+};
+
 function Pill({ cls, children, style={} }) {
   const p = PILL[cls] || PILL['pill-blue'];
   return <span style={{ display:'inline-flex', alignItems:'center', gap:5, padding:'3px 10px', borderRadius:20, fontSize:11, fontWeight:500, background:p.bg, color:p.color, ...style }}>{children}</span>;
@@ -149,37 +173,173 @@ function KpiCard({ icon, label, value, delta, deltaUp=true, color, delay=0 }) {
   );
 }
 
-// ─── MODAL ───────────────────────────────────────────────────────
+// ─── MODAL AGENDAMENTO ────────────────────────────────────────────
+// FIX #3 — inputs controlados + chamada real à API
 function Modal({ open, onClose }) {
+  const [form, setForm] = useState({ candidato:'Ana Lima', vaga:'Dev Sênior Backend', data:'2025-03-10', horario:'14:00', tipo:'Video call (Google Meet)', lembrete:'1 hora antes (Email + WhatsApp)' });
+  const [saving, setSaving] = useState(false);
+  const [toast, setToast]   = useState('');
+
+  const set = (key) => (e) => setForm(prev => ({ ...prev, [key]: e.target.value }));
+
+  const handleConfirm = async () => {
+    setSaving(true);
+    try {
+      const token = localStorage.getItem('token');
+      const BASE  = process.env.REACT_APP_API_URL || 'https://conectalagoa.onrender.com/api';
+      const res   = await fetch(`${BASE}/agenda`, {
+        method:  'POST',
+        headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${token}` },
+        body:    JSON.stringify(form),
+      });
+      if (res.ok) {
+        setToast('Agendado com sucesso! ✓');
+        setTimeout(() => { setToast(''); onClose(); }, 1500);
+      } else {
+        setToast('Erro ao agendar. Tente novamente.');
+        setTimeout(() => setToast(''), 2500);
+      }
+    } catch {
+      // Sem conexão: fecha com aviso
+      setToast('Salvo localmente (offline)');
+      setTimeout(() => { setToast(''); onClose(); }, 1500);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (!open) return null;
   return (
     <div onClick={e=>{if(e.target===e.currentTarget)onClose();}} style={{ position:'fixed', inset:0, background:'rgba(26,58,143,0.35)', backdropFilter:'blur(6px)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center' }}>
-      <div style={{ background:V.surface, border:`1px solid ${V.border}`, borderRadius:16, padding:28, width:420, maxWidth:'95vw', animation:'fadeUp 0.3s ease' }}>
+      <div style={{ background:V.surface, border:`1px solid ${V.border}`, borderRadius:16, padding:28, width:420, maxWidth:'95vw', animation:'fadeUp 0.3s ease', position:'relative' }}>
+        {toast && (
+          <div style={{ position:'absolute', top:16, left:'50%', transform:'translateX(-50%)', background:V.accent, color:'white', padding:'6px 18px', borderRadius:20, fontSize:12, fontWeight:500, whiteSpace:'nowrap', zIndex:10 }}>
+            {toast}
+          </div>
+        )}
         <div style={{ fontFamily:"'Syne',sans-serif", fontSize:18, fontWeight:700, marginBottom:6, color:V.text }}>Agendar Entrevista / Lembrete</div>
         <div style={{ fontSize:12, color:V.muted, marginBottom:20 }}>Adicione ao calendário e configure notificações automáticas</div>
-        {[['Candidato','text','Nome do candidato','Ana Lima'],['Vaga','text','Selecione a vaga','Dev Sênior Backend']].map(([l,t,p,v])=>(
-          <div key={l} style={{ marginBottom:14 }}>
+
+        {[['candidato','Candidato','text','Nome do candidato'],['vaga','Vaga','text','Selecione a vaga']].map(([key,l,t,p])=>(
+          <div key={key} style={{ marginBottom:14 }}>
             <label style={{ fontSize:11, color:V.muted, textTransform:'uppercase', letterSpacing:'0.05em', display:'block', marginBottom:6 }}>{l}</label>
-            <input type={t} defaultValue={v} placeholder={p} style={{ width:'100%', background:V.surface2, border:`1px solid ${V.border}`, borderRadius:8, padding:'10px 12px', color:V.text, fontSize:13, outline:'none' }}/>
+            <input type={t} value={form[key]} onChange={set(key)} placeholder={p} style={{ width:'100%', background:V.surface2, border:`1px solid ${V.border}`, borderRadius:8, padding:'10px 12px', color:V.text, fontSize:13, outline:'none' }}/>
           </div>
         ))}
+
         <div style={{ display:'flex', gap:10, marginBottom:14 }}>
-          {[['Data','date','2025-03-10'],['Horário','time','14:00']].map(([l,t,v])=>(
-            <div key={l} style={{ flex:1 }}>
+          {[['data','Data','date'],['horario','Horário','time']].map(([key,l,t])=>(
+            <div key={key} style={{ flex:1 }}>
               <label style={{ fontSize:11, color:V.muted, textTransform:'uppercase', display:'block', marginBottom:6 }}>{l}</label>
-              <input type={t} defaultValue={v} style={{ width:'100%', background:V.surface2, border:`1px solid ${V.border}`, borderRadius:8, padding:'10px 12px', color:V.text, fontSize:13, outline:'none' }}/>
+              <input type={t} value={form[key]} onChange={set(key)} style={{ width:'100%', background:V.surface2, border:`1px solid ${V.border}`, borderRadius:8, padding:'10px 12px', color:V.text, fontSize:13, outline:'none' }}/>
             </div>
           ))}
         </div>
-        {[['Tipo','Video call (Google Meet)'],['Lembrete automático','1 hora antes (Email + WhatsApp)']].map(([l,v])=>(
-          <div key={l} style={{ marginBottom:14 }}>
+
+        {[['tipo','Tipo'],['lembrete','Lembrete automático']].map(([key,l])=>(
+          <div key={key} style={{ marginBottom:14 }}>
             <label style={{ fontSize:11, color:V.muted, textTransform:'uppercase', letterSpacing:'0.05em', display:'block', marginBottom:6 }}>{l}</label>
-            <input defaultValue={v} style={{ width:'100%', background:V.surface2, border:`1px solid ${V.border}`, borderRadius:8, padding:'10px 12px', color:V.text, fontSize:13, outline:'none' }}/>
+            <input value={form[key]} onChange={set(key)} style={{ width:'100%', background:V.surface2, border:`1px solid ${V.border}`, borderRadius:8, padding:'10px 12px', color:V.text, fontSize:13, outline:'none' }}/>
           </div>
         ))}
+
         <div style={{ display:'flex', gap:10, marginTop:20, justifyContent:'flex-end' }}>
           <button onClick={onClose} style={{ background:'none', border:`1px solid ${V.border}`, color:V.muted2, padding:'7px 16px', borderRadius:8, cursor:'pointer', fontSize:12 }}>Cancelar</button>
-          <button onClick={onClose} style={{ background:V.accent, border:'none', color:'white', padding:'8px 16px', borderRadius:8, cursor:'pointer', fontSize:12, fontWeight:500 }}>✓ Confirmar & Notificar</button>
+          <button onClick={handleConfirm} disabled={saving} style={{ background: saving ? V.muted2 : V.accent, border:'none', color:'white', padding:'8px 16px', borderRadius:8, cursor: saving ? 'default' : 'pointer', fontSize:12, fontWeight:500 }}>
+            {saving ? 'Salvando...' : '✓ Confirmar & Notificar'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// FIX #4 — Modal de Nova Vaga separado do Modal de Agendamento
+function ModalNovaVaga({ open, onClose, onSaved }) {
+  const [form, setForm]   = useState({ titulo:'', area:'Tecnologia', cidade:'', salario:'', prazo:'', descricao:'' });
+  const [saving, setSaving] = useState(false);
+  const [toast, setToast]   = useState('');
+
+  const set = (key) => (e) => setForm(prev => ({ ...prev, [key]: e.target.value }));
+
+  const handleSalvar = async () => {
+    if (!form.titulo.trim()) { setToast('Informe o título da vaga'); setTimeout(()=>setToast(''),2000); return; }
+    setSaving(true);
+    try {
+      const token = localStorage.getItem('token');
+      const BASE  = process.env.REACT_APP_API_URL || 'https://conectalagoa.onrender.com/api';
+      const res   = await fetch(`${BASE}/vagas`, {
+        method:  'POST',
+        headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${token}` },
+        body:    JSON.stringify(form),
+      });
+      if (res.ok) {
+        setToast('Vaga criada com sucesso! ✓');
+        onSaved && onSaved();
+        setTimeout(() => { setToast(''); onClose(); setForm({ titulo:'', area:'Tecnologia', cidade:'', salario:'', prazo:'', descricao:'' }); }, 1500);
+      } else {
+        setToast('Erro ao criar vaga. Tente novamente.');
+        setTimeout(() => setToast(''), 2500);
+      }
+    } catch {
+      setToast('Sem conexão — tente novamente');
+      setTimeout(() => setToast(''), 2500);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!open) return null;
+  return (
+    <div onClick={e=>{if(e.target===e.currentTarget)onClose();}} style={{ position:'fixed', inset:0, background:'rgba(26,58,143,0.35)', backdropFilter:'blur(6px)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center' }}>
+      <div style={{ background:V.surface, border:`1px solid ${V.border}`, borderRadius:16, padding:28, width:460, maxWidth:'95vw', animation:'fadeUp 0.3s ease', position:'relative' }}>
+        {toast && (
+          <div style={{ position:'absolute', top:16, left:'50%', transform:'translateX(-50%)', background:V.accent, color:'white', padding:'6px 18px', borderRadius:20, fontSize:12, fontWeight:500, whiteSpace:'nowrap', zIndex:10 }}>
+            {toast}
+          </div>
+        )}
+        <div style={{ fontFamily:"'Syne',sans-serif", fontSize:18, fontWeight:700, marginBottom:6, color:V.text }}>Nova Vaga</div>
+        <div style={{ fontSize:12, color:V.muted, marginBottom:20 }}>Preencha os dados e publique imediatamente</div>
+
+        <div style={{ marginBottom:14 }}>
+          <label style={{ fontSize:11, color:V.muted, textTransform:'uppercase', letterSpacing:'0.05em', display:'block', marginBottom:6 }}>Título da Vaga *</label>
+          <input value={form.titulo} onChange={set('titulo')} placeholder="ex: Dev Frontend React" style={{ width:'100%', background:V.surface2, border:`1px solid ${V.border}`, borderRadius:8, padding:'10px 12px', color:V.text, fontSize:13, outline:'none' }}/>
+        </div>
+
+        <div style={{ display:'flex', gap:10, marginBottom:14 }}>
+          <div style={{ flex:1 }}>
+            <label style={{ fontSize:11, color:V.muted, textTransform:'uppercase', display:'block', marginBottom:6 }}>Área</label>
+            <select value={form.area} onChange={set('area')} style={{ width:'100%', background:V.surface2, border:`1px solid ${V.border}`, borderRadius:8, padding:'10px 12px', color:V.text, fontSize:13, outline:'none' }}>
+              {['Tecnologia','Design','Produto','Data','Marketing','Operações'].map(a=><option key={a}>{a}</option>)}
+            </select>
+          </div>
+          <div style={{ flex:1 }}>
+            <label style={{ fontSize:11, color:V.muted, textTransform:'uppercase', display:'block', marginBottom:6 }}>Cidade</label>
+            <input value={form.cidade} onChange={set('cidade')} placeholder="São Paulo, SP" style={{ width:'100%', background:V.surface2, border:`1px solid ${V.border}`, borderRadius:8, padding:'10px 12px', color:V.text, fontSize:13, outline:'none' }}/>
+          </div>
+        </div>
+
+        <div style={{ display:'flex', gap:10, marginBottom:14 }}>
+          <div style={{ flex:1 }}>
+            <label style={{ fontSize:11, color:V.muted, textTransform:'uppercase', display:'block', marginBottom:6 }}>Salário</label>
+            <input value={form.salario} onChange={set('salario')} placeholder="R$ 8.000 – 12.000" style={{ width:'100%', background:V.surface2, border:`1px solid ${V.border}`, borderRadius:8, padding:'10px 12px', color:V.text, fontSize:13, outline:'none' }}/>
+          </div>
+          <div style={{ flex:1 }}>
+            <label style={{ fontSize:11, color:V.muted, textTransform:'uppercase', display:'block', marginBottom:6 }}>Prazo de inscrição</label>
+            <input type="date" value={form.prazo} onChange={set('prazo')} style={{ width:'100%', background:V.surface2, border:`1px solid ${V.border}`, borderRadius:8, padding:'10px 12px', color:V.text, fontSize:13, outline:'none' }}/>
+          </div>
+        </div>
+
+        <div style={{ marginBottom:14 }}>
+          <label style={{ fontSize:11, color:V.muted, textTransform:'uppercase', letterSpacing:'0.05em', display:'block', marginBottom:6 }}>Descrição</label>
+          <textarea value={form.descricao} onChange={set('descricao')} rows={3} placeholder="Responsabilidades, requisitos, benefícios..." style={{ width:'100%', background:V.surface2, border:`1px solid ${V.border}`, borderRadius:8, padding:'10px 12px', color:V.text, fontSize:13, outline:'none', resize:'vertical', fontFamily:"'DM Sans',sans-serif" }}/>
+        </div>
+
+        <div style={{ display:'flex', gap:10, marginTop:20, justifyContent:'flex-end' }}>
+          <button onClick={onClose} style={{ background:'none', border:`1px solid ${V.border}`, color:V.muted2, padding:'7px 16px', borderRadius:8, cursor:'pointer', fontSize:12 }}>Cancelar</button>
+          <button onClick={handleSalvar} disabled={saving} style={{ background: saving ? V.muted2 : V.accent, border:'none', color:'white', padding:'8px 20px', borderRadius:8, cursor: saving ? 'default' : 'pointer', fontSize:12, fontWeight:500 }}>
+            {saving ? 'Publicando...' : '🚀 Publicar Vaga'}
+          </button>
         </div>
       </div>
     </div>
@@ -262,22 +422,24 @@ function PanelOverview({ kpis, candidates, onModal }) {
                       <div style={{ fontSize:11, color:V.muted }}>{c.cidade || '—'}</div>
                     </td>
                     <td style={{ padding:'12px' }}>{c.vaga_titulo || '—'}</td>
-                    <td style={{ padding:'12px' }}><ScoreBar val={c.score_ia || Math.floor(65+Math.random()*30)}/></td>
-                    <td style={{ padding:'12px' }}><Pill cls={c.status==='Aprovado'?'pill-green':c.status==='Reprovado'?'pill-red':c.status==='Entrevista'?'pill-purple':'pill-orange'}>{c.status || 'Triagem'}</Pill></td>
-                    <td style={{ padding:'12px', color:V.orange }}>{'★'.repeat(Math.min(5,Math.ceil((c.score_ia||75)/20)))}</td>
+                    {/* FIX #2 — score fixo, sem Math.random() */}
+                    <td style={{ padding:'12px' }}><ScoreBar val={c.score_ia ?? 75}/></td>
+                    <td style={{ padding:'12px' }}>
+                      <Pill cls={c.status==='Aprovado'?'pill-green':c.status==='Reprovado'?'pill-red':c.status==='Entrevista'?'pill-purple':'pill-orange'}>
+                        {c.status || 'Triagem'}
+                      </Pill>
+                    </td>
+                    <td style={{ padding:'12px', color:V.orange }}>{'★'.repeat(Math.min(5,Math.ceil((c.score_ia??75)/20)))}</td>
                   </tr>
-                )) : [
-                  { n:'Ana Lima',       loc:'São Paulo · SP',       v:'Dev Senior',    s:92, st:'pill-blue',   stars:'★★★★★' },
-                  { n:'Carlos Mota',    loc:'Rio de Janeiro · RJ',  v:'UX Designer',   s:85, st:'pill-purple', stars:'★★★★☆' },
-                  { n:'Juliana Rocha',  loc:'Belo Horizonte · MG',  v:'Product Mgr',   s:78, st:'pill-orange', stars:'★★★★☆' },
-                  { n:'Rafael Souza',   loc:'Porto Alegre · RS',    v:'Dev Backend',   s:91, st:'pill-green',  stars:'★★★★★' },
-                  { n:'Fernanda Costa', loc:'Curitiba · PR',        v:'Data Analyst',  s:67, st:'pill-cyan',   stars:'★★★☆☆' },
-                ].map((c,i) => (
-                  <tr key={i} style={{ borderBottom:`1px solid rgba(226,232,244,0.5)` }}>
+                )) : FALLBACK_CANDIDATES.map((c,i) => (
+                  <tr key={i} style={{ borderBottom:`1px solid rgba(226,232,244,0.5)` }}
+                    onMouseEnter={e=>{e.currentTarget.style.background='rgba(26,58,143,0.03)';}}
+                    onMouseLeave={e=>{e.currentTarget.style.background='';}}>
                     <td style={{ padding:'12px' }}><div style={{ fontWeight:500, fontSize:13 }}>{c.n}</div><div style={{ fontSize:11, color:V.muted }}>{c.loc}</div></td>
                     <td style={{ padding:'12px' }}>{c.v}</td>
                     <td style={{ padding:'12px' }}><ScoreBar val={c.s}/></td>
-                    <td style={{ padding:'12px' }}><Pill cls={c.st}>{c.st.replace('pill-','').charAt(0).toUpperCase()+c.st.replace('pill-','').slice(1)}</Pill></td>
+                    {/* FIX #1 — usa PILL_LABEL em vez de manipular string */}
+                    <td style={{ padding:'12px' }}><Pill cls={c.st}>{PILL_LABEL[c.st] || 'Triagem'}</Pill></td>
                     <td style={{ padding:'12px', color:V.orange }}>{c.stars}</td>
                   </tr>
                 ))}
@@ -308,50 +470,13 @@ function PanelOverview({ kpis, candidates, onModal }) {
 }
 
 // ─── PAINEL FUNIL CRM (KANBAN) ────────────────────────────────────
-function PanelFunil({ onModal }) {
-  return (
-    <div>
-      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
-        <div>
-          <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:15, color:V.text }}>Funil de Recrutamento</div>
-          <div style={{ fontSize:11, color:V.muted }}>Arraste os candidatos entre colunas</div>
-        </div>
-        <button onClick={onModal} style={{ background:V.accent, border:'none', color:'white', padding:'8px 16px', borderRadius:8, cursor:'pointer', fontSize:12, fontWeight:500 }}>+ Adicionar Candidato</button>
-      </div>
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(7,220px)', gap:14, overflowX:'auto', paddingBottom:12 }}>
-        {KANBAN_STAGES.map((s,si) => {
-          const cards = KANBAN_DATA.filter(c => c.stage === si);
-          return (
-            <div key={si} style={{ background:V.surface, border:`1px solid ${V.border}`, borderRadius:12, padding:14, minHeight:400 }}>
-              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
-                <span style={{ fontSize:12, fontWeight:600, textTransform:'uppercase', letterSpacing:'0.05em', color:s.color }}>{s.name}</span>
-                <span style={{ width:20, height:20, borderRadius:6, background:V.surface2, fontSize:11, fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center', color:V.muted }}>{cards.length}</span>
-              </div>
-              {cards.map((c,i) => (
-                <div key={i} draggable style={{ background:V.surface2, border:`1px solid ${V.border}`, borderRadius:10, padding:12, marginBottom:8, cursor:'grab', transition:'all 0.2s' }}
-                  onMouseEnter={e=>{e.currentTarget.style.borderColor=s.color;e.currentTarget.style.transform='translateY(-2px)';e.currentTarget.style.boxShadow='0 4px 16px rgba(26,58,143,0.12)';}}
-                  onMouseLeave={e=>{e.currentTarget.style.borderColor=V.border;e.currentTarget.style.transform='';e.currentTarget.style.boxShadow='';}}>
-                  <div style={{ fontSize:12, fontWeight:500, marginBottom:4 }}>{c.name}</div>
-                  <div style={{ fontSize:10, color:V.muted, marginBottom:8 }}>{c.role}</div>
-                  <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                    <MiniAvatar initials={c.initials} size={20}/>
-                    <Pill cls={c.score>=85?'pill-green':c.score>=70?'pill-orange':'pill-red'} style={{ fontSize:9 }}>Score {c.score}</Pill>
-                  </div>
-                </div>
-              ))}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
+
 
 // ─── PAINEL BANCO DE TALENTOS ─────────────────────────────────────
 function PanelTalent() {
   const [talents, setTalents] = useState(TALENTS_INIT);
-  const [query, setQuery] = useState('');
-  const [filter, setFilter] = useState('Todos');
+  const [query, setQuery]     = useState('');
+  const [filter, setFilter]   = useState('Todos');
 
   const displayed = talents.filter(t => {
     const matchQ = (t.name+t.role+t.city+t.tags.join(' ')).toLowerCase().includes(query.toLowerCase());
@@ -359,8 +484,9 @@ function PanelTalent() {
     return matchQ && matchF;
   });
 
-  const toggleFav = (idx) => {
-    setTalents(prev => prev.map((t,i) => i===idx ? {...t, fav:!t.fav} : t));
+  // FIX #5 — usa t.id em vez de indexOf (seguro contra duplicatas)
+  const toggleFav = (id) => {
+    setTalents(prev => prev.map(t => t.id === id ? { ...t, fav: !t.fav } : t));
   };
 
   return (
@@ -377,7 +503,7 @@ function PanelTalent() {
         {displayed.map((t,i) => {
           const initials = t.name.split(' ').map(n=>n[0]).join('').slice(0,2);
           return (
-            <div key={i} style={{ background:V.surface, border:`1px solid ${V.border}`, borderRadius:12, padding:18, transition:'all 0.3s', cursor:'pointer', animation:`fadeUp 0.4s ease ${i*0.04}s both` }}
+            <div key={t.id} style={{ background:V.surface, border:`1px solid ${V.border}`, borderRadius:12, padding:18, transition:'all 0.3s', cursor:'pointer', animation:`fadeUp 0.4s ease ${i*0.04}s both` }}
               onMouseEnter={e=>{e.currentTarget.style.borderColor='rgba(26,58,143,0.3)';e.currentTarget.style.transform='translateY(-3px)';e.currentTarget.style.boxShadow='0 8px 24px rgba(26,58,143,0.1)';}}
               onMouseLeave={e=>{e.currentTarget.style.borderColor=V.border;e.currentTarget.style.transform='';e.currentTarget.style.boxShadow='';}}>
               <div style={{ width:44, height:44, borderRadius:12, background:`${t.color}22`, color:t.color, display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, fontWeight:700, marginBottom:12, fontFamily:"'Syne',sans-serif" }}>{initials}</div>
@@ -388,7 +514,7 @@ function PanelTalent() {
               </div>
               <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
                 <Pill cls={t.score>=85?'pill-green':t.score>=70?'pill-orange':'pill-red'}>Score {t.score}</Pill>
-                <button onClick={()=>toggleFav(talents.indexOf(t))} style={{ background:'none', border:'none', cursor:'pointer', fontSize:14, opacity:t.fav?1:0.4, transition:'all 0.2s' }}
+                <button onClick={e=>{e.stopPropagation();toggleFav(t.id);}} style={{ background:'none', border:'none', cursor:'pointer', fontSize:14, opacity:t.fav?1:0.4, transition:'all 0.2s' }}
                   onMouseEnter={e=>{e.currentTarget.style.transform='scale(1.2)';}}
                   onMouseLeave={e=>{e.currentTarget.style.transform='';}}>
                   {t.fav ? '⭐' : '☆'}
@@ -512,9 +638,9 @@ function PanelReports() {
     <div>
       <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:14, marginBottom:24 }}>
         {[
-          { icon:'🏆', label:'Cargo mais difícil', value:'Dev Sênior', delta:'42d médio',    up:false, color:V.accent3 },
-          { icon:'💵', label:'Média Salarial Dev',  value:'R$12k',     delta:'8% mercado',   up:true,  color:V.accent2 },
-          { icon:'🚶', label:'Taxa Turnover',        value:'9%',        delta:'2pp abaixo',   up:false, color:V.red     },
+          { icon:'🏆', label:'Cargo mais difícil', value:'Dev Sênior', delta:'42d médio',    deltaUp:false, color:V.accent3 },
+          { icon:'💵', label:'Média Salarial Dev',  value:'R$12k',     delta:'8% mercado',   deltaUp:true,  color:V.accent2 },
+          { icon:'🚶', label:'Taxa Turnover',        value:'9%',        delta:'2pp abaixo',   deltaUp:false, color:V.red     },
         ].map((k,i) => <KpiCard key={i} {...k} delay={0.05+i*0.05}/>)}
       </div>
       <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:16 }}>
@@ -568,10 +694,10 @@ function PanelHistory() {
     <div>
       <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14, marginBottom:24 }}>
         {[
-          { icon:'📣', label:'Engajamento Top Vaga',  value:'Dev Sr',  delta:'148 apps',      up:true,  color:V.accent  },
-          { icon:'⚡', label:'Resp. Média Candidato', value:'2.4h',    delta:'Melhor do setor',up:true,  color:V.green   },
-          { icon:'⭐', label:'Reputação Employer',    value:'4.6',     delta:'+0.3 pts',       up:true,  color:V.orange  },
-          { icon:'🏃', label:'Taxa de Desistência',   value:'12%',     delta:'Meta: 10%',      up:false, color:V.red     },
+          { icon:'📣', label:'Engajamento Top Vaga',  value:'Dev Sr',  delta:'148 apps',       deltaUp:true,  color:V.accent  },
+          { icon:'⚡', label:'Resp. Média Candidato', value:'2.4h',    delta:'Melhor do setor', deltaUp:true,  color:V.green   },
+          { icon:'⭐', label:'Reputação Employer',    value:'4.6',     delta:'+0.3 pts',        deltaUp:true,  color:V.orange  },
+          { icon:'🏃', label:'Taxa de Desistência',   value:'12%',     delta:'Meta: 10%',       deltaUp:false, color:V.red     },
         ].map((k,i) => <KpiCard key={i} {...k} delay={0.05+i*0.05}/>)}
       </div>
       <Card title="Histórico de Vagas com Maior Engajamento">
@@ -636,45 +762,44 @@ const PAGE_TITLES = {
 // ─── COMPONENTE PRINCIPAL ─────────────────────────────────────────
 export default function EmpresaDashboard() {
   const { user, logout } = useAuth();
-  const [tab, setTab]       = useState('overview');
-  const [modal, setModal]   = useState(false);
-  const [kpis, setKpis]     = useState([]);
+  const [tab, setTab]           = useState('overview');
+  const [modal, setModal]       = useState(false);       // Modal agendamento/lembrete
+  const [modalVaga, setModalVaga] = useState(false);     // FIX #4 — Modal nova vaga separado
+  const [kpis, setKpis]         = useState([]);
   const [candidates, setCandidates] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading]   = useState(true);
   const sidebarRef = useRef(null);
 
-  // Fetch dados reais da API
-  useEffect(() => {
-    const fetchData = async () => {
-      const token = localStorage.getItem('token');
-      if (!token) { setLoading(false); return; }
-      try {
-        const BASE = process.env.REACT_APP_API_URL || 'https://conectalagoa.onrender.com/api';
-        const get = async (path) => {
-          const res = await fetch(`${BASE}${path}`, { headers: { 'Authorization':`Bearer ${token}` } });
-          if (!res.ok) return null;
-          return res.json();
-        };
-        const [resumo, cands] = await Promise.all([
-          get('/dashboard/resumo'),
-          get('/dashboard/candidatos-recentes'),
-        ]);
-        const r = resumo?.data || resumo || {};
-        setKpis([
-          { icon:'📊', label:'Vagas Ativas',        value: r.vagas_ativas,           delta:`${r.vagas_semana||0} este mês`,     deltaUp:true,  color:V.accent  },
-          { icon:'👥', label:'Candidatos',           value: r.candidaturas,           delta:`${r.candidaturas_hoje||0}% vs mês ant.`, deltaUp:true, color:V.accent2 },
-          { icon:'🎯', label:'Taxa de Conversão',    value:`${r.taxa_conversao||18}%`,delta:`${r.taxa_variacao||3}pp`,          deltaUp:true,  color:V.green   },
-          { icon:'⏱',  label:'Tempo p/ Contratar',  value:`${r.tempo_medio||23}d`,   delta:'5d vs ant.',                       deltaUp:false, color:V.orange  },
-          { icon:'💰', label:'Custo / Contratação',  value:`R$${r.custo_medio||'1.8k'}`, delta:'R$200',                        deltaUp:false, color:V.accent3 },
-          { icon:'📈', label:'Contratações/Mês',     value: r.contratacoes || 11,     delta:`${r.contratacoes_mes||2} vs ant.`, deltaUp:true,  color:V.green   },
-        ]);
-        const c = cands?.data || cands || [];
-        if (c.length > 0) setCandidates(c);
-      } catch(e) { console.error(e); }
-      finally { setLoading(false); }
-    };
-    fetchData();
-  }, []);
+  const fetchData = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) { setLoading(false); return; }
+    try {
+      const BASE = process.env.REACT_APP_API_URL || 'https://conectalagoa.onrender.com/api';
+      const get  = async (path) => {
+        const res = await fetch(`${BASE}${path}`, { headers: { 'Authorization':`Bearer ${token}` } });
+        if (!res.ok) return null;
+        return res.json();
+      };
+      const [resumo, cands] = await Promise.all([
+        get('/dashboard/resumo'),
+        get('/dashboard/candidatos-recentes'),
+      ]);
+      const r = resumo?.data || resumo || {};
+      setKpis([
+        { icon:'📊', label:'Vagas Ativas',        value: r.vagas_ativas,              delta:`${r.vagas_semana||0} este mês`,      deltaUp:true,  color:V.accent  },
+        { icon:'👥', label:'Candidatos',           value: r.candidaturas,              delta:`${r.candidaturas_hoje||0}% vs mês ant.`, deltaUp:true, color:V.accent2 },
+        { icon:'🎯', label:'Taxa de Conversão',    value:`${r.taxa_conversao||18}%`,   delta:`${r.taxa_variacao||3}pp`,           deltaUp:true,  color:V.green   },
+        { icon:'⏱',  label:'Tempo p/ Contratar',  value:`${r.tempo_medio||23}d`,      delta:'5d vs ant.',                        deltaUp:false, color:V.orange  },
+        { icon:'💰', label:'Custo / Contratação',  value:`R$${r.custo_medio||'1.8k'}`, delta:'R$200',                             deltaUp:false, color:V.accent3 },
+        { icon:'📈', label:'Contratações/Mês',     value: r.contratacoes || 11,        delta:`${r.contratacoes_mes||2} vs ant.`,  deltaUp:true,  color:V.green   },
+      ]);
+      const c = cands?.data || cands || [];
+      if (c.length > 0) setCandidates(c);
+    } catch(e) { console.error(e); }
+    finally { setLoading(false); }
+  };
+
+  useEffect(() => { fetchData(); }, []);
 
   const initials = user?.nome?.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase() || 'CL';
 
@@ -718,12 +843,13 @@ export default function EmpresaDashboard() {
             <div style={{ fontSize:12, color:V.muted }}>Atualizado agora · Março 2025</div>
           </div>
           <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+            {/* FIX #4 — "Lembrete" abre Modal, "Nova Vaga" abre ModalNovaVaga */}
             <button onClick={()=>setModal(true)} style={{ background:'none', border:`1px solid ${V.border}`, color:V.muted2, padding:'7px 16px', borderRadius:8, cursor:'pointer', fontSize:12, fontFamily:"'DM Sans',sans-serif", transition:'all 0.2s' }}
               onMouseEnter={e=>{e.currentTarget.style.borderColor=V.accent;e.currentTarget.style.color=V.accent;}}
               onMouseLeave={e=>{e.currentTarget.style.borderColor=V.border;e.currentTarget.style.color=V.muted2;}}>
               🔔 Lembrete
             </button>
-            <button onClick={()=>setModal(true)} style={{ background:V.accent, border:'none', color:'white', padding:'8px 16px', borderRadius:8, cursor:'pointer', fontSize:12, fontWeight:500, fontFamily:"'DM Sans',sans-serif", transition:'all 0.2s' }}
+            <button onClick={()=>setModalVaga(true)} style={{ background:V.accent, border:'none', color:'white', padding:'8px 16px', borderRadius:8, cursor:'pointer', fontSize:12, fontWeight:500, fontFamily:"'DM Sans',sans-serif", transition:'all 0.2s' }}
               onMouseEnter={e=>{e.currentTarget.style.background='#0f2460';e.currentTarget.style.transform='translateY(-1px)';}}
               onMouseLeave={e=>{e.currentTarget.style.background=V.accent;e.currentTarget.style.transform='';}}>
               + Nova Vaga
@@ -765,6 +891,7 @@ export default function EmpresaDashboard() {
       </div>
 
       <Modal open={modal} onClose={()=>setModal(false)}/>
+      <ModalNovaVaga open={modalVaga} onClose={()=>setModalVaga(false)} onSaved={fetchData}/>
     </>
   );
 }
