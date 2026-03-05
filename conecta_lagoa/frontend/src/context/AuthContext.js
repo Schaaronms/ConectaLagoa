@@ -11,22 +11,39 @@ export const useAuth = () => {
   return context;
 };
 
+// ── Lê o usuário do localStorage de forma SÍNCRONA
+// Isso evita que o PrivateRoute veja user=null no primeiro render
+// e redirecione para /login antes do useEffect rodar
+const getInitialUser = () => {
+  try {
+    const token = localStorage.getItem('token');
+    const savedUser = localStorage.getItem('user');
+    if (token && savedUser) {
+      return JSON.parse(savedUser);
+    }
+  } catch (e) {}
+  return null;
+};
+
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(getInitialUser); // inicializa SÍNCRONO
+  const [loading, setLoading] = useState(false);     // já começa false
 
   useEffect(() => {
-    const loadUser = () => {
-      const token = localStorage.getItem('token');
-      const savedUser = localStorage.getItem('user');
-      
-      if (token && savedUser) {
+    // Apenas valida se ainda tem token (segurança extra)
+    const token = localStorage.getItem('token');
+    const savedUser = localStorage.getItem('user');
+    if (token && savedUser) {
+      try {
         setUser(JSON.parse(savedUser));
+      } catch (e) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setUser(null);
       }
-      setLoading(false);
-    };
-
-    loadUser();
+    } else {
+      setUser(null);
+    }
   }, []);
 
   const login = async (email, senha, tipo) => {
