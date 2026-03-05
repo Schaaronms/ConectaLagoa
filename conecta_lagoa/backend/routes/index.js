@@ -19,6 +19,11 @@ router.get( '/auth/profile', authMiddleware, authController.getProfile);
 router.post('/auth/esqueceu-senha',  authController.esqueceuSenha);
 router.post('/auth/redefinir-senha', authController.redefinirSenha);
 
+
+//agenda
+const agendaRoutes = require('./agenda');
+router.use('/agenda', agendaRoutes);
+
 // ==================== CANDIDATOS ====================
 // Perfil próprio
 router.get( '/candidato/meu-perfil', authMiddleware, isCandidato, candidatoController.getMeuPerfil);
