@@ -5,6 +5,7 @@ const cors = require('cors');
 const path = require('path');
 const app = express();
 
+
 // ==============================
 // MIDDLEWARES
 // ==============================
@@ -39,6 +40,9 @@ app.use('/api', routes);
 
 app.use('/api/contato', require('./routes/email'));
 
+const agendaRoutes = require('./routes/agenda');
+const { default: PanelFunil } = require('../frontend/src/pages/PanelFunil');
+app.use('/api/agenda', agendaRoutes);
 
 // Rota raiz
 app.get('/', (req, res) => {
@@ -49,6 +53,9 @@ app.get('/', (req, res) => {
       health:     '/api/health',
       contato:    '/api/contato',
       dashboard:  '/api/dashboard/resumo',
+      vagas:      '/api/vagas',
+      PanelFunil: '/api/PanelFunil',
+      agenda:     '/api/agenda'
     }
   });
 });
