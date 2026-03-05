@@ -340,19 +340,35 @@ export default function PanelFunil() {
     return () => clearInterval(t);
   }, [fetchCandidaturas]);
 
-  // ── Persistir stage na API (mesmo padrão do candidato) ────────
+  // ── Helpers de persistência (stage, rating, notas salvas no banco) ─
+  const _BASE = process.env.REACT_APP_API_URL || 'https://conectalagoa.onrender.com/api';
+  const _H = () => ({ 'Content-Type':'application/json', 'Authorization':`Bearer ${localStorage.getItem('token')}` });
+
   const persistStage = async (cardId, stageId) => {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-    const BASE   = process.env.REACT_APP_API_URL || 'https://conectalagoa.onrender.com/api';
-    const status = STAGE_TO_STATUS[stageId];
     try {
-      await fetch(`${BASE}/candidaturas/${cardId}/stage`, {
-        method: 'PUT',
-        headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${token}` },
-        body: JSON.stringify({ stage:stageId, status }),
+      await fetch(`${_BASE}/vagas/candidaturas/${cardId}/stage`, {
+        method:'PUT', headers:_H(),
+        body: JSON.stringify({ stage:stageId, status:STAGE_TO_STATUS[stageId] }),
       });
-    } catch { /* silencia — state local já atualizado */ }
+    } catch { }
+  };
+
+  const persistRating = async (cardId, rating) => {
+    try {
+      await fetch(`${_BASE}/vagas/candidaturas/${cardId}/rating`, {
+        method:'PUT', headers:_H(),
+        body: JSON.stringify({ rating }),
+      });
+    } catch { }
+  };
+
+  const persistNotas = async (cardId, notas) => {
+    try {
+      await fetch(`${_BASE}/vagas/candidaturas/${cardId}/notas`, {
+        method:'PUT', headers:_H(),
+        body: JSON.stringify({ notas }),
+      });
+    } catch { }
   };
 
   // ── Drag & Drop ───────────────────────────────────────────────
@@ -365,18 +381,22 @@ export default function PanelFunil() {
     setDragging(null); setDragOver(null);
   };
 
-  // ── Atualizar card (notas, avaliação, mover) ─────────────────
+  // ── Atualizar card — tudo persiste no banco ───────────────────
   const updateCard = async (updated) => {
     const prev = cards.find(c=>c.id===updated.id);
     setCards(p=>p.map(c=>c.id===updated.id?updated:c));
     setDetail(updated);
-    if (prev && prev.stage!==updated.stage) await persistStage(updated.id, updated.stage);
+    if (prev?.stage  !== updated.stage)           persistStage(updated.id, updated.stage);
+    if (prev?.rating !== updated.rating)          persistRating(updated.id, updated.rating);
+    if (prev?.notes?.length !== updated.notes?.length) persistNotas(updated.id, updated.notes);
   };
 
   const updateRating = (cardId, rating) => {
     setCards(p=>p.map(c=>c.id===cardId?{...c,rating}:c));
     setDetail(p=>p?.id===cardId?{...p,rating}:p);
+    persistRating(cardId, rating);
   };
+
 
   // ── Filtros ───────────────────────────────────────────────────
   const vagaOpts = ['Todas', ...new Set(cards.map(c=>c.vaga_titulo).filter(Boolean))];
