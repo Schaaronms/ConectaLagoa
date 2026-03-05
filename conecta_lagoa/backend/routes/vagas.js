@@ -1,3 +1,7 @@
+// ============================================
+// routes/vagas.js — VERSÃO COMPLETA COM KANBAN
+// Persiste stage, notas e avaliação no banco
+// ============================================
 
 const express = require('express');
 const router  = express.Router();
@@ -38,6 +42,52 @@ router.get('/candidato/minhas', authMiddleware, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Erro ao buscar candidaturas' });
+  }
+});
+
+// ─── GET /api/vagas/empresa/minhas ───────────────────────────────
+// Lista vagas ativas da empresa — usado no select do modal "Adicionar ao Funil"
+router.get('/empresa/minhas', authMiddleware, async (req, res) => {
+  try {
+    if (req.user.tipo !== 'empresa') return res.status(403).json({ error: 'Acesso negado' });
+    const result = await pool.query(
+      `SELECT id, titulo FROM vagas WHERE empresa_id = $1 AND ativa = true ORDER BY created_at DESC`,
+      [req.user.id]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao buscar vagas' });
+  }
+});
+
+// ─── POST /api/vagas/candidaturas/manual ─────────────────────────
+// Empresa insere candidato manualmente no Funil pelo CPF
+// Candidato precisa ter cadastro — CPF buscado via GET /api/usuarios/buscar-cpf/:cpf
+router.post('/candidaturas/manual', authMiddleware, async (req, res) => {
+  try {
+    if (req.user.tipo !== 'empresa') return res.status(403).json({ error: 'Apenas empresas podem fazer isso' });
+
+    const { candidato_id, vaga_id, status = 'Visualizado', stage = 0, origem = 'manual' } = req.body;
+    if (!candidato_id || !vaga_id) return res.status(400).json({ error: 'candidato_id e vaga_id são obrigatórios' });
+
+    // Garante que a vaga pertence à empresa
+    const vagaCheck = await pool.query(
+      'SELECT id FROM vagas WHERE id = $1 AND empresa_id = $2 AND ativa = true',
+      [vaga_id, req.user.id]
+    );
+    if (vagaCheck.rows.length === 0) return res.status(403).json({ error: 'Vaga não encontrada ou não pertence à sua empresa' });
+
+    const result = await pool.query(`
+      INSERT INTO candidaturas (vaga_id, candidato_id, status, stage, origem)
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING *
+    `, [vaga_id, candidato_id, status, stage, origem]);
+
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    if (err.code === '23505') return res.status(409).json({ error: 'Este candidato já está no funil para essa vaga' });
+    console.error(err);
+    res.status(500).json({ error: 'Erro ao adicionar candidato' });
   }
 });
 

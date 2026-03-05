@@ -5,7 +5,6 @@ const cors = require('cors');
 const path = require('path');
 const app = express();
 
-
 // ==============================
 // MIDDLEWARES
 // ==============================
@@ -19,11 +18,8 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// Servir arquivos estáticos (uploads)
 app.use('/uploads', express.static(path.join(__dirname, './uploads')));
 
-// Log de requisições (dev)
 if (process.env.NODE_ENV !== 'production') {
   app.use((req, _res, next) => {
     console.log(`[${new Date().toLocaleTimeString('pt-BR')}] ${req.method} ${req.path}`);
@@ -34,28 +30,29 @@ if (process.env.NODE_ENV !== 'production') {
 // ==============================
 // ROTAS
 // ==============================
-
-const routes = require('./routes');
-app.use('/api', routes);
-
-app.use('/api/contato', require('./routes/email'));
-
+const routes      = require('./routes');
 const agendaRoutes = require('./routes/agenda');
-const { default: PanelFunil } = require('../frontend/src/pages/PanelFunil');
-app.use('/api/agenda', agendaRoutes);
+const usuariosRoutes = require('./routes/usuarios'); // ← NOVO
 
-// Rota raiz
+app.use('/api', routes);
+app.use('/api/contato', require('./routes/email'));
+app.use('/api/agenda', agendaRoutes);
+app.use('/api/usuarios', usuariosRoutes); // ← NOVO: GET /api/usuarios/buscar-cpf/:cpf
+
+// REMOVIDO: const { default: PanelFunil } = require('../frontend/src/pages/PanelFunil');
+// ↑ isso importava React no Node — causava crash no servidor
+
 app.get('/', (req, res) => {
   res.json({
     message: 'Bem-vindo à API Conecta Lagoa',
     version: '1.0.0',
     endpoints: {
-      health:     '/api/health',
-      contato:    '/api/contato',
-      dashboard:  '/api/dashboard/resumo',
-      vagas:      '/api/vagas',
-      PanelFunil: '/api/PanelFunil',
-      agenda:     '/api/agenda'
+      health:    '/api/health',
+      contato:   '/api/contato',
+      dashboard: '/api/dashboard/resumo',
+      vagas:     '/api/vagas',
+      agenda:    '/api/agenda',
+      usuarios:  '/api/usuarios',
     }
   });
 });
@@ -65,61 +62,28 @@ app.get('/', (req, res) => {
 // ==============================
 app.use((err, req, res, next) => {
   console.error(err.stack);
-
   if (err.name === 'MulterError') {
-    if (err.code === 'LIMIT_FILE_SIZE') {
-      return res.status(400).json({
-        success: false,
-        message: 'Arquivo muito grande. Tamanho máximo: 5MB'
-      });
-    }
-    return res.status(400).json({
-      success: false,
-      message: 'Erro no upload: ' + err.message
-    });
+    if (err.code === 'LIMIT_FILE_SIZE')
+      return res.status(400).json({ success: false, message: 'Arquivo muito grande. Máximo: 5MB' });
+    return res.status(400).json({ success: false, message: 'Erro no upload: ' + err.message });
   }
-
-  res.status(500).json({
-    success: false,
-    message: err.message || 'Erro interno do servidor'
-  });
+  res.status(500).json({ success: false, message: err.message || 'Erro interno do servidor' });
 });
 
-// Rota 404
 app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    message: 'Rota não encontrada'
-  });
+  res.status(404).json({ success: false, message: 'Rota não encontrada' });
 });
 
 // ==============================
-// INICIALIZAÇÃO DO BANCO
+// INICIALIZAÇÃO
 // ==============================
-let isInitialized = false;
-const ensureDatabase = async () => {
-  if (!isInitialized) {
-    await initDatabase();
-    isInitialized = true;
-  }
-};
-
-
-// ==============================
-// DESENVOLVIMENTO LOCAL
-// ==============================
-// Substitui o if (require.main === module) por isso:
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
   try {
     await initDatabase();
     console.log('✓ Banco de dados inicializado');
-
-    app.listen(PORT, () => {
-      console.log(`🚀 Servidor rodando na porta ${PORT}`);
-    });
-
+    app.listen(PORT, () => console.log(`🚀 Servidor rodando na porta ${PORT}`));
   } catch (error) {
     console.error('❌ Erro ao iniciar servidor:', error);
     process.exit(1);
