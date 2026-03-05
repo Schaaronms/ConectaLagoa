@@ -5,6 +5,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import PanelFunil from './PanelFunil';
+import PanelAgenda from './PanelAgenda';
+import { fetchVagas } from '../api/vagasApi';
+
 
 // ─── PALETA ────────────────────────────────────────────────────────
 const V = {
@@ -653,63 +656,6 @@ function PanelAI({ onModal }) {
 }
 
 // ─── PAINEL AGENDA ────────────────────────────────────────────────
-function PanelAgenda({ onModal }) {
-  const firstDay = new Date(2025,2,1).getDay();
-  const cells = [];
-  for(let i=0;i<firstDay;i++) cells.push({ day:28-firstDay+i+1, other:true });
-  for(let d=1;d<=31;d++) cells.push({ day:d, today:d===5, event:EVENT_DAYS.includes(d) });
-
-  return (
-    <div style={{ display:'grid', gridTemplateColumns:'300px 1fr', gap:16 }}>
-      <div>
-        <div style={{ background:V.surface, border:`1px solid ${V.border}`, borderRadius:12, padding:18 }}>
-          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
-            <button style={{ background:'none', border:`1px solid ${V.border}`, color:V.muted2, width:26, height:26, borderRadius:6, cursor:'pointer', fontSize:12, display:'flex', alignItems:'center', justifyContent:'center' }}>‹</button>
-            <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:14, color:V.text }}>Março 2025</div>
-            <button style={{ background:'none', border:`1px solid ${V.border}`, color:V.muted2, width:26, height:26, borderRadius:6, cursor:'pointer', fontSize:12, display:'flex', alignItems:'center', justifyContent:'center' }}>›</button>
-          </div>
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:2, marginBottom:4 }}>
-            {['D','S','T','Q','Q','S','S'].map((d,i)=><div key={i} style={{ fontSize:9, textAlign:'center', color:V.muted, textTransform:'uppercase', padding:'4px 0' }}>{d}</div>)}
-          </div>
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:2 }}>
-            {cells.map((c,i) => (
-              <div key={i} style={{ aspectRatio:'1', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, borderRadius:6, cursor:'pointer', position:'relative', background: c.today ? V.accent : 'transparent', color: c.today ? 'white' : c.other ? '#d1d9f0' : V.text, fontWeight: c.today ? 700 : 400, transition:'all 0.15s' }}
-                onMouseEnter={e=>{if(!c.today)e.currentTarget.style.background=V.surface2;}}
-                onMouseLeave={e=>{if(!c.today)e.currentTarget.style.background='transparent';}}>
-                {c.day}
-                {c.event && !c.today && <span style={{ position:'absolute', bottom:3, left:'50%', transform:'translateX(-50%)', width:4, height:4, background:V.orange, borderRadius:'50%' }}/>}
-              </div>
-            ))}
-          </div>
-        </div>
-        <div style={{ marginTop:14, display:'flex', flexDirection:'column', gap:8 }}>
-          <button onClick={onModal} style={{ width:'100%', background:V.accent, border:'none', color:'white', padding:'9px', borderRadius:8, cursor:'pointer', fontSize:12, fontWeight:500 }}>+ Agendar Entrevista</button>
-          <button onClick={onModal} style={{ width:'100%', background:'none', border:`1px solid ${V.border}`, color:V.muted2, padding:'8px', borderRadius:8, cursor:'pointer', fontSize:12 }}>🔔 Definir Lembrete</button>
-        </div>
-      </div>
-      <div>
-        <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:14, marginBottom:14, color:V.text }}>Hoje — 5 de Março</div>
-        <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
-          {EVENTS.map((ev,i) => {
-            const p = PILL[ev.tc] || PILL['pill-blue'];
-            return (
-              <div key={i} style={{ display:'flex', gap:14, background:V.surface, border:`1px solid ${V.border}`, borderRadius:10, padding:'14px 16px', alignItems:'center', animation:`fadeUp 0.4s ease ${i*0.07}s both`, transition:'all 0.2s' }}
-                onMouseEnter={e=>{e.currentTarget.style.borderColor='rgba(26,58,143,0.25)';}}
-                onMouseLeave={e=>{e.currentTarget.style.borderColor=V.border;}}>
-                <div style={{ fontFamily:"'Syne',sans-serif", fontSize:13, fontWeight:700, minWidth:50, color:V.accent }}>{ev.time}</div>
-                <div style={{ flex:1 }}>
-                  <div style={{ fontSize:13, fontWeight:500, marginBottom:3, color:V.text }}>{ev.title}</div>
-                  <div style={{ fontSize:11, color:V.muted }}>{ev.meta}</div>
-                </div>
-                <span style={{ padding:'4px 10px', borderRadius:6, fontSize:10, fontWeight:600, background:p.bg, color:p.color }}>{ev.tipo}</span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // ─── PAINEL RELATÓRIOS ────────────────────────────────────────────
 function PanelReports() {
