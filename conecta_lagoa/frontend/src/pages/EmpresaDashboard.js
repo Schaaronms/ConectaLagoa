@@ -1,65 +1,130 @@
-// EmpresaDashboard.js — Dashboard completo Conecta Lagoa
-// Rota: /empresa/dashboard (protegida por PrivateRoute no App.js)
-// Usa o Header e Footer globais do site — NÃO tem sidebar própria
-import { useState, useEffect } from 'react';
-import { AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+// EmpresaDashboard.js — Conecta Lagoa
+// Layout idêntico ao dashboard-rh.html original
+// Cores: Azul #1a3a8f + Laranja #e07b00 (tema claro)
+// API real via fetch com token JWT do localStorage
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 
-const CL = {
-  blue:'#1a3a8f', blue2:'#2d52c4', orange:'#e07b00', green:'#10b981',
-  red:'#ef4444', purple:'#8b5cf6', cyan:'#06b6d4',
-  bg:'#f4f6fb', surface:'#ffffff', border:'#e8ecf4',
-  text:'#1a1f36', muted:'#6b7280', muted2:'#9ca3af',
+// ─── PALETA ────────────────────────────────────────────────────────
+const V = {
+  bg:       '#f4f6fb',
+  surface:  '#ffffff',
+  surface2: '#f0f3fa',
+  border:   '#e2e8f4',
+  accent:   '#1a3a8f',
+  accent2:  '#2d52c4',
+  accent3:  '#e07b00',
+  green:    '#10b981',
+  orange:   '#e07b00',
+  red:      '#ef4444',
+  text:     '#1a1f36',
+  muted:    '#6b7280',
+  muted2:   '#9ca3af',
 };
 
-const STATUS_STYLE = {
-  'Aprovado':   { bg:'#dcfce7', color:'#16a34a' },
-  'contratado': { bg:'#dcfce7', color:'#16a34a' },
-  'Em Análise': { bg:'#fef3c7', color:'#d97706' },
-  'em_analise': { bg:'#fef3c7', color:'#d97706' },
-  'Entrevista': { bg:'#dbeafe', color:'#1d4ed8' },
-  'entrevista': { bg:'#dbeafe', color:'#1d4ed8' },
-  'Reprovado':  { bg:'#fee2e2', color:'#dc2626' },
-  'reprovado':  { bg:'#fee2e2', color:'#dc2626' },
+// ─── DADOS ESTÁTICOS (fallback / demo) ────────────────────────────
+const KANBAN_STAGES = [
+  { name:'Recebido',   color:'#1a3a8f' },
+  { name:'Triagem',    color:'#2d52c4' },
+  { name:'Entrevista', color:'#e07b00' },
+  { name:'Técnico',    color:'#c96a00' },
+  { name:'Proposta',   color:'#10b981' },
+  { name:'Contratado', color:'#059669' },
+  { name:'Rejeitado',  color:'#ef4444' },
+];
+const KANBAN_DATA = [
+  { name:'Fernanda Costa',  role:'Data Analyst',    stage:0, score:67, initials:'FC' },
+  { name:'Marcos Alves',    role:'Dev Backend',      stage:0, score:74, initials:'MA' },
+  { name:'Letícia Nunes',   role:'UX Designer',      stage:0, score:81, initials:'LN' },
+  { name:'Bruna Dias',      role:'PM',               stage:1, score:79, initials:'BD' },
+  { name:'Pedro Luz',       role:'Dev Frontend',     stage:1, score:88, initials:'PL' },
+  { name:'Sofia Ramos',     role:'Dev Sênior',       stage:2, score:94, initials:'SR' },
+  { name:'Carlos Mota',     role:'UX Designer',      stage:2, score:85, initials:'CM' },
+  { name:'Juliana Rocha',   role:'PM',               stage:3, score:78, initials:'JR' },
+  { name:'Ana Lima',        role:'Dev Sênior',       stage:3, score:92, initials:'AL' },
+  { name:'Rafael Souza',    role:'Dev Backend',      stage:4, score:91, initials:'RS' },
+  { name:'Tiago Faria',     role:'Dev Frontend',     stage:5, score:89, initials:'TF' },
+  { name:'Giovanna Silva',  role:'Data Sci',         stage:6, score:55, initials:'GS' },
+];
+const TALENTS_INIT = [
+  { name:'Ana Lima',        role:'Dev Sênior Backend',   city:'São Paulo',      area:'Tecnologia', tags:['Node.js','AWS','Python'],          fav:true,  score:92, color:V.accent  },
+  { name:'Carlos Mota',     role:'UX Designer Sênior',   city:'Rio de Janeiro', area:'Design',     tags:['Figma','Prototyping','Research'],  fav:false, score:85, color:V.accent3 },
+  { name:'Sofia Ramos',     role:'Dev Frontend',          city:'Curitiba',       area:'Tecnologia', tags:['React','TypeScript','CSS'],        fav:true,  score:94, color:V.accent2 },
+  { name:'Juliana Rocha',   role:'Product Manager',       city:'Belo Horizonte', area:'Produto',    tags:['Agile','OKRs','Analytics'],       fav:false, score:78, color:'#c96a00'  },
+  { name:'Rafael Souza',    role:'Dev Backend',           city:'Porto Alegre',   area:'Tecnologia', tags:['Java','Spring','Docker'],          fav:true,  score:91, color:V.green   },
+  { name:'Fernanda Costa',  role:'Data Analyst',          city:'Florianópolis',  area:'Data',       tags:['SQL','Python','Tableau'],          fav:false, score:67, color:V.red     },
+  { name:'Pedro Luz',       role:'Dev Frontend React',    city:'Recife',         area:'Tecnologia', tags:['React','Next.js','Tailwind'],      fav:false, score:88, color:V.accent  },
+  { name:'Letícia Nunes',   role:'UX/UI Designer',        city:'Salvador',       area:'Design',     tags:['Adobe XD','Figma','Motion'],       fav:true,  score:81, color:V.accent3 },
+  { name:'Marcos Alves',    role:'Data Scientist',        city:'São Paulo',      area:'Data',       tags:['ML','TensorFlow','R'],             fav:false, score:74, color:V.accent2 },
+  { name:'Bruna Dias',      role:'Product Designer',      city:'Campinas',       area:'Design',     tags:['Figma','Design Systems','A11y'],   fav:false, score:79, color:'#c96a00'  },
+  { name:'Tiago Faria',     role:'Dev Fullstack',         city:'Goiânia',        area:'Tecnologia', tags:['React','Node','MongoDB'],          fav:true,  score:89, color:V.green   },
+  { name:'Giovanna Silva',  role:'Data Engineer',         city:'Brasília',       area:'Data',       tags:['Spark','Kafka','BigQuery'],        fav:false, score:55, color:V.red     },
+];
+const AI_DATA = [
+  { name:'Sofia Ramos',    role:'Dev Frontend',          score:94, color:V.green,   traits:['Proativa','Comunicativa','Autônoma'],  skills:['React','TypeScript','Next.js'],  reason:'Histórico de 3 contratações similares com excelente performance.' },
+  { name:'Ana Lima',       role:'Dev Sênior Backend',    score:92, color:V.accent,  traits:['Analítica','Metódica','Liderança'],    skills:['Node.js','AWS','Python'],        reason:'Alta compatibilidade comportamental com a cultura da equipe.' },
+  { name:'Rafael Souza',   role:'Dev Backend',           score:91, color:V.accent,  traits:['Focado','Técnico','Colaborativo'],    skills:['Java','Spring','Docker'],        reason:'Score técnico acima da média + fit cultural forte.' },
+  { name:'Pedro Luz',      role:'Dev Frontend React',    score:88, color:V.accent2, traits:['Criativo','Detalhista','Ágil'],       skills:['React','Next.js','Tailwind'],    reason:'Portfólio alinhado com projetos anteriores bem-sucedidos.' },
+  { name:'Carlos Mota',    role:'UX Designer',           score:85, color:V.accent3, traits:['Empático','Visual','Estratégico'],    skills:['Figma','Research','Motion'],     reason:'Experiência prévia em segmento similar (fintech).' },
+  { name:'Letícia Nunes',  role:'UX/UI Designer',        score:81, color:V.accent3, traits:['Criativa','Organizada','Empática'],   skills:['Figma','Adobe XD','A11y'],       reason:'Forte em design systems, alinhado com stack atual.' },
+];
+const EVENTS = [
+  { time:'09:00', title:'Triagem — Pedro Luz',           meta:'Dev Frontend · Video Call',            tipo:'Triagem',    tc:'pill-cyan'   },
+  { time:'11:30', title:'Entrevista — Ana Lima',         meta:'Dev Sênior · Presencial',              tipo:'Entrevista', tc:'pill-purple' },
+  { time:'14:00', title:'Entrevista Técnica — Juliana',  meta:'Product Manager · Google Meet',        tipo:'Técnica',    tc:'pill-orange' },
+  { time:'16:00', title:'Proposta — Rafael Souza',       meta:'Dev Backend · Telefone',               tipo:'Proposta',   tc:'pill-green'  },
+  { time:'17:30', title:'Feedback — Giovanna Silva',     meta:'Data Engineer · Video Call',           tipo:'Feedback',   tc:'pill-red'    },
+];
+const EVENT_DAYS = [5,8,10,12,14,18,20,25];
+const BAR_DATA = [
+  { mes:'Jan', c:45, h:30 }, { mes:'Fev', c:60, h:45 }, { mes:'Mar', c:75, h:55 },
+  { mes:'Abr', c:55, h:40 }, { mes:'Mai', c:85, h:65 }, { mes:'Jun', c:100, h:75 },
+];
+
+// ─── PILL helper ──────────────────────────────────────────────────
+const PILL = {
+  'pill-blue':   { bg:'rgba(26,58,143,0.1)',   color:'#1a3a8f' },
+  'pill-green':  { bg:'rgba(16,185,129,0.12)', color:'#10b981' },
+  'pill-orange': { bg:'rgba(224,123,0,0.12)',  color:'#e07b00' },
+  'pill-red':    { bg:'rgba(239,68,68,0.12)',  color:'#ef4444' },
+  'pill-purple': { bg:'rgba(224,123,0,0.12)',  color:'#c96a00' },
+  'pill-cyan':   { bg:'rgba(45,82,196,0.12)',  color:'#2d52c4' },
 };
+function Pill({ cls, children, style={} }) {
+  const p = PILL[cls] || PILL['pill-blue'];
+  return <span style={{ display:'inline-flex', alignItems:'center', gap:5, padding:'3px 10px', borderRadius:20, fontSize:11, fontWeight:500, background:p.bg, color:p.color, ...style }}>{children}</span>;
+}
 
-const getAreaColor = (a) => ({ Tecnologia:CL.blue, Comércio:CL.orange, Saúde:CL.green, Construção:'#f59e0b', Outros:CL.purple }[a] || CL.muted);
-
-const TABS = [
-  { id:'visao', label:'📊 Visão Geral' },
-  { id:'candidatos', label:'👥 Candidatos' },
-  { id:'funil', label:'🎯 Funil CRM' },
-  { id:'agenda', label:'📅 Agenda' },
-  { id:'relatorios', label:'📈 Relatórios' },
-  { id:'historico', label:'🏆 Histórico' },
-];
-
-const STAGES = [
-  { id:'recebido', label:'Recebido', color:CL.blue },
-  { id:'triagem', label:'Triagem', color:CL.cyan },
-  { id:'entrevista', label:'Entrevista', color:CL.purple },
-  { id:'tecnico', label:'Técnico', color:CL.orange },
-  { id:'proposta', label:'Proposta', color:CL.green },
-  { id:'contratado', label:'Contratado', color:'#059669' },
-];
-
-function Tooltip2({ active, payload, label }) {
-  if (!active || !payload?.length) return null;
+// ─── SCORE BAR ────────────────────────────────────────────────────
+function ScoreBar({ val }) {
+  const color = val>=85 ? V.green : val>=70 ? V.orange : V.muted;
   return (
-    <div style={{ background:'white', border:`1px solid ${CL.border}`, borderRadius:12, padding:'12px 16px', boxShadow:'0 8px 24px rgba(26,58,143,0.1)', fontSize:13 }}>
-      <p style={{ fontWeight:700, marginBottom:6, color:CL.text }}>{label}</p>
-      {payload.map((p,i) => <p key={i} style={{ color:p.color, margin:'2px 0' }}>{p.name}: <strong>{p.value}</strong></p>)}
+    <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+      <div style={{ flex:1, height:4, background:V.border, borderRadius:2, minWidth:60 }}>
+        <div style={{ width:`${val}%`, height:'100%', background:color, borderRadius:2 }}/>
+      </div>
+      <span style={{ fontSize:11, fontWeight:600, color:V.muted2, minWidth:28 }}>{val}</span>
     </div>
   );
 }
 
-function Card({ title, sub, children, style={} }) {
+// ─── MINI AVATAR ─────────────────────────────────────────────────
+function MiniAvatar({ initials, size=20, color=V.accent }) {
+  return <div style={{ width:size, height:size, borderRadius:'50%', background:`linear-gradient(135deg,${color},${V.accent2})`, fontSize:size*0.38, fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center', color:'white', flexShrink:0 }}>{initials}</div>;
+}
+
+// ─── CARD ─────────────────────────────────────────────────────────
+function Card({ title, sub, badge, badgeColor='blue', children, style={} }) {
+  const bc = badgeColor==='green' ? {bg:'rgba(16,185,129,0.12)',color:V.green} : badgeColor==='orange' ? {bg:'rgba(224,123,0,0.12)',color:V.orange} : {bg:'rgba(26,58,143,0.1)',color:V.accent};
   return (
-    <div style={{ background:CL.surface, border:`1px solid ${CL.border}`, borderRadius:16, padding:'22px 24px', boxShadow:'0 2px 12px rgba(26,58,143,0.05)', ...style }}>
-      {(title||sub) && (
-        <div style={{ marginBottom:16 }}>
-          {title && <div style={{ fontSize:14, fontWeight:700, color:CL.text, fontFamily:"'Sora',sans-serif" }}>{title}</div>}
-          {sub   && <div style={{ fontSize:11, color:CL.muted, marginTop:2 }}>{sub}</div>}
+    <div style={{ background:V.surface, border:`1px solid ${V.border}`, borderRadius:14, padding:22, animation:'fadeUp 0.5s ease both', ...style }}>
+      {(title||badge) && (
+        <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:18 }}>
+          <div>
+            {title && <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:14, color:V.text }}>{title}</div>}
+            {sub   && <div style={{ fontSize:11, color:V.muted, marginTop:2 }}>{sub}</div>}
+          </div>
+          {badge && <span style={{ fontSize:10, padding:'3px 10px', borderRadius:20, fontWeight:600, background:bc.bg, color:bc.color, marginLeft:12, flexShrink:0 }}>{badge}</span>}
         </div>
       )}
       {children}
@@ -67,443 +132,639 @@ function Card({ title, sub, children, style={} }) {
   );
 }
 
-function KpiCard({ icon, label, value, delta, color, delay=0 }) {
-  const pos = !String(delta||'').startsWith('-');
+// ─── KPI CARD ─────────────────────────────────────────────────────
+function KpiCard({ icon, label, value, delta, deltaUp=true, color, delay=0 }) {
   return (
-    <div style={{ background:CL.surface, border:`1px solid ${CL.border}`, borderRadius:16, padding:'20px 22px', flex:1, minWidth:150, boxShadow:'0 2px 12px rgba(26,58,143,0.06)', position:'relative', overflow:'hidden', animation:`clFU 0.45s ease ${delay}s both`, transition:'transform 0.2s,box-shadow 0.2s', cursor:'default' }}
-      onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-3px)';e.currentTarget.style.boxShadow='0 8px 28px rgba(26,58,143,0.13)';}}
-      onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow='0 2px 12px rgba(26,58,143,0.06)';}}>
-      <div style={{ position:'absolute', top:-18, right:-18, width:70, height:70, borderRadius:'50%', background:color, opacity:0.09 }}/>
-      <div style={{ width:38, height:38, borderRadius:10, background:`${color}18`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, marginBottom:14 }}>{icon}</div>
-      <div style={{ fontSize:11, color:CL.muted, fontWeight:500, marginBottom:4, textTransform:'uppercase', letterSpacing:'0.04em' }}>{label}</div>
-      <div style={{ fontSize:28, fontWeight:800, color:CL.text, lineHeight:1, fontFamily:"'Sora',sans-serif" }}>{value??'—'}</div>
-      <div style={{ display:'inline-flex', alignItems:'center', gap:4, marginTop:8, fontSize:11, fontWeight:600, padding:'2px 8px', borderRadius:20, background:pos?'#dcfce7':'#fee2e2', color:pos?'#16a34a':'#dc2626' }}>
-        {pos?'▲':'▼'} {delta}
+    <div style={{ background:V.surface, border:`1px solid ${V.border}`, borderRadius:14, padding:20, position:'relative', overflow:'hidden', animation:`fadeUp 0.5s ease ${delay}s both`, transition:'all 0.3s', cursor:'default' }}
+      onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-2px)';e.currentTarget.style.boxShadow=`0 8px 32px rgba(26,58,143,0.12)`;e.currentTarget.style.borderColor='rgba(26,58,143,0.25)';}}
+      onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow='';e.currentTarget.style.borderColor=V.border;}}>
+      <div style={{ position:'absolute', top:-30, right:-30, width:80, height:80, borderRadius:'50%', background:color, opacity:0.08, pointerEvents:'none' }}/>
+      <div style={{ width:36, height:36, borderRadius:9, background:`${color}22`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, marginBottom:14 }}>{icon}</div>
+      <div style={{ fontSize:11, color:V.muted, textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:6 }}>{label}</div>
+      <div style={{ fontFamily:"'Syne',sans-serif", fontSize:28, fontWeight:800, lineHeight:1, color:V.text }}>{value ?? '—'}</div>
+      <div style={{ display:'inline-flex', alignItems:'center', gap:4, fontSize:11, fontWeight:500, marginTop:8, padding:'2px 8px', borderRadius:20, background: deltaUp ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)', color: deltaUp ? V.green : V.red }}>
+        {deltaUp ? '▲' : '▼'} {delta}
       </div>
     </div>
   );
 }
 
-function AlertItem({ color, msg, time }) {
+// ─── MODAL ───────────────────────────────────────────────────────
+function Modal({ open, onClose }) {
+  if (!open) return null;
   return (
-    <div style={{ display:'flex', alignItems:'center', gap:10, padding:'9px 12px', borderRadius:9, background:CL.bg, marginBottom:6, fontSize:12 }}>
-      <div style={{ width:8, height:8, borderRadius:'50%', background:color, flexShrink:0 }}/>
-      <span style={{ flex:1, color:CL.text }}>{msg}</span>
-      <span style={{ fontSize:10, color:CL.muted2, whiteSpace:'nowrap' }}>{time}</span>
-    </div>
-  );
-}
-
-function MiniCalendar() {
-  const eventDays=[5,8,10,14,18,20,25];
-  const firstDay=new Date(2025,2,1).getDay();
-  const cells=[];
-  for(let i=0;i<firstDay;i++) cells.push({day:28-firstDay+i+1,other:true});
-  for(let d=1;d<=31;d++) cells.push({day:d,today:d===5,event:eventDays.includes(d)});
-  return (
-    <div style={{ background:CL.surface, border:`1px solid ${CL.border}`, borderRadius:14, padding:18 }}>
-      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
-        <button style={{ background:'none', border:`1px solid ${CL.border}`, borderRadius:6, width:26, height:26, cursor:'pointer', color:CL.muted, fontSize:14 }}>‹</button>
-        <span style={{ fontFamily:"'Sora',sans-serif", fontWeight:700, fontSize:14, color:CL.text }}>Março 2025</span>
-        <button style={{ background:'none', border:`1px solid ${CL.border}`, borderRadius:6, width:26, height:26, cursor:'pointer', color:CL.muted, fontSize:14 }}>›</button>
-      </div>
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:2, marginBottom:4 }}>
-        {['D','S','T','Q','Q','S','S'].map((d,i)=><div key={i} style={{ textAlign:'center', fontSize:9, color:CL.muted2, padding:'3px 0' }}>{d}</div>)}
-      </div>
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:2 }}>
-        {cells.map((c,i)=>(
-          <div key={i} style={{ aspectRatio:'1', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, borderRadius:6, cursor:'pointer', position:'relative', background:c.today?CL.blue:'transparent', color:c.today?'white':c.other?'#d1d5db':CL.text, fontWeight:c.today?700:400 }}>
-            {c.day}
-            {c.event&&!c.today&&<span style={{ position:'absolute', bottom:2, left:'50%', transform:'translateX(-50%)', width:4, height:4, background:CL.orange, borderRadius:'50%' }}/>}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function ModalAgenda({ onClose }) {
-  return (
-    <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.45)', zIndex:9999, display:'flex', alignItems:'center', justifyContent:'center' }} onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
-      <div style={{ background:'white', borderRadius:20, padding:32, width:440, maxWidth:'95vw', boxShadow:'0 24px 64px rgba(26,58,143,0.2)', animation:'clFU 0.3s ease' }}>
-        <h3 style={{ fontFamily:"'Sora',sans-serif", fontSize:20, fontWeight:700, color:CL.text, marginBottom:4 }}>Agendar Entrevista</h3>
-        <p style={{ fontSize:12, color:CL.muted, marginBottom:22 }}>Configure data, horário e lembrete automático</p>
-        {[['Candidato','text','Nome do candidato'],['Vaga','text','Título da vaga']].map(([l,t,p])=>(
+    <div onClick={e=>{if(e.target===e.currentTarget)onClose();}} style={{ position:'fixed', inset:0, background:'rgba(26,58,143,0.35)', backdropFilter:'blur(6px)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center' }}>
+      <div style={{ background:V.surface, border:`1px solid ${V.border}`, borderRadius:16, padding:28, width:420, maxWidth:'95vw', animation:'fadeUp 0.3s ease' }}>
+        <div style={{ fontFamily:"'Syne',sans-serif", fontSize:18, fontWeight:700, marginBottom:6, color:V.text }}>Agendar Entrevista / Lembrete</div>
+        <div style={{ fontSize:12, color:V.muted, marginBottom:20 }}>Adicione ao calendário e configure notificações automáticas</div>
+        {[['Candidato','text','Nome do candidato','Ana Lima'],['Vaga','text','Selecione a vaga','Dev Sênior Backend']].map(([l,t,p,v])=>(
           <div key={l} style={{ marginBottom:14 }}>
-            <label style={{ fontSize:11, color:CL.muted, textTransform:'uppercase', letterSpacing:'0.05em', display:'block', marginBottom:6, fontWeight:600 }}>{l}</label>
-            <input type={t} placeholder={p} style={{ width:'100%', padding:'10px 14px', borderRadius:10, border:`1.5px solid ${CL.border}`, fontSize:13, outline:'none', color:CL.text }}/>
+            <label style={{ fontSize:11, color:V.muted, textTransform:'uppercase', letterSpacing:'0.05em', display:'block', marginBottom:6 }}>{l}</label>
+            <input type={t} defaultValue={v} placeholder={p} style={{ width:'100%', background:V.surface2, border:`1px solid ${V.border}`, borderRadius:8, padding:'10px 12px', color:V.text, fontSize:13, outline:'none' }}/>
           </div>
         ))}
-        <div style={{ display:'flex', gap:12, marginBottom:14 }}>
-          {[['Data','date'],['Horário','time']].map(([l,t])=>(
+        <div style={{ display:'flex', gap:10, marginBottom:14 }}>
+          {[['Data','date','2025-03-10'],['Horário','time','14:00']].map(([l,t,v])=>(
             <div key={l} style={{ flex:1 }}>
-              <label style={{ fontSize:11, color:CL.muted, textTransform:'uppercase', display:'block', marginBottom:6, fontWeight:600 }}>{l}</label>
-              <input type={t} style={{ width:'100%', padding:'10px 14px', borderRadius:10, border:`1.5px solid ${CL.border}`, fontSize:13, color:CL.text }}/>
+              <label style={{ fontSize:11, color:V.muted, textTransform:'uppercase', display:'block', marginBottom:6 }}>{l}</label>
+              <input type={t} defaultValue={v} style={{ width:'100%', background:V.surface2, border:`1px solid ${V.border}`, borderRadius:8, padding:'10px 12px', color:V.text, fontSize:13, outline:'none' }}/>
             </div>
           ))}
         </div>
-        <div style={{ marginBottom:14 }}>
-          <label style={{ fontSize:11, color:CL.muted, textTransform:'uppercase', display:'block', marginBottom:6, fontWeight:600 }}>Lembrete automático</label>
-          <select style={{ width:'100%', padding:'10px 14px', borderRadius:10, border:`1.5px solid ${CL.border}`, fontSize:13, color:CL.text }}>
-            <option>1 hora antes (Email)</option>
-            <option>30 minutos antes</option>
-            <option>1 dia antes (Email + WhatsApp)</option>
-          </select>
-        </div>
+        {[['Tipo','Video call (Google Meet)'],['Lembrete automático','1 hora antes (Email + WhatsApp)']].map(([l,v])=>(
+          <div key={l} style={{ marginBottom:14 }}>
+            <label style={{ fontSize:11, color:V.muted, textTransform:'uppercase', letterSpacing:'0.05em', display:'block', marginBottom:6 }}>{l}</label>
+            <input defaultValue={v} style={{ width:'100%', background:V.surface2, border:`1px solid ${V.border}`, borderRadius:8, padding:'10px 12px', color:V.text, fontSize:13, outline:'none' }}/>
+          </div>
+        ))}
         <div style={{ display:'flex', gap:10, marginTop:20, justifyContent:'flex-end' }}>
-          <button onClick={onClose} style={{ padding:'10px 20px', borderRadius:10, border:`1px solid ${CL.border}`, background:'white', cursor:'pointer', fontSize:13 }}>Cancelar</button>
-          <button onClick={onClose} style={{ padding:'10px 22px', borderRadius:10, border:'none', background:CL.blue, color:'white', fontSize:13, fontWeight:600, cursor:'pointer' }}>✓ Confirmar</button>
+          <button onClick={onClose} style={{ background:'none', border:`1px solid ${V.border}`, color:V.muted2, padding:'7px 16px', borderRadius:8, cursor:'pointer', fontSize:12 }}>Cancelar</button>
+          <button onClick={onClose} style={{ background:V.accent, border:'none', color:'white', padding:'8px 16px', borderRadius:8, cursor:'pointer', fontSize:12, fontWeight:500 }}>✓ Confirmar & Notificar</button>
         </div>
       </div>
     </div>
   );
 }
 
-export default function EmpresaDashboard() {
-  const { user } = useAuth();
-  const [tab, setTab]         = useState('visao');
-  const [kpis, setKpis]       = useState([]);
-  const [appData, setAppData] = useState([]);
-  const [areaData, setAreaData] = useState([]);
-  const [areaDist, setAreaDist] = useState([]);
-  const [cands, setCands]     = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState(null);
-  const [modal, setModal]     = useState(false);
+// ─── PAINEL OVERVIEW ─────────────────────────────────────────────
+function PanelOverview({ kpis, candidates, onModal }) {
+  return (
+    <div>
+      {/* KPIs */}
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(6,1fr)', gap:14, marginBottom:24 }}>
+        {kpis.map((k,i) => <KpiCard key={i} {...k} delay={0.05+i*0.05}/>)}
+      </div>
 
-  const fetchData = async () => {
-    const token = localStorage.getItem('token');
-    if (!token) { setError('Sessão expirada.'); setLoading(false); return; }
-    setLoading(true); setError(null);
-    try {
-      const BASE = process.env.REACT_APP_API_URL || 'https://conectalagoa.onrender.com/api';
-      const get = async (path) => {
-        const res = await fetch(`${BASE}${path}`, {
-          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-        });
-        if (!res.ok) throw new Error(`Erro ${res.status}`);
-        return res.json();
-      };
-      const [rRes, gRes, aRes, vRes, cRes] = await Promise.all([
-        get('/dashboard/resumo'),
-        get('/dashboard/grafico-candidaturas'),
-        get('/dashboard/vagas-por-area'),
-        get('/dashboard/vagas-por-mes'),
-        get('/dashboard/candidatos-recentes'),
-      ]);
-      const r = rRes?.data || rRes || {};
-      const g = gRes?.data || gRes || [];
-      const a = aRes?.data || aRes || [];
-      const v = vRes?.data || vRes || [];
-      const c = cRes?.data || cRes || [];
-      setKpis([
-        { icon:'💼', label:'Vagas Ativas',       value: r.vagas_ativas,          delta:`${r.vagas_semana||0} esta semana`,                                        color:CL.blue   },
-        { icon:'📋', label:'Candidaturas',       value: r.candidaturas,          delta:`${r.candidaturas_hoje||0} hoje`,                                          color:CL.orange },
-        { icon:'✅', label:'Contratações',       value: r.contratacoes,          delta:`${r.contratacoes_mes||0} este mês`,                                       color:CL.green  },
-        { icon:'📈', label:'Taxa Conversão',     value:`${r.taxa_conversao||0}%`,delta:`${r.taxa_variacao>=0?'+':''}${r.taxa_variacao||0}% vs mês ant.`,         color:CL.purple },
-        { icon:'⏱',  label:'Tempo p/ Contratar', value:`${r.tempo_medio||23}d`,  delta:'-5d vs anterior',                                                        color:CL.cyan   },
-        { icon:'💰', label:'Custo/Contratação',  value:`R$${r.custo_medio||'1.8k'}`, delta:'-R$200 vs anterior',                                                 color:'#f59e0b' },
-      ]);
-      setAppData(g.map(x => ({ mes:x.mes, Candidaturas:x.candidaturas, Contratações:x.contratacoes })));
-      setAreaData(v.map(x => ({ mes:x.mes, Vagas:x.total })));
-      setAreaDist(a.map(x => ({ name:x.area, value:x.percentual, color:getAreaColor(x.area) })));
-      setCands(c.map(x => ({ ...x, avatar: x.nome?.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase() })));
-    } catch(e) { console.error('Dashboard:', e.message); setError(e.message); }
-    finally { setLoading(false); }
+      {/* Gráfico + Funil */}
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:16 }}>
+        <Card title="Evolução Mensal" sub="Candidatos vs Contratações" badge="2025">
+          <div style={{ display:'flex', alignItems:'flex-end', gap:8, height:120, paddingTop:10 }}>
+            {BAR_DATA.map((b,i) => (
+              <div key={i} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:6, height:'100%', justifyContent:'flex-end' }}>
+                <div style={{ width:'100%', display:'flex', gap:3, alignItems:'flex-end', height:90 }}>
+                  <div style={{ flex:1, height:`${b.c}%`, background:V.accent, borderRadius:'4px 4px 0 0', transition:'height 0.6s' }}/>
+                  <div style={{ flex:1, height:`${b.h}%`, background:V.accent3, opacity:0.7, borderRadius:'4px 4px 0 0', transition:'height 0.6s' }}/>
+                </div>
+                <div style={{ fontSize:9, color:V.muted, textTransform:'uppercase' }}>{b.mes}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{ display:'flex', gap:16, marginTop:12 }}>
+            {[['Candidatos',V.accent],['Contratações',V.accent3]].map(([l,c])=>(
+              <div key={l} style={{ display:'flex', alignItems:'center', gap:6, fontSize:11, color:V.muted2 }}>
+                <div style={{ width:10, height:10, background:c, borderRadius:2 }}/>{l}
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        <Card title="Funil Geral" sub="Pipeline atual" badge="Ao vivo" badgeColor="green">
+          {[
+            { name:'Recebidos',    count:347, pct:100, color:V.accent  },
+            { name:'Triados',      count:236, pct:68,  color:V.accent2 },
+            { name:'Entrevistas',  count:146, pct:42,  color:V.accent3 },
+            { name:'Teste Técnico',count:97,  pct:28,  color:'#c96a00'  },
+            { name:'Proposta',     count:42,  pct:12,  color:V.green   },
+            { name:'Contratados',  count:22,  pct:6,   color:'#059669'  },
+          ].map((s,i) => (
+            <div key={i} style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 14px', borderRadius:10, background:V.surface2, marginBottom:6, cursor:'pointer', transition:'all 0.2s' }}
+              onMouseEnter={e=>{e.currentTarget.style.background='rgba(26,58,143,0.06)';}}
+              onMouseLeave={e=>{e.currentTarget.style.background=V.surface2;}}>
+              <div style={{ width:10, height:10, borderRadius:'50%', background:s.color, flexShrink:0 }}/>
+              <div style={{ fontSize:12, fontWeight:500, flex:1 }}>{s.name}</div>
+              <div style={{ flex:1, height:4, background:V.border, borderRadius:2 }}>
+                <div style={{ width:`${s.pct}%`, height:'100%', background:s.color, opacity:0.6, borderRadius:2 }}/>
+              </div>
+              <div style={{ fontFamily:"'Syne',sans-serif", fontSize:16, fontWeight:700, minWidth:32, textAlign:'right' }}>{s.count}</div>
+              <div style={{ fontSize:11, color:V.muted, width:40, textAlign:'right' }}>{s.pct}%</div>
+            </div>
+          ))}
+        </Card>
+      </div>
+
+      {/* Tabela + Alertas */}
+      <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr', gap:16 }}>
+        <Card title="Candidatos Recentes" sub="Últimas aplicações" badge="+hoje">
+          <div style={{ overflowX:'auto' }}>
+            <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
+              <thead>
+                <tr>{['Candidato','Vaga','Score IA','Status','★'].map(h=>(
+                  <th key={h} style={{ padding:'10px 12px', textAlign:'left', color:V.muted, fontWeight:500, borderBottom:`1px solid ${V.border}`, fontSize:11, textTransform:'uppercase', letterSpacing:'0.04em' }}>{h}</th>
+                ))}</tr>
+              </thead>
+              <tbody>
+                {candidates.length > 0 ? candidates.map((c,i) => (
+                  <tr key={i} style={{ borderBottom:`1px solid rgba(226,232,244,0.5)`, transition:'background 0.15s' }}
+                    onMouseEnter={e=>{e.currentTarget.style.background='rgba(26,58,143,0.03)';}}
+                    onMouseLeave={e=>{e.currentTarget.style.background='';}} >
+                    <td style={{ padding:'12px' }}>
+                      <div style={{ fontWeight:500, fontSize:13 }}>{c.nome}</div>
+                      <div style={{ fontSize:11, color:V.muted }}>{c.cidade || '—'}</div>
+                    </td>
+                    <td style={{ padding:'12px' }}>{c.vaga_titulo || '—'}</td>
+                    <td style={{ padding:'12px' }}><ScoreBar val={c.score_ia || Math.floor(65+Math.random()*30)}/></td>
+                    <td style={{ padding:'12px' }}><Pill cls={c.status==='Aprovado'?'pill-green':c.status==='Reprovado'?'pill-red':c.status==='Entrevista'?'pill-purple':'pill-orange'}>{c.status || 'Triagem'}</Pill></td>
+                    <td style={{ padding:'12px', color:V.orange }}>{'★'.repeat(Math.min(5,Math.ceil((c.score_ia||75)/20)))}</td>
+                  </tr>
+                )) : [
+                  { n:'Ana Lima',       loc:'São Paulo · SP',       v:'Dev Senior',    s:92, st:'pill-blue',   stars:'★★★★★' },
+                  { n:'Carlos Mota',    loc:'Rio de Janeiro · RJ',  v:'UX Designer',   s:85, st:'pill-purple', stars:'★★★★☆' },
+                  { n:'Juliana Rocha',  loc:'Belo Horizonte · MG',  v:'Product Mgr',   s:78, st:'pill-orange', stars:'★★★★☆' },
+                  { n:'Rafael Souza',   loc:'Porto Alegre · RS',    v:'Dev Backend',   s:91, st:'pill-green',  stars:'★★★★★' },
+                  { n:'Fernanda Costa', loc:'Curitiba · PR',        v:'Data Analyst',  s:67, st:'pill-cyan',   stars:'★★★☆☆' },
+                ].map((c,i) => (
+                  <tr key={i} style={{ borderBottom:`1px solid rgba(226,232,244,0.5)` }}>
+                    <td style={{ padding:'12px' }}><div style={{ fontWeight:500, fontSize:13 }}>{c.n}</div><div style={{ fontSize:11, color:V.muted }}>{c.loc}</div></td>
+                    <td style={{ padding:'12px' }}>{c.v}</td>
+                    <td style={{ padding:'12px' }}><ScoreBar val={c.s}/></td>
+                    <td style={{ padding:'12px' }}><Pill cls={c.st}>{c.st.replace('pill-','').charAt(0).toUpperCase()+c.st.replace('pill-','').slice(1)}</Pill></td>
+                    <td style={{ padding:'12px', color:V.orange }}>{c.stars}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+
+        <Card title="Alertas & Lembretes">
+          {[
+            { color:V.red,    msg:'3 candidatos sem resposta há +7 dias', time:'urgente' },
+            { color:V.orange, msg:'Entrevista com Ana Lima — hoje 14h',   time:'em 2h'  },
+            { color:V.accent, msg:'Vaga "Dev Senior" expira em 3 dias',   time:'03/mar' },
+            { color:V.accent3,msg:'Teste técnico aguardando avaliação (5)',time:'pendente'},
+            { color:V.green,  msg:'Rafael aceitou a proposta! 🎉',         time:'hoje'  },
+            { color:V.orange, msg:'Relatório mensal pronto para revisão',  time:'28/fev' },
+          ].map((a,i) => (
+            <div key={i} style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 14px', borderRadius:8, background:V.surface2, marginBottom:8, fontSize:12, animation:`fadeUp 0.3s ease ${0.1+i*0.05}s both` }}>
+              <div style={{ width:8, height:8, borderRadius:'50%', background:a.color, flexShrink:0 }}/>
+              <span style={{ flex:1 }}>{a.msg}</span>
+              <span style={{ fontSize:10, color:V.muted2, whiteSpace:'nowrap' }}>{a.time}</span>
+            </div>
+          ))}
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+// ─── PAINEL FUNIL CRM (KANBAN) ────────────────────────────────────
+function PanelFunil({ onModal }) {
+  return (
+    <div>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
+        <div>
+          <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:15, color:V.text }}>Funil de Recrutamento</div>
+          <div style={{ fontSize:11, color:V.muted }}>Arraste os candidatos entre colunas</div>
+        </div>
+        <button onClick={onModal} style={{ background:V.accent, border:'none', color:'white', padding:'8px 16px', borderRadius:8, cursor:'pointer', fontSize:12, fontWeight:500 }}>+ Adicionar Candidato</button>
+      </div>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(7,220px)', gap:14, overflowX:'auto', paddingBottom:12 }}>
+        {KANBAN_STAGES.map((s,si) => {
+          const cards = KANBAN_DATA.filter(c => c.stage === si);
+          return (
+            <div key={si} style={{ background:V.surface, border:`1px solid ${V.border}`, borderRadius:12, padding:14, minHeight:400 }}>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
+                <span style={{ fontSize:12, fontWeight:600, textTransform:'uppercase', letterSpacing:'0.05em', color:s.color }}>{s.name}</span>
+                <span style={{ width:20, height:20, borderRadius:6, background:V.surface2, fontSize:11, fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center', color:V.muted }}>{cards.length}</span>
+              </div>
+              {cards.map((c,i) => (
+                <div key={i} draggable style={{ background:V.surface2, border:`1px solid ${V.border}`, borderRadius:10, padding:12, marginBottom:8, cursor:'grab', transition:'all 0.2s' }}
+                  onMouseEnter={e=>{e.currentTarget.style.borderColor=s.color;e.currentTarget.style.transform='translateY(-2px)';e.currentTarget.style.boxShadow='0 4px 16px rgba(26,58,143,0.12)';}}
+                  onMouseLeave={e=>{e.currentTarget.style.borderColor=V.border;e.currentTarget.style.transform='';e.currentTarget.style.boxShadow='';}}>
+                  <div style={{ fontSize:12, fontWeight:500, marginBottom:4 }}>{c.name}</div>
+                  <div style={{ fontSize:10, color:V.muted, marginBottom:8 }}>{c.role}</div>
+                  <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                    <MiniAvatar initials={c.initials} size={20}/>
+                    <Pill cls={c.score>=85?'pill-green':c.score>=70?'pill-orange':'pill-red'} style={{ fontSize:9 }}>Score {c.score}</Pill>
+                  </div>
+                </div>
+              ))}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── PAINEL BANCO DE TALENTOS ─────────────────────────────────────
+function PanelTalent() {
+  const [talents, setTalents] = useState(TALENTS_INIT);
+  const [query, setQuery] = useState('');
+  const [filter, setFilter] = useState('Todos');
+
+  const displayed = talents.filter(t => {
+    const matchQ = (t.name+t.role+t.city+t.tags.join(' ')).toLowerCase().includes(query.toLowerCase());
+    const matchF = filter==='Todos' ? true : filter==='Favoritos' ? t.fav : t.area===filter;
+    return matchQ && matchF;
+  });
+
+  const toggleFav = (idx) => {
+    setTalents(prev => prev.map((t,i) => i===idx ? {...t, fav:!t.fav} : t));
   };
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { fetchData(); }, []);
-
-  if (loading) return (
-    <div style={{ minHeight:'60vh', display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column', gap:16, background:CL.bg }}>
-      <div style={{ width:40, height:40, border:`3px solid ${CL.border}`, borderTop:`3px solid ${CL.blue}`, borderRadius:'50%', animation:'clSpin 0.8s linear infinite' }}/>
-      <p style={{ color:CL.muted, fontSize:14 }}>Carregando dados...</p>
-      <style>{`@keyframes clSpin{to{transform:rotate(360deg);}}`}</style>
-    </div>
-  );
-
-  if (error) return (
-    <div style={{ minHeight:'60vh', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', background:CL.bg }}>
-      <p style={{ color:CL.red, marginBottom:16 }}>⚠️ {error}</p>
-      <button onClick={fetchData} style={{ padding:'10px 24px', background:CL.blue, color:'white', border:'none', borderRadius:10, cursor:'pointer' }}>Tentar novamente</button>
-    </div>
-  );
-
   return (
-    <div style={{ background:CL.bg, minHeight:'100vh', fontFamily:"'DM Sans',sans-serif" }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap');
-        @keyframes clFU{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
-        *{box-sizing:border-box;}
-        .cl-tr:hover td{background:#f8faff!important;}
-        .cl-tab-btn:hover{color:${CL.blue}!important;}
-      `}</style>
-
-      {/* ── Sub-header da área empresa ── */}
-      <div style={{ background:'white', borderBottom:`1px solid ${CL.border}`, padding:'16px 32px', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-        <div>
-          <h1 style={{ fontFamily:"'Sora',sans-serif", fontSize:20, fontWeight:800, color:CL.text, margin:0 }}>Painel da Empresa</h1>
-          <p style={{ fontSize:12, color:CL.muted, margin:'2px 0 0' }}>Olá, <strong>{user?.nome||'Empresa'}</strong> · Atualizado a cada 2 minutos</p>
-        </div>
-        <div style={{ display:'flex', gap:10 }}>
-          <button onClick={()=>setModal(true)} style={{ padding:'9px 18px', borderRadius:10, border:`1.5px solid ${CL.border}`, background:'white', color:CL.muted, fontSize:13, cursor:'pointer' }}>🔔 Agendar Entrevista</button>
-          <button style={{ padding:'9px 20px', borderRadius:10, border:'none', background:CL.blue, color:'white', fontSize:13, fontWeight:600, cursor:'pointer', boxShadow:'0 4px 14px rgba(26,58,143,0.25)' }}>+ Nova Vaga</button>
-          <button onClick={fetchData} style={{ width:38, height:38, borderRadius:9, border:`1.5px solid ${CL.border}`, background:'white', cursor:'pointer', fontSize:16 }} title="Atualizar">↻</button>
-        </div>
-      </div>
-
-      {/* ── Tabs ── */}
-      <div style={{ background:'white', borderBottom:`1px solid ${CL.border}`, padding:'0 32px', display:'flex', gap:2, overflowX:'auto' }}>
-        {TABS.map(t=>(
-          <button key={t.id} onClick={()=>setTab(t.id)} className="cl-tab-btn" style={{ padding:'13px 18px', border:'none', background:'none', fontSize:13, fontWeight:tab===t.id?600:400, color:tab===t.id?CL.blue:CL.muted, borderBottom:tab===t.id?`2.5px solid ${CL.blue}`:'2.5px solid transparent', cursor:'pointer', whiteSpace:'nowrap', transition:'all 0.15s' }}>{t.label}</button>
+    <div>
+      <input value={query} onChange={e=>setQuery(e.target.value)} placeholder="🔍  Buscar por nome, cargo, cidade, habilidade..."
+        style={{ width:'100%', background:V.surface2, border:`1px solid ${V.border}`, borderRadius:10, padding:'10px 16px', color:V.text, fontSize:13, outline:'none', marginBottom:18, transition:'border-color 0.2s' }}
+        onFocus={e=>e.target.style.borderColor=V.accent} onBlur={e=>e.target.style.borderColor=V.border}/>
+      <div style={{ display:'flex', gap:8, marginBottom:18, flexWrap:'wrap' }}>
+        {['Todos','Tecnologia','Design','Produto','Data','Favoritos'].map(f => (
+          <button key={f} onClick={()=>setFilter(f)} style={{ padding:'6px 14px', borderRadius:20, fontSize:11, fontWeight:500, cursor:'pointer', border:`1px solid ${filter===f?V.accent:V.border}`, background: filter===f ? V.accent : 'none', color: filter===f ? 'white' : V.muted2, transition:'all 0.15s', fontFamily:"'DM Sans',sans-serif" }}>{f}</button>
         ))}
       </div>
-
-      {/* ── Conteúdo ── */}
-      <div style={{ padding:'28px 32px', maxWidth:1400, margin:'0 auto' }}>
-
-        {/* VISÃO GERAL */}
-        {tab==='visao' && <>
-          <div style={{ display:'flex', gap:14, marginBottom:22, flexWrap:'wrap' }}>
-            {kpis.map((k,i)=><KpiCard key={i} {...k} delay={i*0.06}/>)}
-          </div>
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:16 }}>
-            <Card title="Candidaturas vs Contratações" sub="Últimos 7 meses">
-              <ResponsiveContainer width="100%" height={220}>
-                <AreaChart data={appData}>
-                  <defs>
-                    <linearGradient id="gCA" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={CL.blue} stopOpacity={0.2}/><stop offset="95%" stopColor={CL.blue} stopOpacity={0}/></linearGradient>
-                    <linearGradient id="gCB" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={CL.green} stopOpacity={0.2}/><stop offset="95%" stopColor={CL.green} stopOpacity={0}/></linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke={CL.border}/>
-                  <XAxis dataKey="mes" tick={{ fontSize:11, fill:CL.muted }}/>
-                  <YAxis tick={{ fontSize:11, fill:CL.muted }}/>
-                  <Tooltip content={<Tooltip2/>}/>
-                  <Legend wrapperStyle={{ fontSize:12 }}/>
-                  <Area type="monotone" dataKey="Candidaturas" stroke={CL.blue}  fill="url(#gCA)" strokeWidth={2}/>
-                  <Area type="monotone" dataKey="Contratações" stroke={CL.green} fill="url(#gCB)" strokeWidth={2}/>
-                </AreaChart>
-              </ResponsiveContainer>
-            </Card>
-            <Card title="Vagas por Mês" sub="Volume publicado">
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={areaData} barSize={28}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={CL.border}/>
-                  <XAxis dataKey="mes" tick={{ fontSize:11, fill:CL.muted }}/>
-                  <YAxis tick={{ fontSize:11, fill:CL.muted }}/>
-                  <Tooltip content={<Tooltip2/>}/>
-                  <Bar dataKey="Vagas" fill={CL.orange} radius={[6,6,0,0]}/>
-                </BarChart>
-              </ResponsiveContainer>
-            </Card>
-          </div>
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 330px', gap:16 }}>
-            <Card title="Candidatos Recentes" sub="Últimas aplicações">
-              <div style={{ overflowX:'auto' }}>
-                <table style={{ width:'100%', borderCollapse:'collapse', fontSize:13 }}>
-                  <thead><tr>{['Candidato','Cidade','Vaga','Status'].map(h=><th key={h} style={{ padding:'8px 10px', textAlign:'left', fontSize:11, color:CL.muted, borderBottom:`1px solid ${CL.border}`, textTransform:'uppercase', letterSpacing:'0.04em' }}>{h}</th>)}</tr></thead>
-                  <tbody>
-                    {cands.length===0
-                      ? <tr><td colSpan={4} style={{ padding:24, textAlign:'center', color:CL.muted }}>Nenhum candidato ainda</td></tr>
-                      : cands.map((c,i)=>{ const s=STATUS_STYLE[c.status]||{bg:'#f3f4f6',color:CL.muted}; return (
-                        <tr key={i} className="cl-tr" style={{ borderBottom:`1px solid ${CL.border}` }}>
-                          <td style={{ padding:'11px 10px' }}><div style={{ display:'flex', alignItems:'center', gap:10 }}><div style={{ width:30, height:30, borderRadius:'50%', background:CL.blue, color:'white', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, fontWeight:700, flexShrink:0 }}>{c.avatar}</div><span style={{ fontWeight:500 }}>{c.nome}</span></div></td>
-                          <td style={{ padding:'11px 10px', color:CL.muted, fontSize:12 }}>{c.cidade||'—'}</td>
-                          <td style={{ padding:'11px 10px' }}>{c.vaga_titulo}</td>
-                          <td style={{ padding:'11px 10px' }}><span style={{ padding:'3px 10px', borderRadius:20, fontSize:11, fontWeight:600, background:s.bg, color:s.color }}>{c.status}</span></td>
-                        </tr>
-                      );})}
-                  </tbody>
-                </table>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))', gap:14 }}>
+        {displayed.map((t,i) => {
+          const initials = t.name.split(' ').map(n=>n[0]).join('').slice(0,2);
+          return (
+            <div key={i} style={{ background:V.surface, border:`1px solid ${V.border}`, borderRadius:12, padding:18, transition:'all 0.3s', cursor:'pointer', animation:`fadeUp 0.4s ease ${i*0.04}s both` }}
+              onMouseEnter={e=>{e.currentTarget.style.borderColor='rgba(26,58,143,0.3)';e.currentTarget.style.transform='translateY(-3px)';e.currentTarget.style.boxShadow='0 8px 24px rgba(26,58,143,0.1)';}}
+              onMouseLeave={e=>{e.currentTarget.style.borderColor=V.border;e.currentTarget.style.transform='';e.currentTarget.style.boxShadow='';}}>
+              <div style={{ width:44, height:44, borderRadius:12, background:`${t.color}22`, color:t.color, display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, fontWeight:700, marginBottom:12, fontFamily:"'Syne',sans-serif" }}>{initials}</div>
+              <div style={{ fontSize:13, fontWeight:600, marginBottom:3 }}>{t.name}</div>
+              <div style={{ fontSize:11, color:V.muted, marginBottom:10 }}>{t.role} · {t.city}</div>
+              <div style={{ display:'flex', flexWrap:'wrap', gap:4, marginBottom:10 }}>
+                {t.tags.map(tg=><span key={tg} style={{ fontSize:9, padding:'2px 7px', background:V.surface2, border:`1px solid ${V.border}`, borderRadius:4, color:V.muted2 }}>{tg}</span>)}
               </div>
-            </Card>
-            <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
-              <Card title="Vagas por Área">
-                {areaDist.length>0 ? (
-                  <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-                    <ResponsiveContainer width={90} height={90}>
-                      <PieChart><Pie data={areaDist} dataKey="value" outerRadius={44} innerRadius={24}>{areaDist.map((e,i)=><Cell key={i} fill={e.color}/>)}</Pie><Tooltip formatter={v=>`${v}%`}/></PieChart>
-                    </ResponsiveContainer>
-                    <div style={{ flex:1 }}>
-                      {areaDist.map((e,i)=><div key={i} style={{ display:'flex', alignItems:'center', gap:7, marginBottom:5, fontSize:11 }}><div style={{ width:8, height:8, borderRadius:2, background:e.color, flexShrink:0 }}/><span style={{ flex:1 }}>{e.name}</span><strong>{e.value}%</strong></div>)}
-                    </div>
-                  </div>
-                ) : <p style={{ color:CL.muted, fontSize:12 }}>Sem vagas ativas</p>}
-              </Card>
-              <Card title="🔔 Alertas" style={{ flex:1 }}>
-                <AlertItem color={CL.red}    msg="3 candidatos sem resposta +7d" time="urgente"/>
-                <AlertItem color={CL.orange} msg="Entrevista hoje às 14h"        time="2h"/>
-                <AlertItem color={CL.blue}   msg="Vaga 'Dev Sênior' expira em 3d" time="03/mar"/>
-                <AlertItem color={CL.purple} msg="5 testes aguardando avaliação" time="pendente"/>
-                <AlertItem color={CL.green}  msg="Rafael aceitou a proposta! 🎉" time="hoje"/>
-              </Card>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                <Pill cls={t.score>=85?'pill-green':t.score>=70?'pill-orange':'pill-red'}>Score {t.score}</Pill>
+                <button onClick={()=>toggleFav(talents.indexOf(t))} style={{ background:'none', border:'none', cursor:'pointer', fontSize:14, opacity:t.fav?1:0.4, transition:'all 0.2s' }}
+                  onMouseEnter={e=>{e.currentTarget.style.transform='scale(1.2)';}}
+                  onMouseLeave={e=>{e.currentTarget.style.transform='';}}>
+                  {t.fav ? '⭐' : '☆'}
+                </button>
+              </div>
             </div>
-          </div>
-        </>}
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
-        {/* CANDIDATOS */}
-        {tab==='candidatos' && (
-          <Card title="Todos os Candidatos" sub={`${cands.length} registros`}>
-            <div style={{ overflowX:'auto' }}>
-              <table style={{ width:'100%', borderCollapse:'collapse', fontSize:13 }}>
-                <thead><tr>{['Candidato','Email','Cidade','Vaga','Status','Data'].map(h=><th key={h} style={{ padding:'10px 12px', textAlign:'left', fontSize:11, color:CL.muted, borderBottom:`1px solid ${CL.border}`, textTransform:'uppercase' }}>{h}</th>)}</tr></thead>
-                <tbody>
-                  {cands.length===0
-                    ? <tr><td colSpan={6} style={{ padding:32, textAlign:'center', color:CL.muted }}>Nenhum candidato encontrado</td></tr>
-                    : cands.map((c,i)=>{ const s=STATUS_STYLE[c.status]||{bg:'#f3f4f6',color:CL.muted}; return (
-                      <tr key={i} className="cl-tr" style={{ borderBottom:`1px solid ${CL.border}` }}>
-                        <td style={{ padding:'13px 12px' }}><div style={{ display:'flex', alignItems:'center', gap:10 }}><div style={{ width:34, height:34, borderRadius:'50%', background:CL.blue, color:'white', display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, fontWeight:700 }}>{c.avatar}</div><span style={{ fontWeight:600 }}>{c.nome}</span></div></td>
-                        <td style={{ padding:'13px 12px', color:CL.muted }}>{c.email||'—'}</td>
-                        <td style={{ padding:'13px 12px' }}>{c.cidade||'—'}</td>
-                        <td style={{ padding:'13px 12px' }}>{c.vaga_titulo}</td>
-                        <td style={{ padding:'13px 12px' }}><span style={{ padding:'4px 12px', borderRadius:20, fontSize:11, fontWeight:600, background:s.bg, color:s.color }}>{c.status}</span></td>
-                        <td style={{ padding:'13px 12px', color:CL.muted, fontSize:12 }}>{c.criado_em?new Date(c.criado_em).toLocaleDateString('pt-BR'):'—'}</td>
-                      </tr>
-                    );})}
-                </tbody>
-              </table>
-            </div>
-          </Card>
-        )}
-
-        {/* FUNIL CRM */}
-        {tab==='funil' && <>
-          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
-            <div><h2 style={{ fontFamily:"'Sora',sans-serif", fontSize:16, fontWeight:700, color:CL.text, margin:0 }}>Funil de Recrutamento</h2><p style={{ fontSize:12, color:CL.muted, marginTop:3 }}>Pipeline visual por etapa</p></div>
-            <button style={{ padding:'9px 20px', background:CL.blue, color:'white', border:'none', borderRadius:10, cursor:'pointer', fontSize:13, fontWeight:600 }}>+ Candidato</button>
-          </div>
-          <div style={{ display:'grid', gridTemplateColumns:`repeat(${STAGES.length},210px)`, gap:12, overflowX:'auto', paddingBottom:12 }}>
-            {STAGES.map(stage=>{
-              const cards=cands.filter(c=>c.status===stage.id||c.status===stage.label.toLowerCase());
-              return (
-                <div key={stage.id} style={{ background:CL.surface, border:`1px solid ${CL.border}`, borderRadius:14, padding:14, minHeight:320 }}>
-                  <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
-                    <span style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em', color:stage.color }}>{stage.label}</span>
-                    <span style={{ background:CL.bg, borderRadius:6, width:20, height:20, display:'flex', alignItems:'center', justifyContent:'center', fontSize:10, fontWeight:700, color:CL.muted }}>{cards.length}</span>
-                  </div>
-                  {cards.length===0
-                    ? <div style={{ padding:'16px 0', textAlign:'center', color:CL.muted2, fontSize:11 }}>Sem candidatos</div>
-                    : cards.map((c,i)=>(
-                      <div key={i} style={{ background:CL.bg, border:`1px solid ${CL.border}`, borderRadius:10, padding:11, marginBottom:8, cursor:'grab', transition:'all 0.15s' }}
-                        onMouseEnter={e=>{e.currentTarget.style.borderColor=stage.color;e.currentTarget.style.transform='translateY(-2px)';}}
-                        onMouseLeave={e=>{e.currentTarget.style.borderColor=CL.border;e.currentTarget.style.transform='';}}>
-                        <div style={{ fontWeight:600, fontSize:12, marginBottom:2 }}>{c.nome}</div>
-                        <div style={{ fontSize:10, color:CL.muted, marginBottom:8 }}>{c.vaga_titulo}</div>
-                        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                          <div style={{ width:22, height:22, borderRadius:'50%', background:CL.blue, color:'white', display:'flex', alignItems:'center', justifyContent:'center', fontSize:8, fontWeight:700 }}>{c.avatar}</div>
-                          <span style={{ fontSize:10, color:CL.muted }}>{c.cidade||'—'}</span>
-                        </div>
-                      </div>
-                    ))
-                  }
+// ─── PAINEL RANKING IA ────────────────────────────────────────────
+function PanelAI({ onModal }) {
+  return (
+    <div>
+      <div style={{ marginBottom:20 }}>
+        <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:15, marginBottom:4, color:V.text }}>Ranking Inteligente com IA</div>
+        <div style={{ fontSize:12, color:V.muted }}>Score automático de aderência · Matching comportamental · Sugestões baseadas em histórico</div>
+      </div>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(320px,1fr))', gap:14 }}>
+        {AI_DATA.map((c,i) => {
+          const dash = 2 * Math.PI * 20;
+          const fill = dash * c.score / 100;
+          return (
+            <div key={i} style={{ background:V.surface, border:`1px solid ${V.border}`, borderRadius:12, overflow:'hidden', animation:`fadeUp 0.4s ease ${i*0.07}s both`, transition:'all 0.2s' }}
+              onMouseEnter={e=>{e.currentTarget.style.borderColor='rgba(224,123,0,0.3)';}}
+              onMouseLeave={e=>{e.currentTarget.style.borderColor=V.border;}}>
+              <div style={{ padding:16, borderBottom:`1px solid ${V.border}`, display:'flex', alignItems:'center', gap:12 }}>
+                <div style={{ position:'relative', width:48, height:48, flexShrink:0 }}>
+                  <svg width="48" height="48" viewBox="0 0 48 48" style={{ transform:'rotate(-90deg)' }}>
+                    <circle cx="24" cy="24" r="20" fill="none" stroke={V.border} strokeWidth="3"/>
+                    <circle cx="24" cy="24" r="20" fill="none" stroke={c.color} strokeWidth="3" strokeDasharray={`${fill} ${dash}`} strokeLinecap="round"/>
+                  </svg>
+                  <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', fontSize:10, fontWeight:700, color:c.color }}>{c.score}%</div>
                 </div>
-              );
-            })}
-          </div>
-        </>}
-
-        {/* AGENDA */}
-        {tab==='agenda' && (
-          <div style={{ display:'grid', gridTemplateColumns:'300px 1fr', gap:20 }}>
-            <div>
-              <MiniCalendar/>
-              <div style={{ marginTop:12, display:'flex', flexDirection:'column', gap:8 }}>
-                <button onClick={()=>setModal(true)} style={{ padding:'11px', background:CL.blue, color:'white', border:'none', borderRadius:10, cursor:'pointer', fontSize:13, fontWeight:600 }}>+ Agendar Entrevista</button>
-                <button onClick={()=>setModal(true)} style={{ padding:'10px', background:'white', color:CL.text, border:`1px solid ${CL.border}`, borderRadius:10, cursor:'pointer', fontSize:13 }}>🔔 Definir Lembrete</button>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontWeight:600, fontSize:13, color:V.text }}>{c.name}</div>
+                  <div style={{ fontSize:11, color:V.muted, marginBottom:4 }}>{c.role}</div>
+                  <div>
+                    {c.traits.map(t=><span key={t} style={{ display:'inline-block', padding:'2px 8px', borderRadius:4, fontSize:10, background:'rgba(224,123,0,0.1)', color:V.accent3, border:'1px solid rgba(224,123,0,0.2)', margin:2 }}>{t}</span>)}
+                  </div>
+                </div>
+                <button onClick={onModal} style={{ background:V.accent, border:'none', color:'white', fontSize:11, padding:'6px 12px', borderRadius:8, cursor:'pointer', flexShrink:0 }}>Convidar</button>
+              </div>
+              <div style={{ padding:16 }}>
+                <div style={{ fontSize:11, color:V.muted, marginBottom:6 }}>🧠 IA recomenda: <span style={{ color:V.text }}>{c.reason}</span></div>
+                <div>{c.skills.map(s=><span key={s} style={{ fontSize:9, padding:'2px 7px', background:V.surface2, border:`1px solid ${V.border}`, borderRadius:4, color:V.muted2, margin:2, display:'inline-block' }}>{s}</span>)}</div>
               </div>
             </div>
-            <Card title="Agenda de Hoje" sub="5 de Março · 5 compromissos">
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── PAINEL AGENDA ────────────────────────────────────────────────
+function PanelAgenda({ onModal }) {
+  const firstDay = new Date(2025,2,1).getDay();
+  const cells = [];
+  for(let i=0;i<firstDay;i++) cells.push({ day:28-firstDay+i+1, other:true });
+  for(let d=1;d<=31;d++) cells.push({ day:d, today:d===5, event:EVENT_DAYS.includes(d) });
+
+  return (
+    <div style={{ display:'grid', gridTemplateColumns:'300px 1fr', gap:16 }}>
+      <div>
+        <div style={{ background:V.surface, border:`1px solid ${V.border}`, borderRadius:12, padding:18 }}>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
+            <button style={{ background:'none', border:`1px solid ${V.border}`, color:V.muted2, width:26, height:26, borderRadius:6, cursor:'pointer', fontSize:12, display:'flex', alignItems:'center', justifyContent:'center' }}>‹</button>
+            <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:14, color:V.text }}>Março 2025</div>
+            <button style={{ background:'none', border:`1px solid ${V.border}`, color:V.muted2, width:26, height:26, borderRadius:6, cursor:'pointer', fontSize:12, display:'flex', alignItems:'center', justifyContent:'center' }}>›</button>
+          </div>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:2, marginBottom:4 }}>
+            {['D','S','T','Q','Q','S','S'].map((d,i)=><div key={i} style={{ fontSize:9, textAlign:'center', color:V.muted, textTransform:'uppercase', padding:'4px 0' }}>{d}</div>)}
+          </div>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:2 }}>
+            {cells.map((c,i) => (
+              <div key={i} style={{ aspectRatio:'1', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, borderRadius:6, cursor:'pointer', position:'relative', background: c.today ? V.accent : 'transparent', color: c.today ? 'white' : c.other ? '#d1d9f0' : V.text, fontWeight: c.today ? 700 : 400, transition:'all 0.15s' }}
+                onMouseEnter={e=>{if(!c.today)e.currentTarget.style.background=V.surface2;}}
+                onMouseLeave={e=>{if(!c.today)e.currentTarget.style.background='transparent';}}>
+                {c.day}
+                {c.event && !c.today && <span style={{ position:'absolute', bottom:3, left:'50%', transform:'translateX(-50%)', width:4, height:4, background:V.orange, borderRadius:'50%' }}/>}
+              </div>
+            ))}
+          </div>
+        </div>
+        <div style={{ marginTop:14, display:'flex', flexDirection:'column', gap:8 }}>
+          <button onClick={onModal} style={{ width:'100%', background:V.accent, border:'none', color:'white', padding:'9px', borderRadius:8, cursor:'pointer', fontSize:12, fontWeight:500 }}>+ Agendar Entrevista</button>
+          <button onClick={onModal} style={{ width:'100%', background:'none', border:`1px solid ${V.border}`, color:V.muted2, padding:'8px', borderRadius:8, cursor:'pointer', fontSize:12 }}>🔔 Definir Lembrete</button>
+        </div>
+      </div>
+      <div>
+        <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:14, marginBottom:14, color:V.text }}>Hoje — 5 de Março</div>
+        <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+          {EVENTS.map((ev,i) => {
+            const p = PILL[ev.tc] || PILL['pill-blue'];
+            return (
+              <div key={i} style={{ display:'flex', gap:14, background:V.surface, border:`1px solid ${V.border}`, borderRadius:10, padding:'14px 16px', alignItems:'center', animation:`fadeUp 0.4s ease ${i*0.07}s both`, transition:'all 0.2s' }}
+                onMouseEnter={e=>{e.currentTarget.style.borderColor='rgba(26,58,143,0.25)';}}
+                onMouseLeave={e=>{e.currentTarget.style.borderColor=V.border;}}>
+                <div style={{ fontFamily:"'Syne',sans-serif", fontSize:13, fontWeight:700, minWidth:50, color:V.accent }}>{ev.time}</div>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:13, fontWeight:500, marginBottom:3, color:V.text }}>{ev.title}</div>
+                  <div style={{ fontSize:11, color:V.muted }}>{ev.meta}</div>
+                </div>
+                <span style={{ padding:'4px 10px', borderRadius:6, fontSize:10, fontWeight:600, background:p.bg, color:p.color }}>{ev.tipo}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── PAINEL RELATÓRIOS ────────────────────────────────────────────
+function PanelReports() {
+  return (
+    <div>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:14, marginBottom:24 }}>
+        {[
+          { icon:'🏆', label:'Cargo mais difícil', value:'Dev Sênior', delta:'42d médio',    up:false, color:V.accent3 },
+          { icon:'💵', label:'Média Salarial Dev',  value:'R$12k',     delta:'8% mercado',   up:true,  color:V.accent2 },
+          { icon:'🚶', label:'Taxa Turnover',        value:'9%',        delta:'2pp abaixo',   up:false, color:V.red     },
+        ].map((k,i) => <KpiCard key={i} {...k} delay={0.05+i*0.05}/>)}
+      </div>
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:16 }}>
+        <Card title="Vagas por Dificuldade">
+          {[['Dev Sênior Backend',85,V.red,'Alta'],['Data Scientist',75,V.orange,'Média'],['UX Designer',55,V.orange,'Média'],['Product Manager',40,V.green,'Baixa'],['Analista de Suporte',25,V.green,'Baixa']].map(([l,p,c,t],i)=>(
+            <div key={i} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 0', borderBottom:`1px solid rgba(226,232,244,0.6)` }}>
+              <span style={{ fontSize:12 }}>{l}</span>
+              <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                <div style={{ width:120, height:4, background:V.border, borderRadius:2 }}><div style={{ width:`${p}%`, height:'100%', background:c, borderRadius:2 }}/></div>
+                <span style={{ fontFamily:"'Syne',sans-serif", fontSize:15, fontWeight:700, color:c }}>{t}</span>
+              </div>
+            </div>
+          ))}
+        </Card>
+        <Card title="Médias Salariais por Função">
+          {[['Dev Sênior','R$ 14.000'],['Data Scientist','R$ 12.500'],['Product Manager','R$ 11.000'],['UX Designer','R$ 8.500'],['Dev Pleno','R$ 9.000'],['Analista de Suporte','R$ 4.200']].map(([r,s],i)=>(
+            <div key={i} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 0', borderBottom:`1px solid rgba(226,232,244,0.6)` }}>
+              <span style={{ fontSize:12 }}>{r}</span>
+              <span style={{ fontFamily:"'Syne',sans-serif", fontSize:15, fontWeight:700, color:V.text }}>{s}</span>
+            </div>
+          ))}
+        </Card>
+      </div>
+      <Card title="Comparativo com Mercado" badge="Glassdoor · 2025" badgeColor="green">
+        <div style={{ display:'flex', alignItems:'flex-end', gap:8, height:160, paddingTop:10 }}>
+          {[['Dev Sr',80,75],['Data Sci',90,70],['PM',65,80],['UX',55,60],['Dev Pl',45,52]].map(([l,a,b],i)=>(
+            <div key={i} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:6, height:'100%', justifyContent:'flex-end' }}>
+              <div style={{ width:'100%', display:'flex', gap:3, alignItems:'flex-end', height:130 }}>
+                <div style={{ flex:1, height:`${a}%`, background:V.accent, borderRadius:'4px 4px 0 0' }}/>
+                <div style={{ flex:1, height:`${b}%`, background:V.accent3, opacity:0.7, borderRadius:'4px 4px 0 0' }}/>
+              </div>
+              <div style={{ fontSize:9, color:V.muted, textTransform:'uppercase' }}>{l}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{ display:'flex', gap:16, marginTop:12 }}>
+          {[['Nossa empresa',V.accent],['Média mercado',V.accent3]].map(([l,c])=>(
+            <div key={l} style={{ display:'flex', alignItems:'center', gap:6, fontSize:11, color:V.muted2 }}>
+              <div style={{ width:10, height:10, background:c, borderRadius:2 }}/>{l}
+            </div>
+          ))}
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+// ─── PAINEL HISTÓRICO ─────────────────────────────────────────────
+function PanelHistory() {
+  return (
+    <div>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14, marginBottom:24 }}>
+        {[
+          { icon:'📣', label:'Engajamento Top Vaga',  value:'Dev Sr',  delta:'148 apps',      up:true,  color:V.accent  },
+          { icon:'⚡', label:'Resp. Média Candidato', value:'2.4h',    delta:'Melhor do setor',up:true,  color:V.green   },
+          { icon:'⭐', label:'Reputação Employer',    value:'4.6',     delta:'+0.3 pts',       up:true,  color:V.orange  },
+          { icon:'🏃', label:'Taxa de Desistência',   value:'12%',     delta:'Meta: 10%',      up:false, color:V.red     },
+        ].map((k,i) => <KpiCard key={i} {...k} delay={0.05+i*0.05}/>)}
+      </div>
+      <Card title="Histórico de Vagas com Maior Engajamento">
+        <div style={{ overflowX:'auto' }}>
+          <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
+            <thead><tr>{['Vaga','Período','Apps','Contratados','Conversão','Tempo Médio','Reputação'].map(h=>(
+              <th key={h} style={{ padding:'10px 12px', textAlign:'left', color:V.muted, fontWeight:500, borderBottom:`1px solid ${V.border}`, fontSize:11, textTransform:'uppercase', letterSpacing:'0.04em' }}>{h}</th>
+            ))}</tr></thead>
+            <tbody>
               {[
-                { time:'09:00', title:'Triagem — Pedro Luz',       meta:'Dev Frontend · Video Call',  tipo:'Triagem',    color:CL.blue   },
-                { time:'11:30', title:'Entrevista — Ana Lima',     meta:'Dev Sênior · Presencial',    tipo:'Entrevista', color:CL.purple },
-                { time:'14:00', title:'Técnica — Juliana Rocha',   meta:'PM · Google Meet',           tipo:'Técnica',    color:CL.orange },
-                { time:'16:00', title:'Proposta — Rafael Souza',   meta:'Dev Backend · Telefone',     tipo:'Proposta',   color:CL.green  },
-                { time:'17:30', title:'Feedback — Giovanna Silva', meta:'Data Eng · Video Call',      tipo:'Feedback',   color:CL.cyan   },
-              ].map((ev,i)=>(
-                <div key={i} style={{ display:'flex', alignItems:'center', gap:16, padding:'14px 0', borderBottom:`1px solid ${CL.border}` }}>
-                  <div style={{ fontFamily:"'Sora',sans-serif", fontWeight:700, fontSize:15, color:CL.blue, minWidth:52 }}>{ev.time}</div>
-                  <div style={{ flex:1 }}>
-                    <div style={{ fontWeight:600, fontSize:13, color:CL.text }}>{ev.title}</div>
-                    <div style={{ fontSize:11, color:CL.muted, marginTop:2 }}>{ev.meta}</div>
-                  </div>
-                  <span style={{ padding:'4px 12px', borderRadius:8, fontSize:11, fontWeight:600, background:`${ev.color}15`, color:ev.color }}>{ev.tipo}</span>
-                </div>
+                ['Dev Sênior Backend','Jan–Fev 2025',148,3,'pill-orange','2%','38d','★★★★☆'],
+                ['UX Designer Pleno', 'Fev 2025',    92, 2,'pill-blue',  '2.2%','22d','★★★★★'],
+                ['Product Manager',   'Dez–Jan 2025',67, 1,'pill-green', '1.5%','18d','★★★★☆'],
+                ['Data Analyst Jr',   'Jan 2025',    203,5,'pill-green', '2.5%','15d','★★★★★'],
+                ['Dev Frontend React','Dez 2024',    119,2,'pill-orange','1.7%','27d','★★★★☆'],
+              ].map(([v,p,a,c,pc,cv,t,r],i) => (
+                <tr key={i} style={{ borderBottom:`1px solid rgba(226,232,244,0.5)`, transition:'background 0.15s' }}
+                  onMouseEnter={e=>{e.currentTarget.style.background='rgba(26,58,143,0.03)';}}
+                  onMouseLeave={e=>{e.currentTarget.style.background='';}}>
+                  <td style={{ padding:'12px 12px', fontWeight:500 }}>{v}</td>
+                  <td style={{ padding:'12px 12px', color:V.muted }}>{p}</td>
+                  <td style={{ padding:'12px 12px' }}>{a}</td>
+                  <td style={{ padding:'12px 12px' }}>{c}</td>
+                  <td style={{ padding:'12px 12px' }}><Pill cls={pc}>{cv}</Pill></td>
+                  <td style={{ padding:'12px 12px' }}>{t}</td>
+                  <td style={{ padding:'12px 12px', color:V.orange }}>{r}</td>
+                </tr>
               ))}
-            </Card>
-          </div>
-        )}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+    </div>
+  );
+}
 
-        {/* RELATÓRIOS */}
-        {tab==='relatorios' && <>
-          <div style={{ display:'flex', gap:14, marginBottom:20, flexWrap:'wrap' }}>
-            {[['🏆','Cargo Mais Difícil','Dev Sênior','42d médio',CL.purple],['💵','Média Salarial Dev','R$ 12k','+8% mercado',CL.blue],['⭐','Reputação Employer','4.6/5','+0.3 pts',CL.orange],['🚶','Taxa Turnover','9%','Meta: 10%',CL.green]].map(([ic,l,v,s,c],i)=>(
-              <div key={i} style={{ flex:1, minWidth:150, background:CL.surface, border:`1px solid ${CL.border}`, borderRadius:14, padding:'18px 20px' }}>
-                <div style={{ fontSize:24, marginBottom:8 }}>{ic}</div>
-                <div style={{ fontSize:11, color:CL.muted, marginBottom:4, textTransform:'uppercase', letterSpacing:'0.04em' }}>{l}</div>
-                <div style={{ fontFamily:"'Sora',sans-serif", fontSize:22, fontWeight:800, color:c }}>{v}</div>
-                <div style={{ fontSize:11, color:CL.green, marginTop:4 }}>▲ {s}</div>
-              </div>
-            ))}
-          </div>
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
-            <Card title="Dificuldade por Cargo">
-              {[['Dev Sênior Backend',85,CL.red],['Data Scientist',75,CL.orange],['UX Designer',55,CL.orange],['Product Manager',40,CL.green],['Analista Suporte',25,CL.green]].map(([l,p,c],i)=>(
-                <div key={i} style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 0', borderBottom:`1px solid ${CL.border}` }}>
-                  <span style={{ fontSize:12, flex:1 }}>{l}</span>
-                  <div style={{ width:120, height:5, background:CL.border, borderRadius:3 }}><div style={{ width:`${p}%`, height:'100%', background:c, borderRadius:3 }}/></div>
-                  <span style={{ fontSize:11, fontWeight:700, color:c, minWidth:32 }}>{p}%</span>
-                </div>
-              ))}
-            </Card>
-            <Card title="Médias Salariais">
-              {[['Dev Sênior','R$ 14.000'],['Data Scientist','R$ 12.500'],['Product Manager','R$ 11.000'],['UX Designer','R$ 8.500'],['Dev Pleno','R$ 9.000'],['Analista Suporte','R$ 4.200']].map(([r,s],i)=>(
-                <div key={i} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'11px 0', borderBottom:`1px solid ${CL.border}` }}>
-                  <span style={{ fontSize:13 }}>{r}</span>
-                  <span style={{ fontFamily:"'Sora',sans-serif", fontWeight:700, fontSize:15, color:CL.blue }}>{s}</span>
-                </div>
-              ))}
-            </Card>
-          </div>
-        </>}
+// ─── NAV ICONS ────────────────────────────────────────────────────
+const ICONS = {
+  overview: <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1" strokeWidth="1.5"/><rect x="14" y="3" width="7" height="7" rx="1" strokeWidth="1.5"/><rect x="3" y="14" width="7" height="7" rx="1" strokeWidth="1.5"/><rect x="14" y="14" width="7" height="7" rx="1" strokeWidth="1.5"/></svg>,
+  funnel:   <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 4h18l-7 8v7l-4-2V12L3 4z" strokeWidth="1.5"/></svg>,
+  talent:   <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" strokeWidth="1.5"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" strokeWidth="1.5"/></svg>,
+  ai:       <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" strokeWidth="1.5"/><path d="M9 12l2 2 4-4" strokeWidth="1.5"/></svg>,
+  agenda:   <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" strokeWidth="1.5"/><path d="M3 9h18M8 2v4M16 2v4" strokeWidth="1.5"/></svg>,
+  reports:  <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" strokeWidth="1.5"/></svg>,
+  history:  <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" strokeWidth="1.5"/></svg>,
+};
+const TABS = [
+  { id:'overview', label:'Visão Geral'       },
+  { id:'funnel',   label:'Funil CRM'         },
+  { id:'talent',   label:'Banco de Talentos' },
+  { id:'ai',       label:'Ranking IA'        },
+  { id:'agenda',   label:'Agenda'            },
+  { id:'reports',  label:'Relatórios'        },
+  { id:'history',  label:'Histórico'         },
+];
+const PAGE_TITLES = {
+  overview:'Visão Geral Executiva', funnel:'Funil de Recrutamento — CRM',
+  talent:'Banco de Talentos', ai:'Ranking Inteligente com IA',
+  agenda:'Agenda & Lembretes', reports:'Relatórios Estratégicos', history:'Histórico de Performance',
+};
 
-        {/* HISTÓRICO */}
-        {tab==='historico' && <>
-          <div style={{ display:'flex', gap:14, marginBottom:20, flexWrap:'wrap' }}>
-            {[['📣','Top Vaga Engajamento','Dev Sênior','148 apps',CL.blue],['⚡','Resp. Média Candidato','2.4h','Melhor do setor',CL.green],['⭐','Reputação Employer','4.6','+0.3 pts',CL.orange],['🏃','Taxa de Desistência','12%','Meta: 10%',CL.red]].map(([ic,l,v,s,c],i)=>(
-              <div key={i} style={{ flex:1, minWidth:150, background:CL.surface, border:`1px solid ${CL.border}`, borderRadius:14, padding:'18px 20px' }}>
-                <div style={{ fontSize:24, marginBottom:8 }}>{ic}</div>
-                <div style={{ fontSize:11, color:CL.muted, marginBottom:4, textTransform:'uppercase', letterSpacing:'0.04em' }}>{l}</div>
-                <div style={{ fontFamily:"'Sora',sans-serif", fontSize:22, fontWeight:800, color:c }}>{v}</div>
-                <div style={{ fontSize:11, color:CL.green, marginTop:4 }}>▲ {s}</div>
-              </div>
-            ))}
+// ─── COMPONENTE PRINCIPAL ─────────────────────────────────────────
+export default function EmpresaDashboard() {
+  const { user, logout } = useAuth();
+  const [tab, setTab]       = useState('overview');
+  const [modal, setModal]   = useState(false);
+  const [kpis, setKpis]     = useState([]);
+  const [candidates, setCandidates] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const sidebarRef = useRef(null);
+
+  // Fetch dados reais da API
+  useEffect(() => {
+    const fetchData = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) { setLoading(false); return; }
+      try {
+        const BASE = process.env.REACT_APP_API_URL || 'https://conectalagoa.onrender.com/api';
+        const get = async (path) => {
+          const res = await fetch(`${BASE}${path}`, { headers: { 'Authorization':`Bearer ${token}` } });
+          if (!res.ok) return null;
+          return res.json();
+        };
+        const [resumo, cands] = await Promise.all([
+          get('/dashboard/resumo'),
+          get('/dashboard/candidatos-recentes'),
+        ]);
+        const r = resumo?.data || resumo || {};
+        setKpis([
+          { icon:'📊', label:'Vagas Ativas',        value: r.vagas_ativas,           delta:`${r.vagas_semana||0} este mês`,     deltaUp:true,  color:V.accent  },
+          { icon:'👥', label:'Candidatos',           value: r.candidaturas,           delta:`${r.candidaturas_hoje||0}% vs mês ant.`, deltaUp:true, color:V.accent2 },
+          { icon:'🎯', label:'Taxa de Conversão',    value:`${r.taxa_conversao||18}%`,delta:`${r.taxa_variacao||3}pp`,          deltaUp:true,  color:V.green   },
+          { icon:'⏱',  label:'Tempo p/ Contratar',  value:`${r.tempo_medio||23}d`,   delta:'5d vs ant.',                       deltaUp:false, color:V.orange  },
+          { icon:'💰', label:'Custo / Contratação',  value:`R$${r.custo_medio||'1.8k'}`, delta:'R$200',                        deltaUp:false, color:V.accent3 },
+          { icon:'📈', label:'Contratações/Mês',     value: r.contratacoes || 11,     delta:`${r.contratacoes_mes||2} vs ant.`, deltaUp:true,  color:V.green   },
+        ]);
+        const c = cands?.data || cands || [];
+        if (c.length > 0) setCandidates(c);
+      } catch(e) { console.error(e); }
+      finally { setLoading(false); }
+    };
+    fetchData();
+  }, []);
+
+  const initials = user?.nome?.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase() || 'CL';
+
+  return (
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
+        @keyframes fadeUp { from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);} }
+        * { box-sizing:border-box; margin:0; padding:0; }
+        .cl-sidebar { position:fixed;left:0;top:64px;bottom:0;width:64px;background:${V.surface};border-right:1px solid ${V.border};display:flex;flex-direction:column;align-items:center;padding:20px 0;gap:8px;z-index:90;transition:width 0.3s cubic-bezier(.4,0,.2,1);overflow:hidden; }
+        .cl-sidebar:hover { width:200px; }
+        .cl-nav-item { width:100%;display:flex;align-items:center;gap:12px;padding:10px 14px;cursor:pointer;transition:all 0.2s;color:${V.muted};font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;position:relative;border:none;background:none;font-family:'DM Sans',sans-serif; }
+        .cl-nav-item:hover { background:${V.surface2};color:${V.text}; }
+        .cl-nav-item.active { color:${V.accent}; }
+        .cl-nav-item.active::before { content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:${V.accent};border-radius:0 2px 2px 0; }
+        .cl-nav-label { opacity:0;transition:opacity 0.2s;font-family:'DM Sans',sans-serif; }
+        .cl-sidebar:hover .cl-nav-label { opacity:1; }
+        .cl-tab { padding:10px 20px;font-size:13px;font-weight:500;color:${V.muted};cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;white-space:nowrap;background:none;border-left:none;border-right:none;border-top:none;font-family:'DM Sans',sans-serif; }
+        .cl-tab:hover { color:${V.text}; }
+        .cl-tab.active { color:${V.accent};border-bottom-color:${V.accent}; }
+        ::-webkit-scrollbar{width:6px;height:6px} ::-webkit-scrollbar-track{background:transparent} ::-webkit-scrollbar-thumb{background:${V.border};border-radius:3px}
+      `}</style>
+
+      {/* ── SIDEBAR ── */}
+      <nav className="cl-sidebar">
+        {TABS.map(t => (
+          <button key={t.id} onClick={()=>setTab(t.id)} className={`cl-nav-item${tab===t.id?' active':''}`}>
+            <span style={{ width:20, height:20, flexShrink:0, display:'flex', alignItems:'center' }}>{ICONS[t.id]}</span>
+            <span className="cl-nav-label">{t.label}</span>
+          </button>
+        ))}
+      </nav>
+
+      {/* ── MAIN ── */}
+      <div style={{ marginLeft:64, fontFamily:"'DM Sans',sans-serif", background:V.bg, minHeight:'calc(100vh - 64px)' }}>
+
+        {/* TOPBAR */}
+        <div style={{ position:'sticky', top:64, background:'rgba(244,246,251,0.95)', backdropFilter:'blur(16px)', borderBottom:`1px solid ${V.border}`, padding:'14px 32px', display:'flex', alignItems:'center', justifyContent:'space-between', zIndex:50 }}>
+          <div>
+            <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:17, color:V.text }}>{PAGE_TITLES[tab]}</div>
+            <div style={{ fontSize:12, color:V.muted }}>Atualizado agora · Março 2025</div>
           </div>
-          <Card title="Histórico de Vagas — Engajamento">
-            <div style={{ overflowX:'auto' }}>
-              <table style={{ width:'100%', borderCollapse:'collapse', fontSize:13 }}>
-                <thead><tr>{['Vaga','Período','Apps','Contratados','Conversão','Tempo Médio','Reputação'].map(h=><th key={h} style={{ padding:'10px 12px', textAlign:'left', fontSize:11, color:CL.muted, borderBottom:`1px solid ${CL.border}`, textTransform:'uppercase' }}>{h}</th>)}</tr></thead>
-                <tbody>
-                  {[['Dev Sênior Backend','Jan–Fev 2025',148,3,'2%','38d','★★★★☆',CL.orange],['UX Designer Pleno','Fev 2025',92,2,'2.2%','22d','★★★★★',CL.green],['Product Manager','Dez–Jan 2025',67,1,'1.5%','18d','★★★★☆',CL.blue],['Data Analyst Jr','Jan 2025',203,5,'2.5%','15d','★★★★★',CL.green],['Dev Frontend React','Dez 2024',119,2,'1.7%','27d','★★★★☆',CL.orange]].map(([v,p,a,c,cv,t,r,col],i)=>(
-                    <tr key={i} className="cl-tr" style={{ borderBottom:`1px solid ${CL.border}` }}>
-                      <td style={{ padding:'13px 12px', fontWeight:600 }}>{v}</td>
-                      <td style={{ padding:'13px 12px', color:CL.muted }}>{p}</td>
-                      <td style={{ padding:'13px 12px' }}>{a}</td>
-                      <td style={{ padding:'13px 12px' }}>{c}</td>
-                      <td style={{ padding:'13px 12px' }}><span style={{ padding:'3px 10px', borderRadius:20, fontSize:11, fontWeight:600, background:`${col}15`, color:col }}>{cv}</span></td>
-                      <td style={{ padding:'13px 12px' }}>{t}</td>
-                      <td style={{ padding:'13px 12px', color:CL.orange }}>{r}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+            <button onClick={()=>setModal(true)} style={{ background:'none', border:`1px solid ${V.border}`, color:V.muted2, padding:'7px 16px', borderRadius:8, cursor:'pointer', fontSize:12, fontFamily:"'DM Sans',sans-serif", transition:'all 0.2s' }}
+              onMouseEnter={e=>{e.currentTarget.style.borderColor=V.accent;e.currentTarget.style.color=V.accent;}}
+              onMouseLeave={e=>{e.currentTarget.style.borderColor=V.border;e.currentTarget.style.color=V.muted2;}}>
+              🔔 Lembrete
+            </button>
+            <button onClick={()=>setModal(true)} style={{ background:V.accent, border:'none', color:'white', padding:'8px 16px', borderRadius:8, cursor:'pointer', fontSize:12, fontWeight:500, fontFamily:"'DM Sans',sans-serif", transition:'all 0.2s' }}
+              onMouseEnter={e=>{e.currentTarget.style.background='#0f2460';e.currentTarget.style.transform='translateY(-1px)';}}
+              onMouseLeave={e=>{e.currentTarget.style.background=V.accent;e.currentTarget.style.transform='';}}>
+              + Nova Vaga
+            </button>
+            <div style={{ position:'relative' }}>
+              <div style={{ width:32, height:32, background:`linear-gradient(135deg,${V.accent3},${V.accent})`, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, fontWeight:600, color:'white', cursor:'pointer' }}>{initials}</div>
+              <div style={{ position:'absolute', top:-4, right:-4, width:16, height:16, background:V.red, borderRadius:'50%', fontSize:9, fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center', border:`2px solid ${V.bg}`, color:'white' }}>3</div>
             </div>
-          </Card>
-        </>}
+          </div>
+        </div>
 
+        {/* TABS */}
+        <div style={{ display:'flex', gap:4, padding:'20px 32px 0', borderBottom:`1px solid ${V.border}`, background:V.bg, overflowX:'auto' }}>
+          {TABS.map(t => (
+            <button key={t.id} onClick={()=>setTab(t.id)} className={`cl-tab${tab===t.id?' active':''}`}>{t.label}</button>
+          ))}
+        </div>
+
+        {/* CONTENT */}
+        <div style={{ padding:'28px 32px' }}>
+          {loading ? (
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:300, flexDirection:'column', gap:16 }}>
+              <div style={{ width:36, height:36, border:`3px solid ${V.border}`, borderTop:`3px solid ${V.accent}`, borderRadius:'50%', animation:'clSpin 0.8s linear infinite' }}/>
+              <style>{`@keyframes clSpin{to{transform:rotate(360deg);}}`}</style>
+              <p style={{ color:V.muted, fontSize:14 }}>Carregando dados...</p>
+            </div>
+          ) : (
+            <>
+              {tab==='overview' && <PanelOverview kpis={kpis} candidates={candidates} onModal={()=>setModal(true)}/>}
+              {tab==='funnel'   && <PanelFunil onModal={()=>setModal(true)}/>}
+              {tab==='talent'   && <PanelTalent/>}
+              {tab==='ai'       && <PanelAI onModal={()=>setModal(true)}/>}
+              {tab==='agenda'   && <PanelAgenda onModal={()=>setModal(true)}/>}
+              {tab==='reports'  && <PanelReports/>}
+              {tab==='history'  && <PanelHistory/>}
+            </>
+          )}
+        </div>
       </div>
 
-      {modal && <ModalAgenda onClose={()=>setModal(false)}/>}
-    </div>
+      <Modal open={modal} onClose={()=>setModal(false)}/>
+    </>
   );
 }
