@@ -1,9 +1,8 @@
 // EmpresaDashboard.js — Dashboard completo Conecta Lagoa
 // Rota: /empresa/dashboard (protegida por PrivateRoute no App.js)
 // Usa o Header e Footer globais do site — NÃO tem sidebar própria
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { dashboardService } from '../api/dashboard-api';
 import { useAuth } from '../context/AuthContext';
 
 const CL = {
@@ -172,32 +171,49 @@ export default function EmpresaDashboard() {
   const [error, setError]     = useState(null);
   const [modal, setModal]     = useState(false);
 
-  const fetchData = useCallback(async () => {
+  const fetchData = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) { setError('Sessão expirada.'); setLoading(false); return; }
+    setLoading(true); setError(null);
     try {
-      setLoading(true); setError(null);
-      const raw = await dashboardService.carregarDadosCompletos();
-      const r = raw.resumo?.data || raw.resumo || {};
-      const g = raw.grafico?.data || raw.grafico || [];
-      const a = raw.areas?.data || raw.areas || [];
-      const v = raw.vagasMes?.data || raw.vagasMes || [];
-      const c = raw.candidatosRecentes?.data || raw.candidatosRecentes || [];
-      setKpis([
-        { icon:'💼', label:'Vagas Ativas',      value:r.vagas_ativas,         delta:`${r.vagas_semana||0} esta semana`,    color:CL.blue   },
-        { icon:'📋', label:'Candidaturas',      value:r.candidaturas,         delta:`${r.candidaturas_hoje||0} hoje`,      color:CL.orange },
-        { icon:'✅', label:'Contratações',      value:r.contratacoes,         delta:`${r.contratacoes_mes||0} este mês`,   color:CL.green  },
-        { icon:'📈', label:'Taxa Conversão',    value:`${r.taxa_conversao}%`, delta:`${r.taxa_variacao>=0?'+':''}${r.taxa_variacao}% vs mês ant.`, color:CL.purple },
-        { icon:'⏱',  label:'Tempo p/ Contratar',value:`${r.tempo_medio||23}d`,delta:'-5d vs anterior',                    color:CL.cyan   },
-        { icon:'💰', label:'Custo/Contratação', value:`R$${r.custo_medio||'1.8k'}`, delta:'-R$200 vs anterior',           color:'#f59e0b' },
+      const BASE = process.env.REACT_APP_API_URL || 'https://conectalagoa.onrender.com/api';
+      const get = async (path) => {
+        const res = await fetch(`${BASE}${path}`, {
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        });
+        if (!res.ok) throw new Error(`Erro ${res.status}`);
+        return res.json();
+      };
+      const [rRes, gRes, aRes, vRes, cRes] = await Promise.all([
+        get('/dashboard/resumo'),
+        get('/dashboard/grafico-candidaturas'),
+        get('/dashboard/vagas-por-area'),
+        get('/dashboard/vagas-por-mes'),
+        get('/dashboard/candidatos-recentes'),
       ]);
-      setAppData(g.map(x=>({ mes:x.mes, Candidaturas:x.candidaturas, Contratações:x.contratacoes })));
-      setAreaData(v.map(x=>({ mes:x.mes, Vagas:x.total })));
-      setAreaDist(a.map(x=>({ name:x.area, value:x.percentual, color:getAreaColor(x.area) })));
-      setCands(c.map(x=>({ ...x, avatar:x.nome?.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase() })));
-    } catch(e) { setError(e.message); }
+      const r = rRes?.data || rRes || {};
+      const g = gRes?.data || gRes || [];
+      const a = aRes?.data || aRes || [];
+      const v = vRes?.data || vRes || [];
+      const c = cRes?.data || cRes || [];
+      setKpis([
+        { icon:'💼', label:'Vagas Ativas',       value: r.vagas_ativas,          delta:`${r.vagas_semana||0} esta semana`,                                        color:CL.blue   },
+        { icon:'📋', label:'Candidaturas',       value: r.candidaturas,          delta:`${r.candidaturas_hoje||0} hoje`,                                          color:CL.orange },
+        { icon:'✅', label:'Contratações',       value: r.contratacoes,          delta:`${r.contratacoes_mes||0} este mês`,                                       color:CL.green  },
+        { icon:'📈', label:'Taxa Conversão',     value:`${r.taxa_conversao||0}%`,delta:`${r.taxa_variacao>=0?'+':''}${r.taxa_variacao||0}% vs mês ant.`,         color:CL.purple },
+        { icon:'⏱',  label:'Tempo p/ Contratar', value:`${r.tempo_medio||23}d`,  delta:'-5d vs anterior',                                                        color:CL.cyan   },
+        { icon:'💰', label:'Custo/Contratação',  value:`R$${r.custo_medio||'1.8k'}`, delta:'-R$200 vs anterior',                                                 color:'#f59e0b' },
+      ]);
+      setAppData(g.map(x => ({ mes:x.mes, Candidaturas:x.candidaturas, Contratações:x.contratacoes })));
+      setAreaData(v.map(x => ({ mes:x.mes, Vagas:x.total })));
+      setAreaDist(a.map(x => ({ name:x.area, value:x.percentual, color:getAreaColor(x.area) })));
+      setCands(c.map(x => ({ ...x, avatar: x.nome?.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase() })));
+    } catch(e) { console.error('Dashboard:', e.message); setError(e.message); }
     finally { setLoading(false); }
-  }, []);
+  };
 
-  useEffect(() => { fetchData(); const t=setInterval(fetchData,120000); return ()=>clearInterval(t); }, [fetchData]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchData(); }, []);
 
   if (loading) return (
     <div style={{ minHeight:'60vh', display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column', gap:16, background:CL.bg }}>
