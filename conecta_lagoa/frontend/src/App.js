@@ -57,8 +57,8 @@ function AppContent() {
           <Routes>
             {/* Rotas Públicas */}
 <Route path="/" element={<Home />} />
-<Route path="/vagas" element={<Vagas />} />
-<Route path="/login" element={<Login />} />
+<Route path="/vagas" element={<Vagas/>} />
+<Route path="/login" element={<Login/>} />
 <Route path="/registro" element={<Registro />} />
 <Route path="/esqueceu-senha" element={<EsqueceuSenha />} />
 <Route path="/redefinir-senha" element={<RedefinirSenha />} />

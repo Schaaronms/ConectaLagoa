@@ -4,7 +4,6 @@
 // API real via fetch com token JWT do localStorage
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import PanelFunil from './PanelFunil';
 
 // ─── PALETA ────────────────────────────────────────────────────────
 const V = {
@@ -254,90 +253,169 @@ function Modal({ open, onClose }) {
   );
 }
 
-// FIX #4 — Modal de Nova Vaga separado do Modal de Agendamento
+// MODAL NOVA VAGA — campos alinhados com Vagas.jsx (local, modelo, tipo, pcd)
 function ModalNovaVaga({ open, onClose, onSaved }) {
-  const [form, setForm]   = useState({ titulo:'', area:'Tecnologia', cidade:'', salario:'', prazo:'', descricao:'' });
+  const EMPTY = {
+    titulo:'', area:'Tecnologia', cidade:'', salario:'', prazo:'', descricao:'',
+    // Campos que Vagas.jsx usa nos filtros:
+    local:'',           // ex: "Presencial", "Remoto", "Lagoa da Prata"
+    modelo:'Presencial',// Filtro "modelo" em Vagas.jsx
+    tipo_contrato:'CLT',// Filtro "tipo" em Vagas.jsx — CLT, PJ, Estágio, Freelance
+    pcd: false,         // Filtro pcd
+    ativo: true,        // CRÍTICO: sem isso a vaga não aparece na listagem pública
+  };
+  const [form, setForm]   = useState(EMPTY);
   const [saving, setSaving] = useState(false);
   const [toast, setToast]   = useState('');
+  const [toastOk, setToastOk] = useState(true);
 
-  const set = (key) => (e) => setForm(prev => ({ ...prev, [key]: e.target.value }));
+  const set    = (key) => (e) => setForm(prev => ({ ...prev, [key]: e.target.value }));
+  const setBool = (key) => (e) => setForm(prev => ({ ...prev, [key]: e.target.checked }));
+
+  const showToast = (msg, ok=true) => {
+    setToast(msg); setToastOk(ok);
+    setTimeout(() => setToast(''), ok ? 1800 : 3000);
+  };
 
   const handleSalvar = async () => {
-    if (!form.titulo.trim()) { setToast('Informe o título da vaga'); setTimeout(()=>setToast(''),2000); return; }
+    if (!form.titulo.trim()) { showToast('Informe o título da vaga', false); return; }
+    if (!form.cidade.trim()) { showToast('Informe a cidade', false); return; }
     setSaving(true);
     try {
       const token = localStorage.getItem('token');
       const BASE  = process.env.REACT_APP_API_URL || 'https://conectalagoa.onrender.com/api';
-      const res   = await fetch(`${BASE}/vagas`, {
+
+      // Envia todos os campos que o backend precisa salvar e que Vagas.jsx filtra
+      const payload = {
+        ...form,
+        // Garante que local = cidade se não preenchido separadamente
+        local: form.local || form.cidade,
+        ativo: true,  // força ativo para aparecer na listagem pública imediatamente
+      };
+
+      const res = await fetch(`${BASE}/vagas`, {
         method:  'POST',
         headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${token}` },
-        body:    JSON.stringify(form),
+        body:    JSON.stringify(payload),
       });
+
       if (res.ok) {
-        setToast('Vaga criada com sucesso! ✓');
-        onSaved && onSaved();
-        setTimeout(() => { setToast(''); onClose(); setForm({ titulo:'', area:'Tecnologia', cidade:'', salario:'', prazo:'', descricao:'' }); }, 1500);
+        const criada = await res.json();
+        showToast(`Vaga "${form.titulo}" publicada! ✓`);
+        onSaved && onSaved(criada); // passa a vaga criada para o pai atualizar KPIs
+        setTimeout(() => { onClose(); setForm(EMPTY); }, 1600);
       } else {
-        setToast('Erro ao criar vaga. Tente novamente.');
-        setTimeout(() => setToast(''), 2500);
+        const err = await res.json().catch(()=>({}));
+        showToast(err.error || err.message || 'Erro ao criar vaga. Tente novamente.', false);
       }
     } catch {
-      setToast('Sem conexão — tente novamente');
-      setTimeout(() => setToast(''), 2500);
+      showToast('Sem conexão — tente novamente', false);
     } finally {
       setSaving(false);
     }
   };
 
   if (!open) return null;
+
+  const inputStyle = { width:'100%', background:V.surface2, border:`1px solid ${V.border}`, borderRadius:8, padding:'10px 12px', color:V.text, fontSize:13, outline:'none', fontFamily:"'DM Sans',sans-serif" };
+  const labelStyle = { fontSize:11, color:V.muted, textTransform:'uppercase', letterSpacing:'0.05em', display:'block', marginBottom:6 };
+
   return (
-    <div onClick={e=>{if(e.target===e.currentTarget)onClose();}} style={{ position:'fixed', inset:0, background:'rgba(26,58,143,0.35)', backdropFilter:'blur(6px)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center' }}>
-      <div style={{ background:V.surface, border:`1px solid ${V.border}`, borderRadius:16, padding:28, width:460, maxWidth:'95vw', animation:'fadeUp 0.3s ease', position:'relative' }}>
+    <div onClick={e=>{if(e.target===e.currentTarget)onClose();}}
+      style={{ position:'fixed', inset:0, background:'rgba(26,58,143,0.35)', backdropFilter:'blur(6px)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center', padding:'16px' }}>
+      <div style={{ background:V.surface, border:`1px solid ${V.border}`, borderRadius:16, padding:28, width:500, maxWidth:'100%', maxHeight:'90vh', overflowY:'auto', animation:'fadeUp 0.3s ease', position:'relative' }}>
+
         {toast && (
-          <div style={{ position:'absolute', top:16, left:'50%', transform:'translateX(-50%)', background:V.accent, color:'white', padding:'6px 18px', borderRadius:20, fontSize:12, fontWeight:500, whiteSpace:'nowrap', zIndex:10 }}>
+          <div style={{ position:'absolute', top:16, left:'50%', transform:'translateX(-50%)', background: toastOk ? V.accent : V.red, color:'white', padding:'6px 18px', borderRadius:20, fontSize:12, fontWeight:500, whiteSpace:'nowrap', zIndex:10 }}>
             {toast}
           </div>
         )}
-        <div style={{ fontFamily:"'Syne',sans-serif", fontSize:18, fontWeight:700, marginBottom:6, color:V.text }}>Nova Vaga</div>
-        <div style={{ fontSize:12, color:V.muted, marginBottom:20 }}>Preencha os dados e publique imediatamente</div>
 
+        <div style={{ fontFamily:"'Syne',sans-serif", fontSize:18, fontWeight:700, marginBottom:4, color:V.text }}>Nova Vaga</div>
+        <div style={{ fontSize:12, color:V.muted, marginBottom:22 }}>Preencha os dados e publique imediatamente</div>
+
+        {/* Título */}
         <div style={{ marginBottom:14 }}>
-          <label style={{ fontSize:11, color:V.muted, textTransform:'uppercase', letterSpacing:'0.05em', display:'block', marginBottom:6 }}>Título da Vaga *</label>
-          <input value={form.titulo} onChange={set('titulo')} placeholder="ex: Dev Frontend React" style={{ width:'100%', background:V.surface2, border:`1px solid ${V.border}`, borderRadius:8, padding:'10px 12px', color:V.text, fontSize:13, outline:'none' }}/>
+          <label style={labelStyle}>Título da Vaga *</label>
+          <input value={form.titulo} onChange={set('titulo')} placeholder="ex: Dev Frontend React"
+            style={inputStyle}
+            onFocus={e=>e.target.style.borderColor=V.accent} onBlur={e=>e.target.style.borderColor=V.border}/>
         </div>
 
+        {/* Área + Tipo de contrato */}
         <div style={{ display:'flex', gap:10, marginBottom:14 }}>
           <div style={{ flex:1 }}>
-            <label style={{ fontSize:11, color:V.muted, textTransform:'uppercase', display:'block', marginBottom:6 }}>Área</label>
-            <select value={form.area} onChange={set('area')} style={{ width:'100%', background:V.surface2, border:`1px solid ${V.border}`, borderRadius:8, padding:'10px 12px', color:V.text, fontSize:13, outline:'none' }}>
-              {['Tecnologia','Design','Produto','Data','Marketing','Operações'].map(a=><option key={a}>{a}</option>)}
+            <label style={labelStyle}>Área</label>
+            <select value={form.area} onChange={set('area')} style={inputStyle}>
+              {['Tecnologia','Design','Produto','Data','Marketing','Operações','Saúde','Educação','Outros'].map(a=><option key={a}>{a}</option>)}
             </select>
           </div>
           <div style={{ flex:1 }}>
-            <label style={{ fontSize:11, color:V.muted, textTransform:'uppercase', display:'block', marginBottom:6 }}>Cidade</label>
-            <input value={form.cidade} onChange={set('cidade')} placeholder="São Paulo, SP" style={{ width:'100%', background:V.surface2, border:`1px solid ${V.border}`, borderRadius:8, padding:'10px 12px', color:V.text, fontSize:13, outline:'none' }}/>
+            {/* tipo_contrato é o "tipo" que Vagas.jsx filtra (CLT / PJ / Estágio / Freelance) */}
+            <label style={labelStyle}>Tipo de contrato</label>
+            <select value={form.tipo_contrato} onChange={set('tipo_contrato')} style={inputStyle}>
+              {['CLT','PJ','Estágio','Freelance','Temporário'].map(t=><option key={t}>{t}</option>)}
+            </select>
           </div>
         </div>
 
+        {/* Cidade + Modelo de trabalho */}
         <div style={{ display:'flex', gap:10, marginBottom:14 }}>
           <div style={{ flex:1 }}>
-            <label style={{ fontSize:11, color:V.muted, textTransform:'uppercase', display:'block', marginBottom:6 }}>Salário</label>
-            <input value={form.salario} onChange={set('salario')} placeholder="R$ 8.000 – 12.000" style={{ width:'100%', background:V.surface2, border:`1px solid ${V.border}`, borderRadius:8, padding:'10px 12px', color:V.text, fontSize:13, outline:'none' }}/>
+            <label style={labelStyle}>Cidade *</label>
+            <input value={form.cidade} onChange={set('cidade')} placeholder="Lagoa da Prata, MG"
+              style={inputStyle}
+              onFocus={e=>e.target.style.borderColor=V.accent} onBlur={e=>e.target.style.borderColor=V.border}/>
           </div>
           <div style={{ flex:1 }}>
-            <label style={{ fontSize:11, color:V.muted, textTransform:'uppercase', display:'block', marginBottom:6 }}>Prazo de inscrição</label>
-            <input type="date" value={form.prazo} onChange={set('prazo')} style={{ width:'100%', background:V.surface2, border:`1px solid ${V.border}`, borderRadius:8, padding:'10px 12px', color:V.text, fontSize:13, outline:'none' }}/>
+            {/* modelo é o filtro "modelo" de Vagas.jsx */}
+            <label style={labelStyle}>Modelo de trabalho</label>
+            <select value={form.modelo} onChange={set('modelo')} style={inputStyle}>
+              {['Presencial','Híbrido','Remoto'].map(m=><option key={m}>{m}</option>)}
+            </select>
           </div>
         </div>
 
-        <div style={{ marginBottom:14 }}>
-          <label style={{ fontSize:11, color:V.muted, textTransform:'uppercase', letterSpacing:'0.05em', display:'block', marginBottom:6 }}>Descrição</label>
-          <textarea value={form.descricao} onChange={set('descricao')} rows={3} placeholder="Responsabilidades, requisitos, benefícios..." style={{ width:'100%', background:V.surface2, border:`1px solid ${V.border}`, borderRadius:8, padding:'10px 12px', color:V.text, fontSize:13, outline:'none', resize:'vertical', fontFamily:"'DM Sans',sans-serif" }}/>
+        {/* Salário + Prazo */}
+        <div style={{ display:'flex', gap:10, marginBottom:14 }}>
+          <div style={{ flex:1 }}>
+            <label style={labelStyle}>Salário</label>
+            <input value={form.salario} onChange={set('salario')} placeholder="R$ 3.000 – 5.000"
+              style={inputStyle}
+              onFocus={e=>e.target.style.borderColor=V.accent} onBlur={e=>e.target.style.borderColor=V.border}/>
+          </div>
+          <div style={{ flex:1 }}>
+            <label style={labelStyle}>Prazo de inscrição</label>
+            <input type="date" value={form.prazo} onChange={set('prazo')} style={inputStyle}/>
+          </div>
         </div>
 
-        <div style={{ display:'flex', gap:10, marginTop:20, justifyContent:'flex-end' }}>
-          <button onClick={onClose} style={{ background:'none', border:`1px solid ${V.border}`, color:V.muted2, padding:'7px 16px', borderRadius:8, cursor:'pointer', fontSize:12 }}>Cancelar</button>
-          <button onClick={handleSalvar} disabled={saving} style={{ background: saving ? V.muted2 : V.accent, border:'none', color:'white', padding:'8px 20px', borderRadius:8, cursor: saving ? 'default' : 'pointer', fontSize:12, fontWeight:500 }}>
+        {/* Descrição */}
+        <div style={{ marginBottom:14 }}>
+          <label style={labelStyle}>Descrição</label>
+          <textarea value={form.descricao} onChange={set('descricao')} rows={3}
+            placeholder="Responsabilidades, requisitos, benefícios..."
+            style={{ ...inputStyle, resize:'vertical' }}
+            onFocus={e=>e.target.style.borderColor=V.accent} onBlur={e=>e.target.style.borderColor=V.border}/>
+        </div>
+
+        {/* PCD */}
+        <div style={{ marginBottom:20, display:'flex', alignItems:'center', gap:10 }}>
+          <input type="checkbox" id="pcd" checked={form.pcd} onChange={setBool('pcd')}
+            style={{ width:16, height:16, accentColor:V.accent, cursor:'pointer' }}/>
+          <label htmlFor="pcd" style={{ fontSize:13, color:V.text, cursor:'pointer' }}>
+            Vaga destinada a Pessoa com Deficiência (PCD)
+          </label>
+        </div>
+
+        <div style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>
+          <button onClick={onClose} style={{ background:'none', border:`1px solid ${V.border}`, color:V.muted2, padding:'8px 18px', borderRadius:8, cursor:'pointer', fontSize:12 }}>
+            Cancelar
+          </button>
+          <button onClick={handleSalvar} disabled={saving}
+            style={{ background: saving ? V.muted2 : V.accent, border:'none', color:'white', padding:'9px 22px', borderRadius:8, cursor: saving ? 'default' : 'pointer', fontSize:13, fontWeight:600, transition:'background 0.2s' }}
+            onMouseEnter={e=>{ if(!saving) e.currentTarget.style.background='#0f2460'; }}
+            onMouseLeave={e=>{ if(!saving) e.currentTarget.style.background=V.accent; }}>
             {saving ? 'Publicando...' : '🚀 Publicar Vaga'}
           </button>
         </div>
@@ -470,7 +548,44 @@ function PanelOverview({ kpis, candidates, onModal }) {
 }
 
 // ─── PAINEL FUNIL CRM (KANBAN) ────────────────────────────────────
-
+function PanelFunil({ onModal }) {
+  return (
+    <div>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
+        <div>
+          <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:15, color:V.text }}>Funil de Recrutamento</div>
+          <div style={{ fontSize:11, color:V.muted }}>Arraste os candidatos entre colunas</div>
+        </div>
+        <button onClick={onModal} style={{ background:V.accent, border:'none', color:'white', padding:'8px 16px', borderRadius:8, cursor:'pointer', fontSize:12, fontWeight:500 }}>+ Adicionar Candidato</button>
+      </div>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(7,220px)', gap:14, overflowX:'auto', paddingBottom:12 }}>
+        {KANBAN_STAGES.map((s,si) => {
+          const cards = KANBAN_DATA.filter(c => c.stage === si);
+          return (
+            <div key={si} style={{ background:V.surface, border:`1px solid ${V.border}`, borderRadius:12, padding:14, minHeight:400 }}>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
+                <span style={{ fontSize:12, fontWeight:600, textTransform:'uppercase', letterSpacing:'0.05em', color:s.color }}>{s.name}</span>
+                <span style={{ width:20, height:20, borderRadius:6, background:V.surface2, fontSize:11, fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center', color:V.muted }}>{cards.length}</span>
+              </div>
+              {cards.map((c,i) => (
+                <div key={i} draggable style={{ background:V.surface2, border:`1px solid ${V.border}`, borderRadius:10, padding:12, marginBottom:8, cursor:'grab', transition:'all 0.2s' }}
+                  onMouseEnter={e=>{e.currentTarget.style.borderColor=s.color;e.currentTarget.style.transform='translateY(-2px)';e.currentTarget.style.boxShadow='0 4px 16px rgba(26,58,143,0.12)';}}
+                  onMouseLeave={e=>{e.currentTarget.style.borderColor=V.border;e.currentTarget.style.transform='';e.currentTarget.style.boxShadow='';}}>
+                  <div style={{ fontSize:12, fontWeight:500, marginBottom:4 }}>{c.name}</div>
+                  <div style={{ fontSize:10, color:V.muted, marginBottom:8 }}>{c.role}</div>
+                  <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                    <MiniAvatar initials={c.initials} size={20}/>
+                    <Pill cls={c.score>=85?'pill-green':c.score>=70?'pill-orange':'pill-red'} style={{ fontSize:9 }}>Score {c.score}</Pill>
+                  </div>
+                </div>
+              ))}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 // ─── PAINEL BANCO DE TALENTOS ─────────────────────────────────────
 function PanelTalent() {
