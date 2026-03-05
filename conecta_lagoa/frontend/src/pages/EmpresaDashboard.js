@@ -4,6 +4,7 @@
 // API real via fetch com token JWT do localStorage
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
+import PanelFunil from './PanelFunil';
 
 // ─── PALETA ────────────────────────────────────────────────────────
 const V = {
@@ -548,44 +549,7 @@ function PanelOverview({ kpis, candidates, onModal }) {
 }
 
 // ─── PAINEL FUNIL CRM (KANBAN) ────────────────────────────────────
-function PanelFunil({ onModal }) {
-  return (
-    <div>
-      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
-        <div>
-          <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:15, color:V.text }}>Funil de Recrutamento</div>
-          <div style={{ fontSize:11, color:V.muted }}>Arraste os candidatos entre colunas</div>
-        </div>
-        <button onClick={onModal} style={{ background:V.accent, border:'none', color:'white', padding:'8px 16px', borderRadius:8, cursor:'pointer', fontSize:12, fontWeight:500 }}>+ Adicionar Candidato</button>
-      </div>
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(7,220px)', gap:14, overflowX:'auto', paddingBottom:12 }}>
-        {KANBAN_STAGES.map((s,si) => {
-          const cards = KANBAN_DATA.filter(c => c.stage === si);
-          return (
-            <div key={si} style={{ background:V.surface, border:`1px solid ${V.border}`, borderRadius:12, padding:14, minHeight:400 }}>
-              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
-                <span style={{ fontSize:12, fontWeight:600, textTransform:'uppercase', letterSpacing:'0.05em', color:s.color }}>{s.name}</span>
-                <span style={{ width:20, height:20, borderRadius:6, background:V.surface2, fontSize:11, fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center', color:V.muted }}>{cards.length}</span>
-              </div>
-              {cards.map((c,i) => (
-                <div key={i} draggable style={{ background:V.surface2, border:`1px solid ${V.border}`, borderRadius:10, padding:12, marginBottom:8, cursor:'grab', transition:'all 0.2s' }}
-                  onMouseEnter={e=>{e.currentTarget.style.borderColor=s.color;e.currentTarget.style.transform='translateY(-2px)';e.currentTarget.style.boxShadow='0 4px 16px rgba(26,58,143,0.12)';}}
-                  onMouseLeave={e=>{e.currentTarget.style.borderColor=V.border;e.currentTarget.style.transform='';e.currentTarget.style.boxShadow='';}}>
-                  <div style={{ fontSize:12, fontWeight:500, marginBottom:4 }}>{c.name}</div>
-                  <div style={{ fontSize:10, color:V.muted, marginBottom:8 }}>{c.role}</div>
-                  <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                    <MiniAvatar initials={c.initials} size={20}/>
-                    <Pill cls={c.score>=85?'pill-green':c.score>=70?'pill-orange':'pill-red'} style={{ fontSize:9 }}>Score {c.score}</Pill>
-                  </div>
-                </div>
-              ))}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
+
 
 // ─── PAINEL BANCO DE TALENTOS ─────────────────────────────────────
 function PanelTalent() {
