@@ -16,6 +16,8 @@ import RedefinirSenha from './pages/RedefinirSenha';
 import Vagas from './pages/Vagas';
 import EmpresaDashboard from './pages/EmpresaDashboard';
 import Blog from './pages/Blog';
+import PanelAgenda from './pages/PanelAgenda';
+import PanelFunil from './pages/PanelFunil';
 import './index.css';
 
 // Rota protegida com verificação de tipo
