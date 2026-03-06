@@ -4,10 +4,7 @@
 // API real via fetch com token JWT do localStorage
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import PanelFunil from './PanelFunil';
-import PanelAgenda from './PanelAgenda';
-import { fetchVagas } from '../api/vagasApi';
-
+import PanelAgendaFull from './PanelAgenda';
 
 // ─── PALETA ────────────────────────────────────────────────────────
 const V = {
@@ -289,15 +286,22 @@ function ModalNovaVaga({ open, onClose, onSaved }) {
       const token = localStorage.getItem('token');
       const BASE  = process.env.REACT_APP_API_URL || 'https://conectalagoa.onrender.com/api';
 
-      // Envia todos os campos que o backend precisa salvar e que Vagas.jsx filtra
+      // Mapeia form → nomes que o empresaController.criarVaga espera
       const payload = {
-        ...form,
-        // Garante que local = cidade se não preenchido separadamente
-        local: form.local || form.cidade,
-        ativo: true,  // força ativo para aparecer na listagem pública imediatamente
+        titulo:        form.titulo,
+        descricao:     form.descricao,
+        requisitos:    '',
+        salario:       form.salario,
+        cidade:        form.cidade,
+        estado:        '',
+        tipo_contrato: form.tipo_contrato,
+        modalidade:    form.modelo,   // controller usa 'modalidade', form usa 'modelo'
+        area:          form.area,
+        pcd:           form.pcd,
+        prazo:         form.prazo,
       };
 
-      const res = await fetch(`${BASE}/vagas`, {
+      const res = await fetch(`${BASE}/empresa/vagas`, {
         method:  'POST',
         headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${token}` },
         body:    JSON.stringify(payload),
@@ -552,60 +556,306 @@ function PanelOverview({ kpis, candidates, onModal }) {
 }
 
 // ─── PAINEL FUNIL CRM (KANBAN) ────────────────────────────────────
-
-
-// ─── PAINEL BANCO DE TALENTOS ─────────────────────────────────────
-function PanelTalent() {
-  const [talents, setTalents] = useState(TALENTS_INIT);
-  const [query, setQuery]     = useState('');
-  const [filter, setFilter]   = useState('Todos');
-
-  const displayed = talents.filter(t => {
-    const matchQ = (t.name+t.role+t.city+t.tags.join(' ')).toLowerCase().includes(query.toLowerCase());
-    const matchF = filter==='Todos' ? true : filter==='Favoritos' ? t.fav : t.area===filter;
-    return matchQ && matchF;
-  });
-
-  // FIX #5 — usa t.id em vez de indexOf (seguro contra duplicatas)
-  const toggleFav = (id) => {
-    setTalents(prev => prev.map(t => t.id === id ? { ...t, fav: !t.fav } : t));
-  };
-
+function PanelFunil({ onModal }) {
   return (
     <div>
-      <input value={query} onChange={e=>setQuery(e.target.value)} placeholder="🔍  Buscar por nome, cargo, cidade, habilidade..."
-        style={{ width:'100%', background:V.surface2, border:`1px solid ${V.border}`, borderRadius:10, padding:'10px 16px', color:V.text, fontSize:13, outline:'none', marginBottom:18, transition:'border-color 0.2s' }}
-        onFocus={e=>e.target.style.borderColor=V.accent} onBlur={e=>e.target.style.borderColor=V.border}/>
-      <div style={{ display:'flex', gap:8, marginBottom:18, flexWrap:'wrap' }}>
-        {['Todos','Tecnologia','Design','Produto','Data','Favoritos'].map(f => (
-          <button key={f} onClick={()=>setFilter(f)} style={{ padding:'6px 14px', borderRadius:20, fontSize:11, fontWeight:500, cursor:'pointer', border:`1px solid ${filter===f?V.accent:V.border}`, background: filter===f ? V.accent : 'none', color: filter===f ? 'white' : V.muted2, transition:'all 0.15s', fontFamily:"'DM Sans',sans-serif" }}>{f}</button>
-        ))}
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
+        <div>
+          <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:15, color:V.text }}>Funil de Recrutamento</div>
+          <div style={{ fontSize:11, color:V.muted }}>Arraste os candidatos entre colunas</div>
+        </div>
+        <button onClick={onModal} style={{ background:V.accent, border:'none', color:'white', padding:'8px 16px', borderRadius:8, cursor:'pointer', fontSize:12, fontWeight:500 }}>+ Adicionar Candidato</button>
       </div>
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))', gap:14 }}>
-        {displayed.map((t,i) => {
-          const initials = t.name.split(' ').map(n=>n[0]).join('').slice(0,2);
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(7,220px)', gap:14, overflowX:'auto', paddingBottom:12 }}>
+        {KANBAN_STAGES.map((s,si) => {
+          const cards = KANBAN_DATA.filter(c => c.stage === si);
           return (
-            <div key={t.id} style={{ background:V.surface, border:`1px solid ${V.border}`, borderRadius:12, padding:18, transition:'all 0.3s', cursor:'pointer', animation:`fadeUp 0.4s ease ${i*0.04}s both` }}
-              onMouseEnter={e=>{e.currentTarget.style.borderColor='rgba(26,58,143,0.3)';e.currentTarget.style.transform='translateY(-3px)';e.currentTarget.style.boxShadow='0 8px 24px rgba(26,58,143,0.1)';}}
-              onMouseLeave={e=>{e.currentTarget.style.borderColor=V.border;e.currentTarget.style.transform='';e.currentTarget.style.boxShadow='';}}>
-              <div style={{ width:44, height:44, borderRadius:12, background:`${t.color}22`, color:t.color, display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, fontWeight:700, marginBottom:12, fontFamily:"'Syne',sans-serif" }}>{initials}</div>
-              <div style={{ fontSize:13, fontWeight:600, marginBottom:3 }}>{t.name}</div>
-              <div style={{ fontSize:11, color:V.muted, marginBottom:10 }}>{t.role} · {t.city}</div>
-              <div style={{ display:'flex', flexWrap:'wrap', gap:4, marginBottom:10 }}>
-                {t.tags.map(tg=><span key={tg} style={{ fontSize:9, padding:'2px 7px', background:V.surface2, border:`1px solid ${V.border}`, borderRadius:4, color:V.muted2 }}>{tg}</span>)}
+            <div key={si} style={{ background:V.surface, border:`1px solid ${V.border}`, borderRadius:12, padding:14, minHeight:400 }}>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
+                <span style={{ fontSize:12, fontWeight:600, textTransform:'uppercase', letterSpacing:'0.05em', color:s.color }}>{s.name}</span>
+                <span style={{ width:20, height:20, borderRadius:6, background:V.surface2, fontSize:11, fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center', color:V.muted }}>{cards.length}</span>
               </div>
-              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                <Pill cls={t.score>=85?'pill-green':t.score>=70?'pill-orange':'pill-red'}>Score {t.score}</Pill>
-                <button onClick={e=>{e.stopPropagation();toggleFav(t.id);}} style={{ background:'none', border:'none', cursor:'pointer', fontSize:14, opacity:t.fav?1:0.4, transition:'all 0.2s' }}
-                  onMouseEnter={e=>{e.currentTarget.style.transform='scale(1.2)';}}
-                  onMouseLeave={e=>{e.currentTarget.style.transform='';}}>
-                  {t.fav ? '⭐' : '☆'}
-                </button>
-              </div>
+              {cards.map((c,i) => (
+                <div key={i} draggable style={{ background:V.surface2, border:`1px solid ${V.border}`, borderRadius:10, padding:12, marginBottom:8, cursor:'grab', transition:'all 0.2s' }}
+                  onMouseEnter={e=>{e.currentTarget.style.borderColor=s.color;e.currentTarget.style.transform='translateY(-2px)';e.currentTarget.style.boxShadow='0 4px 16px rgba(26,58,143,0.12)';}}
+                  onMouseLeave={e=>{e.currentTarget.style.borderColor=V.border;e.currentTarget.style.transform='';e.currentTarget.style.boxShadow='';}}>
+                  <div style={{ fontSize:12, fontWeight:500, marginBottom:4 }}>{c.name}</div>
+                  <div style={{ fontSize:10, color:V.muted, marginBottom:8 }}>{c.role}</div>
+                  <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                    <MiniAvatar initials={c.initials} size={20}/>
+                    <Pill cls={c.score>=85?'pill-green':c.score>=70?'pill-orange':'pill-red'} style={{ fontSize:9 }}>Score {c.score}</Pill>
+                  </div>
+                </div>
+              ))}
             </div>
           );
         })}
       </div>
+    </div>
+  );
+}
+
+// ─── PAINEL BANCO DE TALENTOS ─────────────────────────────────────
+// ─── MODAL CONVIDAR TALENTO ──────────────────────────────────────
+function ModalConvidar({ talent, onClose }) {
+  const [msg, setMsg]       = useState(`Olá ${talent?.name?.split(' ')[0]}, temos uma oportunidade alinhada ao seu perfil. Podemos conversar?`);
+  const [sending, setSending] = useState(false);
+  const [sent, setSent]       = useState(false);
+
+  const enviar = async () => {
+    setSending(true);
+    try {
+      const token = localStorage.getItem('token');
+      const BASE  = process.env.REACT_APP_API_URL || 'https://conectalagoa.onrender.com/api';
+      await fetch(`${BASE}/mensagens`, {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${token}` },
+        body: JSON.stringify({ destinatario_id: talent.id, conteudo: msg }),
+      });
+      setSent(true);
+      setTimeout(onClose, 1600);
+    } catch {
+      setSending(false);
+    }
+  };
+
+  if (!talent) return null;
+  const initials = talent.name.split(' ').map(n=>n[0]).join('').slice(0,2);
+  return (
+    <div onClick={e=>{ if(e.target===e.currentTarget) onClose(); }}
+      style={{ position:'fixed', inset:0, background:'rgba(26,58,143,0.35)', backdropFilter:'blur(6px)', zIndex:700, display:'flex', alignItems:'center', justifyContent:'center' }}>
+      <div style={{ background:V.surface, border:`1px solid ${V.border}`, borderRadius:16, padding:28, width:420, maxWidth:'95vw' }}>
+        {sent ? (
+          <div style={{ textAlign:'center', padding:'16px 0' }}>
+            <div style={{ fontSize:36, marginBottom:10 }}>✅</div>
+            <div style={{ fontWeight:700, fontSize:15, color:V.text }}>Convite enviado!</div>
+            <div style={{ fontSize:12, color:V.muted, marginTop:4 }}>{talent.name} receberá sua mensagem no dashboard.</div>
+          </div>
+        ) : (
+          <>
+            <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:20 }}>
+              <div style={{ width:44, height:44, borderRadius:11, background:`${talent.color}22`, color:talent.color, display:'flex', alignItems:'center', justifyContent:'center', fontSize:15, fontWeight:700 }}>{initials}</div>
+              <div>
+                <div style={{ fontWeight:700, fontSize:14, color:V.text }}>{talent.name}</div>
+                <div style={{ fontSize:12, color:V.muted }}>{talent.role} · {talent.city}</div>
+              </div>
+            </div>
+            <label style={{ fontSize:11, color:V.muted, textTransform:'uppercase', letterSpacing:'0.05em', display:'block', marginBottom:8 }}>Mensagem</label>
+            <textarea value={msg} onChange={e=>setMsg(e.target.value)} rows={4}
+              style={{ width:'100%', background:V.surface2, border:`1px solid ${V.border}`, borderRadius:8, padding:'10px 12px', color:V.text, fontSize:13, outline:'none', resize:'vertical', fontFamily:'inherit' }}
+              onFocus={e=>e.target.style.borderColor=V.accent} onBlur={e=>e.target.style.borderColor=V.border}/>
+            <div style={{ display:'flex', gap:10, justifyContent:'flex-end', marginTop:18 }}>
+              <button onClick={onClose} style={{ background:'none', border:`1px solid ${V.border}`, color:V.muted2, padding:'8px 16px', borderRadius:8, cursor:'pointer', fontSize:12 }}>Cancelar</button>
+              <button onClick={enviar} disabled={sending}
+                style={{ background:V.accent, border:'none', color:'white', padding:'9px 20px', borderRadius:8, cursor:'pointer', fontSize:12, fontWeight:600 }}>
+                {sending ? 'Enviando...' : '📨 Enviar Convite'}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function PanelTalent() {
+  const [talents, setTalents]     = useState(TALENTS_INIT);
+  const [loading, setLoading]     = useState(true);
+  const [query, setQuery]         = useState('');
+  const [filterArea, setFilterArea] = useState('Todos');
+  const [sortBy, setSortBy]       = useState('score');      // score | nome | favoritos | recente
+  const [scoreMin, setScoreMin]   = useState(0);
+  const [convidar, setConvidar]   = useState(null);         // talent a convidar
+
+  const BASE  = process.env.REACT_APP_API_URL || 'https://conectalagoa.onrender.com/api';
+  const token = localStorage.getItem('token');
+
+  // ── Busca talentos da API ────────────────────────────────────────
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await fetch(`${BASE}/talentos`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+          signal: AbortSignal.timeout(5000),
+        });
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        const list = Array.isArray(data) ? data : (data.data ?? []);
+        if (list.length > 0) setTalents(list.map(t => ({
+          id:    t.id,
+          name:  t.nome || t.name,
+          role:  t.cargo || t.role || 'Candidato',
+          city:  t.cidade || t.city || '—',
+          area:  t.area   || 'Outros',
+          tags:  Array.isArray(t.habilidades) ? t.habilidades : (t.tags || []),
+          fav:   t.favorito ?? t.fav ?? false,
+          score: t.score_ia ?? t.score ?? 70,
+          color: [V.accent,V.accent2,V.accent3,V.green,'#c96a00','#7c3aed'][(t.nome||t.name||'').charCodeAt(0)%6],
+          favAt: t.fav_at || null,
+        })));
+      } catch {
+        // Silencia — mantém mocks
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
+
+  // ── Persistir favorito no backend ────────────────────────────────
+  const toggleFav = async (id) => {
+    const t = talents.find(t => t.id === id);
+    const novoFav = !t.fav;
+    // Atualiza state imediatamente (otimista)
+    setTalents(prev => prev.map(t => t.id === id
+      ? { ...t, fav: novoFav, favAt: novoFav ? new Date().toISOString() : null }
+      : t
+    ));
+    // Persiste no backend
+    try {
+      await fetch(`${BASE}/talentos/${id}/favorito`, {
+        method: 'PATCH',
+        headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${token}` },
+        body: JSON.stringify({ favorito: novoFav }),
+      });
+    } catch { /* silencia — state local já atualizado */ }
+  };
+
+  // ── Filtro + Ordenação ───────────────────────────────────────────
+  const displayed = talents
+    .filter(t => {
+      const q = query.toLowerCase();
+      const matchQ = !q || (t.name+t.role+t.city+(t.tags||[]).join(' ')).toLowerCase().includes(q);
+      const matchA = filterArea==='Todos' ? true : filterArea==='Favoritos' ? t.fav : t.area===filterArea;
+      const matchS = t.score >= scoreMin;
+      return matchQ && matchA && matchS;
+    })
+    .sort((a,b) => {
+      if (sortBy==='score')     return b.score - a.score;
+      if (sortBy==='nome')      return a.name.localeCompare(b.name);
+      if (sortBy==='favoritos') return (b.fav?1:0) - (a.fav?1:0);
+      if (sortBy==='recente')   return new Date(b.favAt||0) - new Date(a.favAt||0);
+      return 0;
+    });
+
+  const favCount = talents.filter(t=>t.fav).length;
+
+  const sel = { padding:'7px 12px', background:V.surface2, border:`1px solid ${V.border}`, borderRadius:8, color:V.text, fontSize:12, outline:'none', cursor:'pointer', fontFamily:'inherit' };
+
+  return (
+    <div>
+      {/* ── Header com stats ── */}
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16, flexWrap:'wrap', gap:10 }}>
+        <div>
+          <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:15, color:V.text }}>Banco de Talentos</div>
+          <div style={{ fontSize:11, color:V.muted, marginTop:2 }}>
+            {talents.length} cadastrados · {favCount} favoritos · {displayed.length} exibidos
+          </div>
+        </div>
+        {/* Ordenação */}
+        <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+          <span style={{ fontSize:11, color:V.muted }}>Ordenar:</span>
+          <select value={sortBy} onChange={e=>setSortBy(e.target.value)} style={sel}>
+            <option value="score">Maior Score</option>
+            <option value="nome">Nome A–Z</option>
+            <option value="favoritos">Favoritos primeiro</option>
+            <option value="recente">Favoritado recentemente</option>
+          </select>
+        </div>
+      </div>
+
+      {/* ── Busca ── */}
+      <input value={query} onChange={e=>setQuery(e.target.value)}
+        placeholder="🔍  Buscar por nome, cargo, cidade, habilidade..."
+        style={{ width:'100%', background:V.surface2, border:`1px solid ${V.border}`, borderRadius:10, padding:'10px 16px', color:V.text, fontSize:13, outline:'none', marginBottom:14, transition:'border-color 0.2s' }}
+        onFocus={e=>e.target.style.borderColor=V.accent} onBlur={e=>e.target.style.borderColor=V.border}/>
+
+      {/* ── Filtros área + score ── */}
+      <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:18, flexWrap:'wrap' }}>
+        {['Todos','Tecnologia','Design','Produto','Data','Favoritos'].map(f => (
+          <button key={f} onClick={()=>setFilterArea(f)}
+            style={{ padding:'6px 14px', borderRadius:20, fontSize:11, fontWeight:500, cursor:'pointer',
+              border:`1px solid ${filterArea===f?V.accent:V.border}`,
+              background: filterArea===f ? V.accent : 'none',
+              color: filterArea===f ? 'white' : V.muted2,
+              transition:'all 0.15s', fontFamily:"'DM Sans',sans-serif",
+              ...(f==='Favoritos' && favCount>0 ? { borderColor: V.orange, color: filterArea===f?'white':V.orange } : {}) }}>
+            {f}{f==='Favoritos' && favCount>0 ? ` (${favCount})` : ''}
+          </button>
+        ))}
+        {/* Filtro score mínimo */}
+        <div style={{ marginLeft:'auto', display:'flex', alignItems:'center', gap:8 }}>
+          <span style={{ fontSize:11, color:V.muted, whiteSpace:'nowrap' }}>Score mín: <strong style={{color:V.text}}>{scoreMin}</strong></span>
+          <input type="range" min={0} max={100} step={5} value={scoreMin} onChange={e=>setScoreMin(Number(e.target.value))}
+            style={{ width:100, accentColor:V.accent }}/>
+        </div>
+      </div>
+
+      {/* ── Grid ── */}
+      {loading ? (
+        <div style={{ textAlign:'center', padding:40, color:V.muted }}>
+          <div style={{ width:32, height:32, border:`3px solid ${V.border}`, borderTop:`3px solid ${V.accent}`, borderRadius:'50%', animation:'clSpin 0.8s linear infinite', margin:'0 auto 12px' }}/>
+          Carregando talentos...
+        </div>
+      ) : displayed.length === 0 ? (
+        <div style={{ textAlign:'center', padding:40, color:V.muted2 }}>
+          <div style={{ fontSize:32, marginBottom:10 }}>🔍</div>
+          Nenhum talento encontrado com esses filtros.
+          <br/>
+          <button onClick={()=>{ setQuery(''); setFilterArea('Todos'); setScoreMin(0); }}
+            style={{ marginTop:12, background:V.accent, border:'none', color:'white', padding:'8px 18px', borderRadius:8, cursor:'pointer', fontSize:12 }}>
+            Limpar filtros
+          </button>
+        </div>
+      ) : (
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))', gap:14 }}>
+          {displayed.map((t,i) => {
+            const initials = t.name.split(' ').map(n=>n[0]).join('').slice(0,2);
+            const scoreColor = t.score>=85 ? V.green : t.score>=70 ? V.orange : V.red;
+            return (
+              <div key={t.id}
+                style={{ background:V.surface, border:`1px solid ${t.fav ? 'rgba(224,123,0,0.3)' : V.border}`, borderRadius:12, padding:18, transition:'all 0.2s', cursor:'pointer', animation:`fadeUp 0.35s ease ${i*0.03}s both`, position:'relative' }}
+                onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-3px)';e.currentTarget.style.boxShadow='0 8px 24px rgba(26,58,143,0.1)';}}
+                onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow='';}}>
+
+                {/* Favorito no topo direito */}
+                <button onClick={e=>{e.stopPropagation();toggleFav(t.id);}}
+                  style={{ position:'absolute', top:12, right:12, background:'none', border:'none', cursor:'pointer', fontSize:16, opacity:t.fav?1:0.3, transition:'all 0.2s', lineHeight:1 }}
+                  title={t.fav ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+                  onMouseEnter={e=>{e.currentTarget.style.transform='scale(1.25)';e.currentTarget.style.opacity='1';}}
+                  onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.opacity=t.fav?'1':'0.3';}}>
+                  {t.fav ? '⭐' : '☆'}
+                </button>
+
+                <div style={{ width:44, height:44, borderRadius:12, background:`${t.color}22`, color:t.color, display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, fontWeight:700, marginBottom:12, fontFamily:"'Syne',sans-serif" }}>{initials}</div>
+                <div style={{ fontSize:13, fontWeight:600, marginBottom:2, paddingRight:24 }}>{t.name}</div>
+                <div style={{ fontSize:11, color:V.muted, marginBottom:10 }}>{t.role} · {t.city}</div>
+                <div style={{ display:'flex', flexWrap:'wrap', gap:4, marginBottom:12 }}>
+                  {(t.tags||[]).slice(0,3).map(tg=><span key={tg} style={{ fontSize:9, padding:'2px 7px', background:V.surface2, border:`1px solid ${V.border}`, borderRadius:4, color:V.muted2 }}>{tg}</span>)}
+                </div>
+
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:8 }}>
+                  {/* Score bar */}
+                  <div style={{ flex:1, display:'flex', alignItems:'center', gap:6 }}>
+                    <div style={{ flex:1, height:4, background:V.surface2, borderRadius:2 }}>
+                      <div style={{ width:`${t.score}%`, height:'100%', background:scoreColor, borderRadius:2 }}/>
+                    </div>
+                    <span style={{ fontSize:10, fontWeight:700, color:scoreColor, minWidth:22 }}>{t.score}</span>
+                  </div>
+                  {/* Botão convidar */}
+                  <button onClick={e=>{e.stopPropagation();setConvidar(t);}}
+                    style={{ background:V.accent, border:'none', color:'white', padding:'4px 10px', borderRadius:6, cursor:'pointer', fontSize:10, fontWeight:500, flexShrink:0 }}>
+                    Convidar
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Modal convidar */}
+      {convidar && <ModalConvidar talent={convidar} onClose={()=>setConvidar(null)}/>}
     </div>
   );
 }
@@ -656,6 +906,63 @@ function PanelAI({ onModal }) {
 }
 
 // ─── PAINEL AGENDA ────────────────────────────────────────────────
+function PanelAgenda({ onModal }) {
+  const firstDay = new Date(2025,2,1).getDay();
+  const cells = [];
+  for(let i=0;i<firstDay;i++) cells.push({ day:28-firstDay+i+1, other:true });
+  for(let d=1;d<=31;d++) cells.push({ day:d, today:d===5, event:EVENT_DAYS.includes(d) });
+
+  return (
+    <div style={{ display:'grid', gridTemplateColumns:'300px 1fr', gap:16 }}>
+      <div>
+        <div style={{ background:V.surface, border:`1px solid ${V.border}`, borderRadius:12, padding:18 }}>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
+            <button style={{ background:'none', border:`1px solid ${V.border}`, color:V.muted2, width:26, height:26, borderRadius:6, cursor:'pointer', fontSize:12, display:'flex', alignItems:'center', justifyContent:'center' }}>‹</button>
+            <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:14, color:V.text }}>Março 2025</div>
+            <button style={{ background:'none', border:`1px solid ${V.border}`, color:V.muted2, width:26, height:26, borderRadius:6, cursor:'pointer', fontSize:12, display:'flex', alignItems:'center', justifyContent:'center' }}>›</button>
+          </div>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:2, marginBottom:4 }}>
+            {['D','S','T','Q','Q','S','S'].map((d,i)=><div key={i} style={{ fontSize:9, textAlign:'center', color:V.muted, textTransform:'uppercase', padding:'4px 0' }}>{d}</div>)}
+          </div>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:2 }}>
+            {cells.map((c,i) => (
+              <div key={i} style={{ aspectRatio:'1', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, borderRadius:6, cursor:'pointer', position:'relative', background: c.today ? V.accent : 'transparent', color: c.today ? 'white' : c.other ? '#d1d9f0' : V.text, fontWeight: c.today ? 700 : 400, transition:'all 0.15s' }}
+                onMouseEnter={e=>{if(!c.today)e.currentTarget.style.background=V.surface2;}}
+                onMouseLeave={e=>{if(!c.today)e.currentTarget.style.background='transparent';}}>
+                {c.day}
+                {c.event && !c.today && <span style={{ position:'absolute', bottom:3, left:'50%', transform:'translateX(-50%)', width:4, height:4, background:V.orange, borderRadius:'50%' }}/>}
+              </div>
+            ))}
+          </div>
+        </div>
+        <div style={{ marginTop:14, display:'flex', flexDirection:'column', gap:8 }}>
+          <button onClick={onModal} style={{ width:'100%', background:V.accent, border:'none', color:'white', padding:'9px', borderRadius:8, cursor:'pointer', fontSize:12, fontWeight:500 }}>+ Agendar Entrevista</button>
+          <button onClick={onModal} style={{ width:'100%', background:'none', border:`1px solid ${V.border}`, color:V.muted2, padding:'8px', borderRadius:8, cursor:'pointer', fontSize:12 }}>🔔 Definir Lembrete</button>
+        </div>
+      </div>
+      <div>
+        <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:14, marginBottom:14, color:V.text }}>Hoje — 5 de Março</div>
+        <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+          {EVENTS.map((ev,i) => {
+            const p = PILL[ev.tc] || PILL['pill-blue'];
+            return (
+              <div key={i} style={{ display:'flex', gap:14, background:V.surface, border:`1px solid ${V.border}`, borderRadius:10, padding:'14px 16px', alignItems:'center', animation:`fadeUp 0.4s ease ${i*0.07}s both`, transition:'all 0.2s' }}
+                onMouseEnter={e=>{e.currentTarget.style.borderColor='rgba(26,58,143,0.25)';}}
+                onMouseLeave={e=>{e.currentTarget.style.borderColor=V.border;}}>
+                <div style={{ fontFamily:"'Syne',sans-serif", fontSize:13, fontWeight:700, minWidth:50, color:V.accent }}>{ev.time}</div>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:13, fontWeight:500, marginBottom:3, color:V.text }}>{ev.title}</div>
+                  <div style={{ fontSize:11, color:V.muted }}>{ev.meta}</div>
+                </div>
+                <span style={{ padding:'4px 10px', borderRadius:6, fontSize:10, fontWeight:600, background:p.bg, color:p.color }}>{ev.tipo}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ─── PAINEL RELATÓRIOS ────────────────────────────────────────────
 function PanelReports() {
@@ -907,7 +1214,7 @@ export default function EmpresaDashboard() {
               {tab==='funnel'   && <PanelFunil onModal={()=>setModal(true)}/>}
               {tab==='talent'   && <PanelTalent/>}
               {tab==='ai'       && <PanelAI onModal={()=>setModal(true)}/>}
-              {tab==='agenda'   && <PanelAgenda onModal={()=>setModal(true)}/>}
+              {tab==='agenda'   && <PanelAgendaFull/>}
               {tab==='reports'  && <PanelReports/>}
               {tab==='history'  && <PanelHistory/>}
             </>

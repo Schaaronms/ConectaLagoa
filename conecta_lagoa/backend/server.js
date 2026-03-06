@@ -37,7 +37,9 @@ const usuariosRoutes = require('./routes/usuarios'); // ← NOVO
 app.use('/api', routes);
 app.use('/api/contato', require('./routes/email'));
 app.use('/api/agenda', agendaRoutes);
-app.use('/api/usuarios', usuariosRoutes); // ← NOVO: GET /api/usuarios/buscar-cpf/:cpf
+app.use('/api/usuarios', usuariosRoutes);          // GET /api/usuarios/buscar-cpf/:cpf
+app.use('/api/talentos', require('./routes/talentos')); // Banco de Talentos + favoritos
+
 
 // REMOVIDO: const { default: PanelFunil } = require('../frontend/src/pages/PanelFunil');
 // ↑ isso importava React no Node — causava crash no servidor

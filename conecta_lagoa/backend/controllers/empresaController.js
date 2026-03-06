@@ -116,15 +116,36 @@ const listarVagas = async (req, res) => {
 const criarVaga = async (req, res) => {
   try {
     const empresaId = req.user.id;
-    const { titulo, descricao, requisitos, salario, cidade, estado, tipo_contrato, modalidade } = req.body;
+    const {
+      titulo, descricao, requisitos, salario,
+      cidade, estado, tipo_contrato, modalidade,
+      area = '',       // novo
+      pcd  = false,    // novo
+      prazo = null,    // novo
+    } = req.body;
+
+    if (!titulo) {
+      return res.status(400).json({ success: false, message: 'Título é obrigatório' });
+    }
 
     const result = await db.pool.query(
-      `INSERT INTO vagas (empresa_id, titulo, descricao, requisitos, salario, cidade, estado, tipo_contrato, modalidade)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
-      [empresaId, titulo, descricao, requisitos, salario, cidade, estado, tipo_contrato, modalidade]
+      `INSERT INTO vagas
+         (empresa_id, titulo, descricao, requisitos, salario,
+          cidade, estado, tipo_contrato, modalidade, area, pcd, prazo, ativa)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12, true)
+       RETURNING *`,
+      [
+        empresaId, titulo, descricao, requisitos, salario,
+        cidade, estado, tipo_contrato, modalidade,
+        area, pcd, prazo
+      ]
     );
 
-    res.status(201).json({ success: true, message: 'Vaga criada com sucesso', vaga: result.rows[0] });
+    res.status(201).json({
+      success: true,
+      message: 'Vaga criada com sucesso',
+      vaga: result.rows[0]
+    });
   } catch (error) {
     console.error('Erro em criarVaga:', error);
     res.status(500).json({ success: false, message: 'Erro ao criar vaga' });
