@@ -5,8 +5,9 @@
 
 const express = require('express');
 const router  = express.Router();
-const pool    = require('../db');
-const authMiddleware = require('../middleware/auth');
+const { pool } = require('../config/db');
+const { authMiddleware } = require('../middleware/auth');
+
 
 // GET /api/agenda — lista eventos da empresa (filtro por data opcional)
 router.get('/', authMiddleware, async (req, res) => {

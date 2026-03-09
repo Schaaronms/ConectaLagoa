@@ -5,8 +5,9 @@
 
 const express = require('express');
 const router  = express.Router();
-const pool    = require('../db');
-const authMiddleware = require('../middleware/auth');
+// antigo caminho '../db' removido; usamos o pool configurado em config/db
+const { pool } = require('../config/db');
+const { authMiddleware } = require('../middleware/auth');
 
 // Status → stage (para sincronizar)
 const STATUS_TO_STAGE = {

@@ -1,6 +1,6 @@
 require('dotenv').config();
 const express = require('express');
-const { initDatabase } = require('./config/database');
+const { initDatabase } = require('./config/db');
 const cors = require('cors');
 const path = require('path');
 const app = express();
@@ -30,28 +30,31 @@ if (process.env.NODE_ENV !== 'production') {
 // ==============================
 // ROTAS
 // ==============================
-const routes      = require('./routes');
-const agendaRoutes = require('./routes/agenda');
-const usuariosRoutes = require('./routes/usuarios'); // ← NOVO
+const routes = require('./routes');
 
-const indicadoresRH = require('./routes/indicadoresRH');
-app.use('/api', indicadoresRH);
+const indicadoresRHRouter = require('./routes/indicadoresRH_route');
+app.use('/api', indicadoresRHRouter);
 
-const colaboradoresRouter = require('./routes/colaboradores');
+const colaboradoresRouter = require('./routes/colaboradores_route');
 app.use('/api', colaboradoresRouter);
 
-const avaliacoesCargos = require('./routes/avaliacoesCargos');
-app.use('/api', avaliacoesCargos);
+const avaliacoesCargosRouter = require('./routes/avaliacoesCargos_route');
+app.use('/api', avaliacoesCargosRouter);
+
+const agendaRoutes = require('./routes/agenda');
+const usuariosRoutes = require('./routes/usuarios');
+const vagasRoutes = require('./routes/vagas');
+
+app.use('/api/vagas', vagasRoutes);
 app.use('/api/agenda', agendaRoutes);
 app.use('/api/usuarios', usuariosRoutes);          // GET /api/usuarios/buscar-cpf/:cpf
 
-app.use('/api', routes);
 app.use('/api/contato', require('./routes/email'));
 app.use('/api/talentos', require('./routes/talentos')); // Banco de Talentos + favoritos
+app.use('/api', routes); // deve vir por último
 
 
-// REMOVIDO: const { default: PanelFunil } = require('../frontend/src/pages/PanelFunil');
-// ↑ isso importava React no Node — causava crash no servidor
+// FIM das rotas principais — adicione novas rotas acima deste comentário
 
 app.get('/', (req, res) => {
   res.json({

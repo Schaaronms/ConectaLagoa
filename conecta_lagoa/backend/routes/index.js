@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { pool } = require('../config/db');
 
 const { authMiddleware, isEmpresa, isCandidato } = require('../middleware/auth');
 const upload = require('../middleware/upload');
@@ -45,7 +46,6 @@ router.post('/candidato/habilidade',  authMiddleware, isCandidato, candidatoCont
 router.get('/candidatos', authMiddleware, isEmpresa, candidatoController.buscarCandidatos);
 
 // ==================== EMPRESAS ====================
-// Perfil
 router.put('/empresa/perfil', authMiddleware, isEmpresa, empresaController.atualizarPerfil);
 router.post('/empresa/logo',  authMiddleware, isEmpresa, upload.single('logo'), empresaController.uploadLogo);
 router.get('/empresa/meu-perfil', authMiddleware, isEmpresa, empresaController.getMeuPerfil);
@@ -53,6 +53,19 @@ router.get('/empresa/vagas', authMiddleware, isEmpresa, empresaController.listar
 router.post('/empresa/vagas', authMiddleware, isEmpresa, empresaController.criarVaga);
 router.put('/empresa/vagas/:vagaId', authMiddleware, isEmpresa, empresaController.atualizarVaga);
 router.delete('/empresa/vagas/:vagaId', authMiddleware, isEmpresa, empresaController.excluirVaga);
+
+// Interações com candidatos
+router.post(  '/empresa/visualizar/:candidatoId', authMiddleware, isEmpresa, empresaController.visualizarCandidato);
+router.post(  '/empresa/favorito/:candidatoId',   authMiddleware, isEmpresa, empresaController.adicionarFavorito);
+router.delete('/empresa/favorito/:candidatoId',   authMiddleware, isEmpresa, empresaController.removerFavorito);
+router.get(   '/empresa/favoritos',               authMiddleware, isEmpresa, empresaController.listarFavoritos);
+router.get(   '/empresa/historico-visualizacoes', authMiddleware, isEmpresa, empresaController.historicoVisualizacoes);
+router.get(   '/empresa/estatisticas',            authMiddleware, isEmpresa, empresaController.getEstatisticas);
+router.get(   '/empresa/candidatos-vagas',        authMiddleware, isEmpresa, empresaController.candidatosPorVaga);
+router.get(   '/empresa/candidatos-ativos',       authMiddleware, isEmpresa, empresaController.candidatosAtivos);
+router.get(   '/empresa/candidatos-contratados',  authMiddleware, isEmpresa, empresaController.candidatosContratados);
+
+// ⚠️ Rota dinâmica SEMPRE por último!
 router.get('/empresa/:id', authMiddleware, empresaController.getPerfilPorId);
 
 // Interações com candidatos

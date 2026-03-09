@@ -3,16 +3,14 @@ const fs = require('fs');
 const path = require('path');
 
 // Configuração do PostgreSQL
-const pool = new Pool({
-  host: process.env.DB_HOST || 'localhost',
-  port: process.env.DB_PORT || 5432,
-  database: process.env.DB_NAME || 'conecta_lagoa',
-  user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || '43182436',
-  max: 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+
+
+
+  const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
 });
+
 
 // Testar conexão
 pool.on('connect', () => {
@@ -40,8 +38,8 @@ const initDatabase = async () => {
   try {
     console.log('Inicializando banco de dados PostgreSQL...');
 
-    // Habilitar extensões
-    await client.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"');
+    // Habilitar extensões  
+    await client.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"').catch(() => {});
 
     // Tabela de Empresas
     await client.query(`
@@ -195,3 +193,5 @@ module.exports = {
   pool,
   initDatabase
 };
+
+

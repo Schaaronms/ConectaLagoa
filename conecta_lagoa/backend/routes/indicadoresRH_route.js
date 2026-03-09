@@ -9,7 +9,7 @@ const { Pool } = require('pg');
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
 // Middleware de auth (reutilize o seu existente)
-const authMiddleware = require('../middleware/auth'); // ajuste o caminho
+const { authMiddleware } = require('../middleware/auth');
 
 // ── GET /api/empresa/indicadores-rh ──────────────────────────────
 // Retorna todos os dados necessários para o painel Indicadores RH

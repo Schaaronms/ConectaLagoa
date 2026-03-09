@@ -13,7 +13,8 @@ const multer   = require('multer');
 const csv      = require('csv-parse/sync');
 
 const pool    = new Pool({ connectionString: process.env.DATABASE_URL });
-const auth    = require('../middleware/auth'); // ajuste o caminho
+// Troque linha 16 por:
+const { authMiddleware: auth } = require('../middleware/auth');
 const upload  = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
 // ── helpers ──────────────────────────────────────────────────────

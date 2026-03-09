@@ -39,7 +39,7 @@ export default function Vagas() {
             <div className="vagas-hero-badge-dot" />
             Vagas atualizadas diariamente
           </div>
-          <h1>Encontre vagas em Lagoa da Prata e região</h1>
+          <h1>Encontre vagas em Lagoa Vermelha e região</h1>
           <p>Plataforma #1 de empregos locais — conectando talentos com oportunidades reais</p>
           <SearchBar value={searchTerm} onChange={setSearchTerm} />
         </div>

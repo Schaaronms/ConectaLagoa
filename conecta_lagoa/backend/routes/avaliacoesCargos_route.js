@@ -9,7 +9,7 @@ const express  = require('express');
 const router   = express.Router();
 const { Pool } = require('pg');
 const pool     = new Pool({ connectionString: process.env.DATABASE_URL });
-const auth     = require('../middleware/auth');
+const { authMiddleware: auth } = require('../middleware/auth');
 const getEmpId = (req) => req.user.empresa_id || req.user.id;
 
 // ════════════════════════════════════════════════════════════════

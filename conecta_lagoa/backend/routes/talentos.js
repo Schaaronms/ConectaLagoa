@@ -2,8 +2,9 @@
 // Banco de Talentos: lista candidatos, persiste favoritos, envia convites
 const express = require('express');
 const router  = express.Router();
-const pool    = require('../db');
-const authMiddleware = require('../middleware/auth');
+// utiliza pool vindo de config/db
+const { pool } = require('../config/db');
+const { authMiddleware } = require('../middleware/auth');
 
 // GET /api/talentos — empresa lista todos os candidatos cadastrados
 router.get('/', authMiddleware, async (req, res) => {
