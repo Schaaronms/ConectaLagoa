@@ -33,17 +33,20 @@ if (process.env.NODE_ENV !== 'production') {
 const routes      = require('./routes');
 const agendaRoutes = require('./routes/agenda');
 const usuariosRoutes = require('./routes/usuarios'); // ← NOVO
+
 const indicadoresRH = require('./routes/indicadoresRH');
 app.use('/api', indicadoresRH);
+
 const colaboradoresRouter = require('./routes/colaboradores');
 app.use('/api', colaboradoresRouter);
+
 const avaliacoesCargos = require('./routes/avaliacoesCargos');
 app.use('/api', avaliacoesCargos);
+app.use('/api/agenda', agendaRoutes);
+app.use('/api/usuarios', usuariosRoutes);          // GET /api/usuarios/buscar-cpf/:cpf
 
 app.use('/api', routes);
 app.use('/api/contato', require('./routes/email'));
-app.use('/api/agenda', agendaRoutes);
-app.use('/api/usuarios', usuariosRoutes);          // GET /api/usuarios/buscar-cpf/:cpf
 app.use('/api/talentos', require('./routes/talentos')); // Banco de Talentos + favoritos
 
 

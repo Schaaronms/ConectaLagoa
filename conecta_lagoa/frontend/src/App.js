@@ -18,6 +18,8 @@ import EmpresaDashboard from './pages/EmpresaDashboard';
 import Blog from './pages/Blog';
 import PanelAgenda from './pages/PanelAgenda';
 import PanelFunil from './pages/PanelFunil';
+import PanelIndicadores from './pages/PanelIndicadores';
+import PanelColaboradores from './pages/PanelColaboradores';
 import './index.css';
 
 // Rota protegida com verificação de tipo
@@ -73,7 +75,9 @@ function AppContent() {
 <Route path="/candidato/esqueceu-senha" element={<EsqueceuSenha tipo="candidato" />} />
 <Route path="/empresa/esqueceu-senha" element={<EsqueceuSenha tipo="empresa" />} />
 <Route path="/candidato/redefinir-senha" element={<RedefinirSenha tipo="candidato" />} />
-       
+<Route path="/indicadores" element={<PanelIndicadores />} />
+<Route path="/colaboradores" element={<PanelColaboradores />} />
+
             {/* Rotas do Candidato (protegidas) */}
             <Route
               path="/candidato/onboarding"
