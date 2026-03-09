@@ -37,6 +37,8 @@ const indicadoresRH = require('./routes/indicadoresRH');
 app.use('/api', indicadoresRH);
 const colaboradoresRouter = require('./routes/colaboradores');
 app.use('/api', colaboradoresRouter);
+const avaliacoesCargos = require('./routes/avaliacoesCargos');
+app.use('/api', avaliacoesCargos);
 
 app.use('/api', routes);
 app.use('/api/contato', require('./routes/email'));
