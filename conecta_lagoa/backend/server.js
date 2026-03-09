@@ -33,6 +33,8 @@ if (process.env.NODE_ENV !== 'production') {
 const routes      = require('./routes');
 const agendaRoutes = require('./routes/agenda');
 const usuariosRoutes = require('./routes/usuarios'); // ← NOVO
+const indicadoresRH = require('./routes/indicadoresRH');
+app.use('/api', indicadoresRH);
 
 app.use('/api', routes);
 app.use('/api/contato', require('./routes/email'));
