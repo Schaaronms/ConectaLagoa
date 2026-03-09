@@ -35,6 +35,8 @@ const agendaRoutes = require('./routes/agenda');
 const usuariosRoutes = require('./routes/usuarios'); // ← NOVO
 const indicadoresRH = require('./routes/indicadoresRH');
 app.use('/api', indicadoresRH);
+const colaboradoresRouter = require('./routes/colaboradores');
+app.use('/api', colaboradoresRouter);
 
 app.use('/api', routes);
 app.use('/api/contato', require('./routes/email'));
