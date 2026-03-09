@@ -14,12 +14,8 @@ import EditarPerfil from './pages/EditarPerfil';
 import EsqueceuSenha from './pages/EsqueceuSenha';
 import RedefinirSenha from './pages/RedefinirSenha';
 import Vagas from './pages/Vagas';
-import EmpresaDashboard from './pages/EmpresaDashboard';
 import Blog from './pages/Blog';
-import PanelAgenda from './pages/PanelAgenda';
-import PanelFunil from './pages/PanelFunil';
-import PanelIndicadores from './pages/PanelIndicadores';
-import PanelColaboradores from './pages/PanelColaboradores';
+import EmpresaDashboard from './pages/EmpresaDashboard';
 import './index.css';
 
 // Rota protegida com verificação de tipo
@@ -35,7 +31,6 @@ const PrivateRoute = ({ children, allowedType }) => {
   }
 
   if (!user) {
-    // Preserva a URL desejada para redirecionar após login
     return <Navigate to="/login" state={{ from: window.location.pathname }} replace />;
   }
 
@@ -49,7 +44,6 @@ const PrivateRoute = ({ children, allowedType }) => {
 function AppContent() {
   const { user } = useAuth();
 
-  // Footer só aparece em páginas públicas (sem usuário logado como candidato/empresa)
   const showFooter = !user || (user.tipo !== 'candidato' && user.tipo !== 'empresa');
 
   return (
@@ -60,51 +54,28 @@ function AppContent() {
         <main className="flex-grow">
           <Routes>
             {/* Rotas Públicas */}
-<Route path="/" element={<Home />} />
-<Route path="/vagas" element={<Vagas/>} />
-<Route path="/login" element={<Login/>} />
-<Route path="/registro" element={<Registro />} />
-<Route path="/esqueceu-senha" element={<EsqueceuSenha />} />
-<Route path="/redefinir-senha" element={<RedefinirSenha />} />
-<Route path="/sobre" element={<Sobre />} />
-<Route path="/blog" element={<Blog />} />
-<Route path="/candidato/registro" element={<Registro tipo="candidato" />} />
-<Route path="/empresa/registro" element={<Registro tipo="empresa" />} />
-<Route path="/candidato/login" element={<Login tipo="candidato" />} />
-<Route path="/empresa/login" element={<Login tipo="empresa" />} />
-<Route path="/candidato/esqueceu-senha" element={<EsqueceuSenha tipo="candidato" />} />
-<Route path="/empresa/esqueceu-senha" element={<EsqueceuSenha tipo="empresa" />} />
-<Route path="/candidato/redefinir-senha" element={<RedefinirSenha tipo="candidato" />} />
-<Route path="/indicadores" element={<PanelIndicadores />} />
-<Route path="/colaboradores" element={<PanelColaboradores />} />
+            <Route path="/" element={<Home />} />
+            <Route path="/vagas" element={<Vagas/>} />
+            <Route path="/login" element={<Login/>} />
+            <Route path="/registro" element={<Registro />} />
+            <Route path="/esqueceu-senha" element={<EsqueceuSenha />} />
+            <Route path="/redefinir-senha" element={<RedefinirSenha />} />
+            <Route path="/sobre" element={<Sobre />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/candidato/registro" element={<Registro tipo="candidato" />} />
+            <Route path="/empresa/registro" element={<Registro tipo="empresa" />} />
+            <Route path="/candidato/login" element={<Login tipo="candidato" />} />
+            <Route path="/empresa/login" element={<Login tipo="empresa" />} />
+            <Route path="/candidato/esqueceu-senha" element={<EsqueceuSenha tipo="candidato" />} />
+            <Route path="/empresa/esqueceu-senha" element={<EsqueceuSenha tipo="empresa" />} />
+            <Route path="/candidato/redefinir-senha" element={<RedefinirSenha tipo="candidato" />} />
 
             {/* Rotas do Candidato (protegidas) */}
-            <Route
-              path="/candidato/onboarding"
-              element={
-                <PrivateRoute allowedType="candidato">
-                  <Onboarding />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/candidato/dashboard"
-              element={
-                <PrivateRoute allowedType="candidato">
-                  <CandidatoDashboard />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/candidato/editar"
-              element={
-                <PrivateRoute allowedType="candidato">
-                  <EditarPerfil />
-                </PrivateRoute>
-              }
-            />
+            <Route path="/candidato/onboarding" element={<PrivateRoute allowedType="candidato"><Onboarding /></PrivateRoute>} />
+            <Route path="/candidato/dashboard"  element={<PrivateRoute allowedType="candidato"><CandidatoDashboard /></PrivateRoute>} />
+            <Route path="/candidato/editar"     element={<PrivateRoute allowedType="candidato"><EditarPerfil /></PrivateRoute>} />
 
-            {/* Rotas da Empresa (protegidas) */}
+            {/* Rota principal da Empresa */}
             <Route
               path="/empresa/dashboard"
               element={
@@ -114,10 +85,15 @@ function AppContent() {
               }
             />
 
-            {/* Redirecionamento de rota antiga/errada (opcional) */}
+            {/* Rotas de subpáginas — redirecionam para o dashboard
+                (os painéis agora são abas internas do EmpresaDashboard) */}
+            <Route path="/empresa/colaboradores"  element={<Navigate to="/empresa/dashboard" replace />} />
+            <Route path="/empresa/indicadores-rh" element={<Navigate to="/empresa/dashboard" replace />} />
+            <Route path="/empresa/agenda"         element={<Navigate to="/empresa/dashboard" replace />} />
+            <Route path="/empresa/funil"          element={<Navigate to="/empresa/dashboard" replace />} />
+
+            {/* Redirecionamentos */}
             <Route path="/empresadashboard" element={<Navigate to="/empresa/dashboard" replace />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-            {/* 404 */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
@@ -130,15 +106,10 @@ function AppContent() {
 
 function App() {
   return (
-    
     <AuthProvider>
       <AppContent />
     </AuthProvider>
-
-    
   );
-  
 }
-  
-   
+
 export default App;
