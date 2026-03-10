@@ -2,6 +2,8 @@
 import { V, Pill, ScoreBar, Card, KpiCard } from './shared';
 
 
+
+
 const PILL_LABEL = {
   'pill-green':  'Aprovado',
   'pill-red':    'Reprovado',

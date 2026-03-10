@@ -12,6 +12,7 @@ import PanelIndicadoresRH from './panels/PanelIndicadoresRH';
 import PanelColaboradores from './panels/PanelColaboradores';
 import PanelAgendaFull    from './PanelAgenda';
 import PanelFunilCRM      from './PanelFunil';
+import PanelVagas         from './panels/PanelVagas';
 import { V, BASE_URL }    from './panels/shared';
 
 // ─── MODAL AGENDAMENTO ────────────────────────────────────────────
@@ -310,7 +311,7 @@ export default function EmpresaDashboard() {
             </div>
           ) : (
             <>
-              {tab === 'overview'      && <PanelOverview/>}
+              {tab === 'overview'      && <PanelOverview kpis={kpis} candidates={candidates}/>}
               {tab === 'funnel'        && <PanelFunilCRM/>}
               {tab === 'talent'        && <PanelTalent/>}
               {tab === 'ai'            && <PanelAI/>}
@@ -325,6 +326,7 @@ export default function EmpresaDashboard() {
       </div>
 
       <Modal open={modal} onClose={() => setModal(false)}/>
+      <ModalNovaVaga open={modalVaga} onClose={() => setModalVaga(false)} onSaved={fetchData}/>
     </>
   );
 }
