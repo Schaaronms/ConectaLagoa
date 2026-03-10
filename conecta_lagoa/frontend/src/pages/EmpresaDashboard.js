@@ -181,6 +181,7 @@ const ICONS = {
 
 const TABS = [
   { id:'overview',      label:'Visão Geral'       },
+  { id:'vagas', label:'Vagas' },   
   { id:'funnel',        label:'Funil CRM'         },
   { id:'talent',        label:'Banco de Talentos' },
   { id:'ai',            label:'Ranking IA'        },
@@ -311,7 +312,8 @@ export default function EmpresaDashboard() {
             </div>
           ) : (
             <>
-              {tab === 'overview'      && <PanelOverview kpis={kpis} candidates={candidates}/>}
+              {tab === 'overview' && (<PanelOverview kpis={kpis}  candidates={candidates} goTo={setTab} />)}
+              {tab === 'vagas'         && <PanelVagas/>}
               {tab === 'funnel'        && <PanelFunilCRM/>}
               {tab === 'talent'        && <PanelTalent/>}
               {tab === 'ai'            && <PanelAI/>}

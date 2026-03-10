@@ -39,7 +39,7 @@ const ALERTAS_FALLBACK = [
   { color:V.accent, msg:'Vaga "Dev Senior" expira em 3 dias',   time:'03/mar' },
 ];
 
-export default function PanelOverview({ kpis, candidates, evolucao, funil, alertas, onModal }) {
+export default function PanelOverview({ kpis, candidates, evolucao, funil, alertas, goTo, onModal }) {
   const barData   = evolucao?.length > 0 ? evolucao : BAR_DATA_FALLBACK;
   const funilData = funil?.length   > 0 ? funil    : FUNIL_FALLBACK;
   const alertData = alertas?.length > 0 ? alertas  : ALERTAS_FALLBACK;
@@ -51,9 +51,17 @@ export default function PanelOverview({ kpis, candidates, evolucao, funil, alert
   return (
     <div>
       {/* KPIs */}
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(6,1fr)', gap:14, marginBottom:24 }}>
-        {kpis.map((k,i) => <KpiCard key={i} {...k} delay={0.05+i*0.05}/>)}
-      </div>
+      {kpis.map((k,i)=>(
+  <div
+    key={i}
+    onClick={() => {
+      if (k.label === 'Vagas Ativas') goTo('vagas')
+    }}
+    style={{cursor:'pointer'}}
+  >
+    <KpiCard {...k}/>
+  </div>
+))}
 
       {/* Gráfico + Funil */}
       <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:16 }}>
