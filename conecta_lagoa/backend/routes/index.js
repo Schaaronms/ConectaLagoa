@@ -81,6 +81,11 @@ router.get(   '/empresa/candidatos-contratados',  authMiddleware, isEmpresa, emp
 
 
 
+
+// ==================== RANKING IA ====================
+const rankingIARoutes = require('./rankingIA');
+router.use('/ranking-ia', rankingIARoutes);
+
 // ==================== DASHBOARD ====================
 const dashboardRoutes = require('./dashboard');
 router.use('/dashboard', dashboardRoutes);

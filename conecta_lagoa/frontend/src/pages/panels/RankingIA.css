@@ -1,0 +1,378 @@
+/* ── RankingIA.css — Conecta Lagoa ────────────────────────── */
+
+/* ── Seção header ── */
+.ria-section-header {
+  margin-bottom: 20px;
+}
+.ria-section-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  margin-bottom: 4px;
+}
+.ria-section-sub {
+  font-size: 12px;
+  color: #7b82a0;
+}
+
+/* ── Controls bar ── */
+.ria-controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.ria-select {
+  flex: 1;
+  min-width: 200px;
+  max-width: 340px;
+  padding: 9px 14px;
+  border-radius: 10px;
+  border: 1px solid #e4e8f0;
+  background: #fff;
+  font-size: 13px;
+  font-family: 'DM Sans', sans-serif;
+  color: #1a1d2e;
+  cursor: pointer;
+  outline: none;
+}
+.ria-select:focus { border-color: #1a3a8f; }
+
+.ria-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 18px;
+  border-radius: 10px;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.ria-btn-primary {
+  background: linear-gradient(135deg, #1a3a8f, #2d52c4);
+  color: #fff;
+}
+.ria-btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(26,58,143,0.3); }
+.ria-btn-primary:disabled { opacity: 0.55; cursor: not-allowed; transform: none; box-shadow: none; }
+
+.ria-btn-outline {
+  background: #fff;
+  border: 1.5px dashed #1a3a8f;
+  color: #1a3a8f;
+}
+.ria-btn-outline:hover { background: #eef2ff; }
+.ria-btn-outline:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Ranking grid (top section) ── */
+.ria-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 14px;
+  margin-bottom: 0;
+}
+
+/* ── Card base ── */
+.ria-card {
+  background: #fff;
+  border: 1px solid #e4e8f0;
+  border-radius: 14px;
+  overflow: hidden;
+  position: relative;
+  transition: all 0.2s;
+  animation: riaFadeUp 0.4s ease forwards;
+  opacity: 0;
+}
+.ria-card:hover {
+  border-color: rgba(26,58,143,0.3);
+  box-shadow: 0 6px 24px rgba(26,58,143,0.1);
+  transform: translateY(-2px);
+}
+.ria-card:nth-child(1) { animation-delay: 0.05s; }
+.ria-card:nth-child(2) { animation-delay: 0.10s; }
+.ria-card:nth-child(3) { animation-delay: 0.15s; }
+.ria-card:nth-child(4) { animation-delay: 0.20s; }
+.ria-card:nth-child(5) { animation-delay: 0.25s; }
+.ria-card:nth-child(6) { animation-delay: 0.30s; }
+
+@keyframes riaFadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Rank badge ── */
+.ria-rank-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: 'Syne', sans-serif;
+  padding: 2px 8px;
+  border-radius: 20px;
+  color: #fff;
+  background: #1a3a8f;
+}
+.ria-rank-badge.gold   { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
+.ria-rank-badge.silver { background: linear-gradient(135deg, #94a3b8, #cbd5e1); }
+.ria-rank-badge.bronze { background: linear-gradient(135deg, #b45309, #d97706); }
+
+/* ── Card header ── */
+.ria-card-header {
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid #e4e8f0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.ria-ring {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+}
+.ria-ring svg { transform: rotate(-90deg); }
+.ria-ring-num {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+}
+.ria-card-info { flex: 1; min-width: 0; }
+.ria-card-name {
+  font-weight: 700;
+  font-size: 13px;
+  color: #1a1d2e;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ria-card-role { font-size: 11px; color: #7b82a0; margin-top: 1px; }
+.ria-invite-btn {
+  background: #1a3a8f;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.ria-invite-btn:hover { background: #2d52c4; }
+
+/* ── Tags ── */
+.ria-tags { display: flex; flex-wrap: wrap; gap: 5px; padding: 10px 16px 0; }
+.ria-tag {
+  background: rgba(26,58,143,0.08);
+  color: #1a3a8f;
+  border-radius: 5px;
+  padding: 2px 8px;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+/* ── IA tip ── */
+.ria-tip {
+  margin: 10px 16px;
+  background: #f7f8fc;
+  border-radius: 8px;
+  padding: 9px 11px;
+  font-size: 11px;
+  color: #7b82a0;
+  line-height: 1.5;
+  display: flex;
+  gap: 7px;
+  align-items: flex-start;
+}
+.ria-tip-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #e07b00;
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+.ria-tip strong { color: #e07b00; }
+
+/* ── Skills chips ── */
+.ria-skills { display: flex; flex-wrap: wrap; gap: 5px; padding: 0 16px 14px; }
+.ria-skill-chip {
+  background: #f7f8fc;
+  border: 1px solid #e4e8f0;
+  border-radius: 5px;
+  padding: 2px 8px;
+  font-size: 10px;
+  color: #7b82a0;
+}
+
+/* ── Divider ── */
+.ria-divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 40px 0 24px;
+}
+.ria-divider-line { flex: 1; height: 1px; background: #e4e8f0; }
+.ria-divider h2 {
+  font-family: 'Syne', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+  color: #1a1d2e;
+}
+.ria-divider .ria-ai-pill {
+  background: linear-gradient(135deg, #1a3a8f, #2d52c4);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 9px;
+  border-radius: 20px;
+  letter-spacing: 0.4px;
+}
+
+/* ── Candidatos grid ── */
+.ria-cand-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+/* ── Candidate card ── */
+.ria-cand-card {
+  background: #fff;
+  border: 1px solid #e4e8f0;
+  border-radius: 14px;
+  overflow: hidden;
+  transition: all 0.2s;
+  animation: riaFadeUp 0.4s ease forwards;
+  opacity: 0;
+}
+.ria-cand-card:hover {
+  border-color: rgba(26,58,143,0.3);
+  box-shadow: 0 6px 24px rgba(26,58,143,0.1);
+  transform: translateY(-2px);
+}
+
+.ria-cand-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid #e4e8f0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.ria-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  color: #fff;
+  flex-shrink: 0;
+}
+.ria-cand-meta { flex: 1; min-width: 0; }
+.ria-cand-name {
+  font-weight: 700;
+  font-size: 13px;
+  color: #1a1d2e;
+}
+.ria-cand-role { font-size: 11px; color: #7b82a0; }
+
+.ria-cand-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 10px 16px;
+  border-bottom: 1px solid #e4e8f0;
+}
+
+/* ── Vaga bars ── */
+.ria-vagas-list { padding: 12px 16px; display: flex; flex-direction: column; gap: 9px; }
+.ria-vaga-row { display: flex; align-items: center; gap: 8px; }
+.ria-vaga-label { flex: 1; font-size: 11px; color: #1a1d2e; font-weight: 500; }
+.ria-vaga-label small { display: block; color: #7b82a0; font-size: 10px; font-weight: 400; }
+.ria-bar-wrap { width: 90px; height: 5px; background: #e4e8f0; border-radius: 10px; overflow: hidden; flex-shrink: 0; }
+.ria-bar-fill { height: 100%; border-radius: 10px; }
+.ria-score-pct { font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; width: 32px; text-align: right; flex-shrink: 0; }
+.ria-best-pill {
+  font-size: 9px;
+  font-weight: 700;
+  background: rgba(16,185,129,0.12);
+  color: #10b981;
+  padding: 2px 6px;
+  border-radius: 20px;
+  flex-shrink: 0;
+}
+
+/* ── Cand footer ── */
+.ria-cand-footer {
+  padding: 10px 16px 14px;
+  border-top: 1px solid #e4e8f0;
+  font-size: 11px;
+  color: #7b82a0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  line-height: 1.4;
+}
+
+/* ── Loading / Empty states ── */
+.ria-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 14px;
+  color: #7b82a0;
+  font-size: 13px;
+  grid-column: 1 / -1;
+}
+.ria-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #e4e8f0;
+  border-top-color: #1a3a8f;
+  border-radius: 50%;
+  animation: riaSpin 0.75s linear infinite;
+}
+@keyframes riaSpin { to { transform: rotate(360deg); } }
+
+.ria-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 40px 20px;
+  color: #7b82a0;
+  font-size: 13px;
+}
+.ria-empty strong {
+  display: block;
+  font-family: 'Syne', sans-serif;
+  font-size: 14px;
+  color: #1a1d2e;
+  margin-bottom: 6px;
+}
+
+.ria-error {
+  grid-column: 1 / -1;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  padding: 12px 16px;
+  color: #dc2626;
+  font-size: 12px;
+}

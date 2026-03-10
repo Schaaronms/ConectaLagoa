@@ -5,7 +5,7 @@ import './Auth.css';
 
 const EsqueceuSenha = () => {
   const [email, setEmail] = useState('');
-  const [tipo, setTipo] = useState('candidato');
+  const [tipo, setTipo] = useState('candidato, empresa');
   const [mensagem, setMensagem] = useState('');
   const [erro, setErro] = useState('');
   const [loading, setLoading] = useState(false);
