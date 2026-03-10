@@ -64,10 +64,15 @@ export const AuthProvider = ({ children }) => {
     }
   };
 const loginComToken = (token) => {
-  localStorage.setItem('token', token);
-  // decodifica e seta o user no contexto
-  const decoded = JSON.parse(atob(token.split('.')[1]));
-  setUser(decoded);
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const userData = { id: payload.id, tipo: payload.tipo };
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(userData)); // ← faltava isso
+    setUser(userData);
+  } catch (e) {
+    console.error('[loginComToken] Token inválido:', e.message);
+  }
 };
   const registroCandidato = async (data) => {
     try {
@@ -117,16 +122,17 @@ const loginComToken = (token) => {
 
   return (
     <AuthContext.Provider
-      value={{
-        user,
-        loading,
-        login,
-        logout,
-        registroCandidato,
-        registroEmpresa,
-        isCandidato,
-        isEmpresa
-      }}
+     value={{
+    user,
+    loading,
+    login,
+    loginComToken,  // ← adiciona essa linha
+    logout,
+    registroCandidato,
+    registroEmpresa,
+    isCandidato,
+    isEmpresa
+    }}
     >
       {children}
     </AuthContext.Provider>
