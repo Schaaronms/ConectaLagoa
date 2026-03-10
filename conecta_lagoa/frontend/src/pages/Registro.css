@@ -1,38 +1,403 @@
-/* Container dos botões */
-.tipo-btn-group {
-  display: flex;
-  background: #f1f5f9;
-  border-radius: 10px;
-  padding: 4px;
-  gap: 4px;
-  width: fit-content;
-}
+/* ═══════════════════════════════════════════
+   Registro.css  –  Conecta Lagoa
+   Estilo alinhado com a tela de Login
+═══════════════════════════════════════════ */
 
-/* Botão base */
-.tipo-btn {
-  padding: 10px 24px;
-  border: none;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  cursor: pointer;
-  background: transparent;
-  color: #64748b;
-  transition: all 0.2s ease;
+/* ── Page ── */
+.registro-page {
+  min-height: 100vh;
+  background: #eef1f8;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 40px 20px 60px;
   position: relative;
 }
 
-/* Hover — sutil, só uma leve clareza */
-.tipo-btn:hover {
-  background: #e2e8f0;
-  color: #334155;
+/* dot grid — mesmo da tela de login */
+.registro-page::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: radial-gradient(circle, #c5cce8 1px, transparent 1px);
+  background-size: 28px 28px;
+  opacity: 0.4;
+  pointer-events: none;
+  z-index: 0;
 }
 
-/* Ativo — destaque real */
+/* ── Wrapper ── */
+.registro-wrapper {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+/* ── Header (logo + títulos) ── */
+.registro-header {
+  text-align: center;
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.registro-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.logo-icon {
+  width: 44px;
+  height: 44px;
+  background: #1a2152;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.logo-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+  text-align: left;
+}
+
+.logo-name {
+  font-size: 18px;
+  font-weight: 800;
+  color: #1a2152;
+  letter-spacing: -0.4px;
+}
+
+.logo-sub {
+  font-size: 10px;
+  font-weight: 700;
+  color: #4f8cff;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+}
+
+.registro-title {
+  font-size: 26px;
+  font-weight: 800;
+  color: #1a2152;
+  letter-spacing: -0.5px;
+  margin: 0;
+}
+
+.registro-subtitle {
+  font-size: 14px;
+  color: #7a85a3;
+  font-weight: 400;
+  margin: 0;
+}
+
+/* ── Card ── */
+.registro-card {
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow:
+    0 8px 40px rgba(45, 77, 224, 0.10),
+    0 1px 0 #d8dff0;
+  width: 100%;
+  padding: 32px 36px 36px;
+  animation: slideUp 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Tipo selector ── */
+.tipo-selector {
+  display: flex;
+  background: #f1f5fb;
+  border-radius: 12px;
+  padding: 4px;
+  gap: 4px;
+  margin-bottom: 24px;
+}
+
+.tipo-btn {
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  background: transparent;
+  color: #7a85a3;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font-family: inherit;
+}
+
+.tipo-btn:hover {
+  color: #1a2152;
+  background: #e4e9f4;
+}
+
 .tipo-btn.active {
   background: #ffffff;
-  color: #004a8d;
+  color: #1a2152;
+  font-weight: 700;
+  box-shadow:
+    0 2px 8px rgba(45, 77, 224, 0.12),
+    0 0 0 1px rgba(45, 77, 224, 0.12);
+}
+
+.tipo-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+/* ── Alert ── */
+.alert-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 13.5px;
+  font-weight: 500;
+  margin-bottom: 20px;
+}
+
+.alert-error svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+/* ── Form ── */
+.registro-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── Field ── */
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.field-label {
+  font-size: 13px;
   font-weight: 600;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12),
-              0 0 0 1px rgba(0, 74, 141, 0.15);
+  color: #374151;
+  letter-spacing: 0.01em;
+}
+
+.field-optional {
+  font-weight: 400;
+  color: #9ca3af;
+  font-size: 12px;
+}
+
+.field-input {
+  width: 100%;
+  padding: 11px 14px;
+  background: #f0f4fb;
+  border: 1.5px solid transparent;
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #1a2152;
+  transition: all 0.2s ease;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.field-input::placeholder {
+  color: #a0aab8;
+}
+
+.field-input:hover {
+  background: #e8edf7;
+}
+
+.field-input:focus {
+  background: #ffffff;
+  border-color: #2d4de0;
+  box-shadow: 0 0 0 3px rgba(45, 77, 224, 0.10);
+}
+
+.field-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+  cursor: pointer;
+  padding-right: 36px;
+}
+
+.field-input.input-error {
+  border-color: #ef4444;
+  background: #fff5f5;
+}
+
+.field-hint {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.field-hint.error { color: #ef4444; }
+.field-hint.success { color: #22c55e; }
+
+/* ── Força da senha ── */
+.senha-strength {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.strength-bars {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+
+.strength-bar {
+  height: 4px;
+  flex: 1;
+  border-radius: 99px;
+  transition: background 0.3s ease;
+}
+
+.strength-label {
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: color 0.3s ease;
+}
+
+/* ── Submit button ── */
+.btn-submit {
+  width: 100%;
+  padding: 14px;
+  background: #1a2152;
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 4px;
+  letter-spacing: 0.01em;
+}
+
+.btn-submit:hover:not(:disabled) {
+  background: #2d4de0;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(45, 77, 224, 0.30);
+}
+
+.btn-submit:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* ── Spinner ── */
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2.5px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Footer ── */
+.registro-footer {
+  font-size: 14px;
+  color: #7a85a3;
+  margin-top: 20px;
+  text-align: center;
+}
+
+.registro-link {
+  color: #2d4de0;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.registro-link:hover {
+  text-decoration: underline;
+}
+
+.registro-back {
+  display: inline-block;
+  margin-top: 12px;
+  font-size: 13px;
+  color: #9ca3af;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.registro-back:hover {
+  color: #1a2152;
+}
+
+/* ── Responsivo ── */
+@media (max-width: 520px) {
+  .registro-card {
+    padding: 24px 20px 28px;
+    border-radius: 16px;
+  }
+
+  .field-row {
+    grid-template-columns: 1fr;
+  }
+
+  .registro-title {
+    font-size: 22px;
+  }
 }
