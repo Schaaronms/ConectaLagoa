@@ -16,6 +16,7 @@ import RedefinirSenha from './pages/RedefinirSenha';
 import Vagas from './pages/Vagas';
 import Blog from './pages/Blog';
 import EmpresaDashboard from './pages/EmpresaDashboard';
+import AuthCallback from './pages/AuthCallback';
 import './index.css';
 
 // Rota protegida com verificação de tipo
@@ -69,6 +70,8 @@ function AppContent() {
             <Route path="/candidato/esqueceu-senha" element={<EsqueceuSenha tipo="candidato" />} />
             <Route path="/empresa/esqueceu-senha" element={<EsqueceuSenha tipo="empresa" />} />
             <Route path="/candidato/redefinir-senha" element={<RedefinirSenha tipo="candidato" />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
+            
 
             {/* Rotas do Candidato (protegidas) */}
             <Route path="/candidato/onboarding" element={<PrivateRoute allowedType="candidato"><Onboarding /></PrivateRoute>} />

@@ -4,9 +4,13 @@
 //  1. Rotas de empresa DUPLICADAS removidas (existiam 2x após /empresa/:id)
 //  2. Rotas fixas de candidato ANTES de /candidato/:id
 //  3. Uploads DEPOIS do perfil fixo — evita Express capturar "curriculo" como :id
+//  4. check-email adicionado (validação no cadastro)
+//  5. Google OAuth adicionado (passport-google-oauth20)
 // ================================================================
-const express = require('express');
-const router  = express.Router();
+const express  = require('express');
+const router   = express.Router();
+const passport = require('passport');
+const jwt      = require('jsonwebtoken');
 const { pool } = require('../config/db');
 const { authMiddleware, isEmpresa, isCandidato } = require('../middleware/auth');
 const upload = require('../middleware/upload');
@@ -15,6 +19,9 @@ const authController      = require('../controllers/authController');
 const candidatoController = require('../controllers/candidatoController');
 const empresaController   = require('../controllers/empresaController');
 
+// Carrega a configuração do Passport (estratégia Google)
+require('../config/passport');
+
 // ==================== AUTENTICAÇÃO ====================
 router.post('/auth/registro/candidato', authController.registroCandidato);
 router.post('/auth/registro/empresa',   authController.registroEmpresa);
@@ -22,6 +29,53 @@ router.post('/auth/login',              authController.login);
 router.get( '/auth/profile', authMiddleware, authController.getProfile);
 router.post('/auth/esqueceu-senha',  authController.esqueceuSenha);
 router.post('/auth/redefinir-senha', authController.redefinirSenha);
+
+// ── Verifica se e-mail já existe (usado no onBlur do cadastro) ──
+router.get('/auth/check-email', async (req, res) => {
+  const { email } = req.query;
+  if (!email) return res.json({ exists: false });
+
+  try {
+    const result = await pool.query(
+      `SELECT id FROM candidatos WHERE email = $1
+       UNION
+       SELECT id FROM empresas    WHERE email = $1
+       LIMIT 1`,
+      [email.toLowerCase().trim()]
+    );
+    res.json({ exists: result.rows.length > 0 });
+  } catch (err) {
+    console.error('[check-email]', err.message);
+    res.status(500).json({ exists: false });
+  }
+});
+
+// ── Google OAuth ──────────────────────────────────────────────
+// 1. Inicia o fluxo — redireciona para o Google
+router.get('/auth/google',
+  passport.authenticate('google', { scope: ['profile', 'email'], session: false })
+);
+
+// 2. Callback — Google redireciona de volta aqui
+router.get('/auth/google/callback',
+  passport.authenticate('google', { session: false, failureRedirect: `${process.env.FRONTEND_URL}/login?error=google` }),
+  (req, res) => {
+    // req.user foi preenchido pela estratégia do Passport
+    const token = jwt.sign(
+      { id: req.user.id, tipo: req.user.tipo },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    // Redireciona pro frontend com o token na URL
+    // O AuthCallback.jsx vai capturar e salvar no contexto
+    const destino = req.user.tipo === 'empresa'
+      ? '/empresa/dashboard'
+      : '/candidato/dashboard';
+
+    res.redirect(`${process.env.FRONTEND_URL}/auth/callback?token=${token}&destino=${destino}`);
+  }
+);
 
 // ==================== AGENDA ====================
 const agendaRoutes = require('./agenda');

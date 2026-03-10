@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 
 const CL_BLUE   = '#1a3a8f';
 const CL_ORANGE = '#e07b00';
+const API_URL   = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const Login = ({ tipo: tipoProp }) => {
   const [formData, setFormData] = useState({ email:'', senha:'', tipo: tipoProp || 'candidato' });
@@ -12,7 +13,6 @@ const Login = ({ tipo: tipoProp }) => {
   const { login, user } = useAuth();
   const navigate  = useNavigate();
 
-  // Se já está logado, vai direto pro dashboard correto
   useEffect(() => {
     if (user) {
       navigate(user.tipo === 'empresa' ? '/empresa/dashboard' : '/candidato/dashboard', { replace: true });
@@ -33,6 +33,10 @@ const Login = ({ tipo: tipoProp }) => {
     setLoading(false);
   };
 
+  const handleGoogleLogin = () => {
+    window.location.href = `${API_URL}/api/auth/google`;
+  };
+
   const isEmpresa = formData.tipo === 'empresa';
 
   return (
@@ -44,10 +48,11 @@ const Login = ({ tipo: tipoProp }) => {
         .cl-input:focus { outline:none; border-color:${CL_BLUE} !important; box-shadow:0 0 0 3px rgba(26,58,143,0.1); }
         .cl-submit:hover:not(:disabled) { transform:translateY(-1px); box-shadow:0 8px 24px rgba(26,58,143,0.35) !important; }
         .cl-submit:disabled { opacity:0.6; cursor:not-allowed; }
+        .cl-google:hover { border-color:${CL_BLUE} !important; background:#f5f7ff !important; box-shadow:0 2px 8px rgba(26,58,143,0.10) !important; }
         @media (max-width: 768px) { .cl-login-grid { grid-template-columns: 1fr !important; } .cl-login-left { display: none !important; } }
       `}</style>
 
-      <div className="cl-login" style={{ minHeight:'calc(100vh - 64px)', display:'grid', gridTemplateColumns:'1fr 1fr', fontFamily:"'DM Sans', sans-serif" }} >
+      <div className="cl-login" style={{ minHeight:'calc(100vh - 64px)', display:'grid', gridTemplateColumns:'1fr 1fr', fontFamily:"'DM Sans', sans-serif" }}>
 
         {/* ── Esquerda: branding ── */}
         <div className="cl-login-left" style={{ background:`linear-gradient(145deg, ${CL_BLUE} 0%, #0f2460 55%, #1a1a2e 100%)`, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'60px 52px', color:'white', position:'relative', overflow:'hidden' }}>
@@ -87,7 +92,8 @@ const Login = ({ tipo: tipoProp }) => {
             {!tipoProp && (
               <div style={{ display:'flex', gap:5, background:'#e8ecf4', borderRadius:12, padding:5, marginBottom:22 }}>
                 {[{val:'candidato',label:'👤 Candidato'},{val:'empresa',label:'🏢 Empresa'}].map(opt => (
-                  <button key={opt.val} type="button" onClick={() => setFormData({...formData, tipo:opt.val})} style={{ flex:1, padding:'10px 0', border:'none', borderRadius:9, cursor:'pointer', fontSize:13, fontWeight:600, fontFamily:"'DM Sans', sans-serif", background: formData.tipo===opt.val ? 'white' : 'transparent', color: formData.tipo===opt.val ? CL_BLUE : '#6b7280', boxShadow: formData.tipo===opt.val ? '0 2px 8px rgba(0,0,0,0.1)' : 'none', transition:'all 0.2s' }}>
+                  <button key={opt.val} type="button" onClick={() => setFormData({...formData, tipo:opt.val})}
+                    style={{ flex:1, padding:'10px 0', border:'none', borderRadius:9, cursor:'pointer', fontSize:13, fontWeight:600, fontFamily:"'DM Sans', sans-serif", background: formData.tipo===opt.val ? 'white' : 'transparent', color: formData.tipo===opt.val ? CL_BLUE : '#6b7280', boxShadow: formData.tipo===opt.val ? '0 2px 8px rgba(0,0,0,0.1)' : 'none', transition:'all 0.2s' }}>
                     {opt.label}
                   </button>
                 ))}
@@ -95,20 +101,51 @@ const Login = ({ tipo: tipoProp }) => {
             )}
 
             <div style={{ background:'white', borderRadius:20, padding:30, boxShadow:'0 4px 24px rgba(26,58,143,0.08)', border:'1px solid #e8ecf4' }}>
-              {error && <div style={{ background:'#fef2f2', border:'1px solid #fecaca', borderRadius:10, padding:'10px 14px', fontSize:13, color:'#dc2626', marginBottom:16 }}>⚠️ {error}</div>}
+
+              {/* ── Botão Google ── */}
+              <button
+                type="button"
+                className="cl-google"
+                onClick={handleGoogleLogin}
+                style={{ width:'100%', padding:'12px 16px', background:'#ffffff', border:'1.5px solid #e8ecf4', borderRadius:12, fontSize:14, fontWeight:600, color:'#1a1f36', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:10, transition:'all 0.2s', fontFamily:"'DM Sans', sans-serif", marginBottom:16 }}
+              >
+                <svg viewBox="0 0 24 24" width="18" height="18">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                Continuar com Google
+              </button>
+
+              {/* Divisor */}
+              <div style={{ textAlign:'center', position:'relative', marginBottom:20 }}>
+                <div style={{ position:'absolute', top:'50%', left:0, right:0, height:1, background:'#e8ecf4' }}/>
+                <span style={{ background:'white', padding:'0 12px', position:'relative', fontSize:12, color:'#9ca3af', fontWeight:500 }}>ou entre com e-mail</span>
+              </div>
+
+              {error && (
+                <div style={{ background:'#fef2f2', border:'1px solid #fecaca', borderRadius:10, padding:'10px 14px', fontSize:13, color:'#dc2626', marginBottom:16 }}>
+                  ⚠️ {error}
+                </div>
+              )}
+
               <form onSubmit={handleSubmit} style={{ display:'flex', flexDirection:'column', gap:15 }}>
                 <div>
                   <label style={{ fontSize:12, fontWeight:600, color:'#374151', display:'block', marginBottom:6 }}>E-mail</label>
-                  <input type="email" name="email" required value={formData.email} onChange={handleChange} placeholder="seu@email.com" className="cl-input" style={{ width:'100%', padding:'12px 14px', borderRadius:10, border:'1.5px solid #e8ecf4', fontSize:14, fontFamily:"'DM Sans', sans-serif", color:'#1a1f36', background:'#fafbff', transition:'border-color 0.2s' }}/>
+                  <input type="email" name="email" required value={formData.email} onChange={handleChange} placeholder="seu@email.com" className="cl-input"
+                    style={{ width:'100%', padding:'12px 14px', borderRadius:10, border:'1.5px solid #e8ecf4', fontSize:14, fontFamily:"'DM Sans', sans-serif", color:'#1a1f36', background:'#fafbff', transition:'border-color 0.2s' }}/>
                 </div>
                 <div>
                   <label style={{ fontSize:12, fontWeight:600, color:'#374151', display:'block', marginBottom:6 }}>Senha</label>
-                  <input type="password" name="senha" required value={formData.senha} onChange={handleChange} placeholder="••••••••" className="cl-input" style={{ width:'100%', padding:'12px 14px', borderRadius:10, border:'1.5px solid #e8ecf4', fontSize:14, fontFamily:"'DM Sans', sans-serif", color:'#1a1f36', background:'#fafbff', transition:'border-color 0.2s' }}/>
+                  <input type="password" name="senha" required value={formData.senha} onChange={handleChange} placeholder="••••••••" className="cl-input"
+                    style={{ width:'100%', padding:'12px 14px', borderRadius:10, border:'1.5px solid #e8ecf4', fontSize:14, fontFamily:"'DM Sans', sans-serif", color:'#1a1f36', background:'#fafbff', transition:'border-color 0.2s' }}/>
                 </div>
                 <div style={{ textAlign:'right', marginTop:-6 }}>
                   <Link to={`/esqueceu-senha?tipo=${formData.tipo}`} style={{ fontSize:12, color:CL_BLUE, textDecoration:'none', fontWeight:500 }}>Esqueceu a senha?</Link>
                 </div>
-                <button type="submit" disabled={loading} className="cl-submit" style={{ width:'100%', padding:'13px', background:`linear-gradient(135deg, ${CL_BLUE}, #2d52c4)`, color:'white', border:'none', borderRadius:12, fontSize:15, fontWeight:700, cursor:'pointer', fontFamily:"'DM Sans', sans-serif", boxShadow:'0 4px 16px rgba(26,58,143,0.25)', transition:'all 0.2s', marginTop:4 }}>
+                <button type="submit" disabled={loading} className="cl-submit"
+                  style={{ width:'100%', padding:'13px', background:`linear-gradient(135deg, ${CL_BLUE}, #2d52c4)`, color:'white', border:'none', borderRadius:12, fontSize:15, fontWeight:700, cursor:'pointer', fontFamily:"'DM Sans', sans-serif", boxShadow:'0 4px 16px rgba(26,58,143,0.25)', transition:'all 0.2s', marginTop:4 }}>
                   {loading ? 'Entrando...' : `Entrar como ${formData.tipo === 'empresa' ? 'Empresa' : 'Candidato'}`}
                 </button>
               </form>

@@ -63,7 +63,12 @@ export const AuthProvider = ({ children }) => {
       };
     }
   };
-
+const loginComToken = (token) => {
+  localStorage.setItem('token', token);
+  // decodifica e seta o user no contexto
+  const decoded = JSON.parse(atob(token.split('.')[1]));
+  setUser(decoded);
+};
   const registroCandidato = async (data) => {
     try {
       const response = await authAPI.registroCandidato(data);

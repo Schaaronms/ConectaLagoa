@@ -262,6 +262,17 @@ const redefinirSenha = async (req, res) => {
     console.error('Erro em redefinirSenha:', error);
     res.status(500).json({ success: false, message: 'Erro no servidor' });
   }
+
+  const existing = await db.query(
+  'SELECT id FROM usuarios WHERE email = $1', [email]
+);
+
+if (existing.rows.length > 0) {
+  return res.status(409).json({ 
+    success: false, 
+    message: 'Este e-mail já está cadastrado' 
+  });
+}
 };
 
 module.exports = { registroCandidato, registroEmpresa, login, getProfile, esqueceuSenha, redefinirSenha };
