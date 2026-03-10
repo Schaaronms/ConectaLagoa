@@ -12,7 +12,6 @@ import PanelIndicadoresRH from './panels/PanelIndicadoresRH';
 import PanelColaboradores from './panels/PanelColaboradores';
 import PanelAgendaFull    from './PanelAgenda';
 import PanelFunilCRM      from './PanelFunil';
-import PanelVagasGrid       from './panels/PanelVagas';
 import { V, BASE_URL }    from './panels/shared';
 
 // ─── MODAL AGENDAMENTO ────────────────────────────────────────────

@@ -169,6 +169,79 @@ const initDatabase = async () => {
       )
     `);
 
+
+    // ── Tabela de Vagas ──────────────────────────────────────
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS vagas (
+        id            SERIAL PRIMARY KEY,
+        empresa_id    INTEGER NOT NULL REFERENCES empresas(id) ON DELETE CASCADE,
+        titulo        VARCHAR(200) NOT NULL,
+        descricao     TEXT,
+        requisitos    TEXT,
+        salario       VARCHAR(100),
+        cidade        VARCHAR(100),
+        estado        VARCHAR(2),
+        area          VARCHAR(100) DEFAULT '',
+        tipo_contrato VARCHAR(50)  DEFAULT 'CLT',
+        modalidade    VARCHAR(50)  DEFAULT 'Presencial',
+        pcd           BOOLEAN      DEFAULT false,
+        prazo         DATE,
+        ativa         BOOLEAN      DEFAULT true,
+        encerrada     BOOLEAN      DEFAULT false,
+        created_at    TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+        updated_at    TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    // Colunas que podem faltar em instâncias já existentes
+    await client.query("ALTER TABLE vagas ADD COLUMN IF NOT EXISTS area          VARCHAR(100) DEFAULT ''").catch(()=>{});
+    await client.query("ALTER TABLE vagas ADD COLUMN IF NOT EXISTS modalidade    VARCHAR(50)  DEFAULT 'Presencial'").catch(()=>{});
+    await client.query("ALTER TABLE vagas ADD COLUMN IF NOT EXISTS pcd           BOOLEAN      DEFAULT false").catch(()=>{});
+    await client.query("ALTER TABLE vagas ADD COLUMN IF NOT EXISTS prazo         DATE").catch(()=>{});
+    await client.query("ALTER TABLE vagas ADD COLUMN IF NOT EXISTS encerrada     BOOLEAN      DEFAULT false").catch(()=>{});
+    await client.query("ALTER TABLE vagas ADD COLUMN IF NOT EXISTS estado        VARCHAR(2)").catch(()=>{});
+    await client.query("ALTER TABLE vagas ADD COLUMN IF NOT EXISTS updated_at    TIMESTAMP    DEFAULT CURRENT_TIMESTAMP").catch(()=>{});
+
+    // ── Tabela de Candidaturas ───────────────────────────────
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS candidaturas (
+        id                  SERIAL PRIMARY KEY,
+        vaga_id             INTEGER NOT NULL REFERENCES vagas(id) ON DELETE CASCADE,
+        candidato_id        INTEGER NOT NULL REFERENCES candidatos(id) ON DELETE CASCADE,
+        stage               INTEGER   DEFAULT 1,
+        status              VARCHAR(50) DEFAULT 'Recebido',
+        mensagem_candidato  TEXT,
+        notas               TEXT,
+        rating              INTEGER DEFAULT 0,
+        created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(vaga_id, candidato_id)
+      )
+    `);
+
+    // ── Tabela de Mensagens ──────────────────────────────────
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS mensagens (
+        id              SERIAL PRIMARY KEY,
+        remetente_id    INTEGER NOT NULL,
+        destinatario_id INTEGER NOT NULL,
+        conteudo        TEXT NOT NULL,
+        lida            BOOLEAN DEFAULT false,
+        created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // ── Tabela talentos_favoritos ────────────────────────────
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS talentos_favoritos (
+        id           SERIAL PRIMARY KEY,
+        empresa_id   INTEGER NOT NULL REFERENCES empresas(id) ON DELETE CASCADE,
+        candidato_id INTEGER NOT NULL REFERENCES candidatos(id) ON DELETE CASCADE,
+        favorito     BOOLEAN DEFAULT true,
+        created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(empresa_id, candidato_id)
+      )
+    `);
+
     // Criar índices para melhor performance
     await client.query('CREATE INDEX IF NOT EXISTS idx_candidatos_cidade ON candidatos(cidade)');
     await client.query('CREATE INDEX IF NOT EXISTS idx_candidatos_estado ON candidatos(estado)');
@@ -193,5 +266,3 @@ module.exports = {
   pool,
   initDatabase
 };
-
-

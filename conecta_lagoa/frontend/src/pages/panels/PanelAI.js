@@ -1,12 +1,3 @@
-// PanelAI.jsx — Conecta Lagoa
-import { useState, useEffect } from 'react';
-import './RankingIA.css';
-const V = {
-  surface:'#ffffff', surface2:'#f0f3fa', border:'#e2e8f4',
-  accent:'#1a3a8f', accent2:'#2d52c4', accent3:'#e07b00',
-  green:'#10b981', text:'#1a1f36', muted:'#6b7280',
-};
-
 // ── PanelRankingIA.js — Conecta Lagoa ────────────────────────
 // Painel "Ranking IA" separado do EmpresaDashboard.
 // Duas seções:
@@ -15,10 +6,11 @@ const V = {
 // A chamada à Claude API é feita pelo BACKEND (/api/ranking-ia)
 // para manter a chave segura no servidor.
 // ─────────────────────────────────────────────────────────────
-
+import { useState, useEffect } from 'react';
+import './RankingIA.css';
 
 const BASE_URL = process.env.REACT_APP_API_URL || 'https://conectalagoa.onrender.com/api';
-const getToken = () => localStorage.getItem('cl_token');
+const getToken = () => localStorage.getItem('token') || localStorage.getItem('cl_token');
 const authHeaders = () => ({
   'Content-Type': 'application/json',
   Authorization: `Bearer ${getToken()}`,

@@ -28,7 +28,7 @@ const getMeuPerfil = async (req, res) => {
   try {
     const empresaId = req.user.id;
 
-    const empresa = await db.get(
+    const empresa = await db.pool.query(
       `SELECT id, nome, cnpj, telefone, endereco, cidade, estado, descricao, logo_url, created_at
        FROM empresas WHERE id = $1`,
       [empresaId]
@@ -50,7 +50,7 @@ const getPerfilPorId = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const empresa = await db.get(
+    const empresa = await db.pool.query(
       `SELECT id, nome, cnpj, telefone, endereco, cidade, estado, descricao, logo_url, created_at
        FROM empresas WHERE id = $1`,
       [id]
@@ -100,12 +100,30 @@ const listarVagas = async (req, res) => {
   try {
     const empresaId = req.user.id;
 
-    const vagas = await db.all(
-      `SELECT * FROM vagas WHERE empresa_id = $1 ORDER BY created_at DESC`,
+    const result = await db.pool.query(
+      `SELECT
+         v.*,
+         COUNT(c.id)::int                            AS total_candidatos,
+         COUNT(CASE WHEN c.stage >= 5 THEN 1 END)::int AS total_contratados,
+         CASE
+           WHEN COUNT(c.id) > 0
+           THEN ROUND(COUNT(CASE WHEN c.stage >= 5 THEN 1 END)::numeric / COUNT(c.id) * 100)
+           ELSE 0
+         END                                          AS taxa_conversao,
+         CASE
+           WHEN COUNT(c.id) > 0
+           THEN ROUND(AVG(EXTRACT(EPOCH FROM (COALESCE(c.updated_at,NOW()) - c.created_at))/86400))
+           ELSE NULL
+         END                                          AS tempo_medio
+       FROM vagas v
+       LEFT JOIN candidaturas c ON c.vaga_id = v.id
+       WHERE v.empresa_id = $1
+       GROUP BY v.id
+       ORDER BY v.created_at DESC`,
       [empresaId]
     );
 
-    res.json({ success: true, vagas });
+    res.json({ success: true, vagas: result.rows });
   } catch (error) {
     console.error('Erro em listarVagas:', error);
     res.status(500).json({ success: false, message: 'Erro ao buscar vagas' });
@@ -119,14 +137,20 @@ const criarVaga = async (req, res) => {
     const {
       titulo, descricao, requisitos, salario,
       cidade, estado, tipo_contrato, modalidade,
-      area = '',       // novo
-      pcd  = false,    // novo
-      prazo = null,    // novo
+      area = '', pcd = false, prazo = null,
     } = req.body;
 
     if (!titulo) {
       return res.status(400).json({ success: false, message: 'Título é obrigatório' });
     }
+
+    // Garante colunas extras antes de inserir (idempotente)
+    await db.pool.query("ALTER TABLE vagas ADD COLUMN IF NOT EXISTS area          VARCHAR(100) DEFAULT ''").catch(()=>{});
+    await db.pool.query("ALTER TABLE vagas ADD COLUMN IF NOT EXISTS modalidade    VARCHAR(50)  DEFAULT 'Presencial'").catch(()=>{});
+    await db.pool.query("ALTER TABLE vagas ADD COLUMN IF NOT EXISTS pcd           BOOLEAN      DEFAULT false").catch(()=>{});
+    await db.pool.query("ALTER TABLE vagas ADD COLUMN IF NOT EXISTS prazo         DATE").catch(()=>{});
+    await db.pool.query("ALTER TABLE vagas ADD COLUMN IF NOT EXISTS encerrada     BOOLEAN      DEFAULT false").catch(()=>{});
+    await db.pool.query("ALTER TABLE vagas ADD COLUMN IF NOT EXISTS estado        VARCHAR(2)").catch(()=>{});
 
     const result = await db.pool.query(
       `INSERT INTO vagas
@@ -148,7 +172,7 @@ const criarVaga = async (req, res) => {
     });
   } catch (error) {
     console.error('Erro em criarVaga:', error);
-    res.status(500).json({ success: false, message: 'Erro ao criar vaga' });
+    res.status(500).json({ success: false, message: 'Erro ao criar vaga', detail: error.message });
   }
 };
 
@@ -157,28 +181,44 @@ const atualizarVaga = async (req, res) => {
   try {
     const empresaId = req.user.id;
     const { vagaId } = req.params;
-    const { titulo, descricao, requisitos, salario, cidade, estado, tipo_contrato, modalidade } = req.body;
+    const {
+      titulo, descricao, requisitos, salario,
+      cidade, estado, tipo_contrato, modalidade,
+      area = '', pcd = false, prazo = null, ativa, encerrada,
+    } = req.body;
 
-    const vaga = await db.get(
+    const check = await db.pool.query(
       'SELECT id FROM vagas WHERE id = $1 AND empresa_id = $2',
       [vagaId, empresaId]
     );
 
-    if (!vaga) {
+    if (!check.rows.length) {
       return res.status(404).json({ success: false, message: 'Vaga não encontrada ou sem permissão' });
     }
 
     await db.pool.query(
-      `UPDATE vagas SET titulo = $1, descricao = $2, requisitos = $3, salario = $4,
-       cidade = $5, estado = $6, tipo_contrato = $7, modalidade = $8
-       WHERE id = $9 AND empresa_id = $10`,
-      [titulo, descricao, requisitos, salario, cidade, estado, tipo_contrato, modalidade, vagaId, empresaId]
+      `UPDATE vagas
+       SET titulo = $1, descricao = $2, requisitos = $3, salario = $4,
+           cidade = $5, estado = $6, tipo_contrato = $7, modalidade = $8,
+           area = $9, pcd = $10, prazo = $11,
+           ativa = COALESCE($12, ativa),
+           encerrada = COALESCE($13, encerrada),
+           updated_at = NOW()
+       WHERE id = $14 AND empresa_id = $15`,
+      [
+        titulo, descricao, requisitos, salario,
+        cidade, estado, tipo_contrato, modalidade,
+        area, pcd, prazo,
+        ativa !== undefined ? ativa : null,
+        encerrada !== undefined ? encerrada : null,
+        vagaId, empresaId
+      ]
     );
 
     res.json({ success: true, message: 'Vaga atualizada com sucesso' });
   } catch (error) {
     console.error('Erro em atualizarVaga:', error);
-    res.status(500).json({ success: false, message: 'Erro ao atualizar vaga' });
+    res.status(500).json({ success: false, message: 'Erro ao atualizar vaga', detail: error.message });
   }
 };
 
@@ -188,12 +228,12 @@ const excluirVaga = async (req, res) => {
     const empresaId = req.user.id;
     const { vagaId } = req.params;
 
-    const vaga = await db.get(
+    const check = await db.pool.query(
       'SELECT id FROM vagas WHERE id = $1 AND empresa_id = $2',
       [vagaId, empresaId]
     );
 
-    if (!vaga) {
+    if (!check.rows.length) {
       return res.status(404).json({ success: false, message: 'Vaga não encontrada ou sem permissão' });
     }
 
@@ -217,9 +257,9 @@ const getResumoDashboard = async (req, res) => {
     const empresaId = req.user.id;
 
     const [vagas, visualizacoes, favoritos] = await Promise.all([
-      db.get('SELECT COUNT(*) as total FROM vagas WHERE empresa_id = $1', [empresaId]),
-      db.get('SELECT COUNT(*) as total FROM visualizacoes WHERE empresa_id = $1', [empresaId]),
-      db.get('SELECT COUNT(*) as total FROM favoritos WHERE empresa_id = $1', [empresaId]),
+      db.pool.query('SELECT COUNT(*) as total FROM vagas WHERE empresa_id = $1', [empresaId]).then(r => r.rows[0]),
+      db.pool.query('SELECT COUNT(*) as total FROM visualizacoes WHERE empresa_id = $1', [empresaId]).then(r => r.rows[0]),
+      db.pool.query('SELECT COUNT(*) as total FROM favoritos WHERE empresa_id = $1', [empresaId]).then(r => r.rows[0]),
     ]);
 
     res.json({
@@ -244,7 +284,7 @@ const visualizarCandidato = async (req, res) => {
     const empresaId = req.user.id;
     const candidatoId = req.params.candidatoId;
 
-    const candidato = await db.get('SELECT id FROM candidatos WHERE id = $1', [candidatoId]);
+    const candidato = await db.pool.query('SELECT id FROM candidatos WHERE id = $1', [candidatoId]).then(r => r.rows[0]);
 
     if (!candidato) {
       return res.status(404).json({ success: false, message: 'Candidato não encontrado' });
@@ -355,8 +395,8 @@ const getEstatisticas = async (req, res) => {
     const empresaId = req.user.id;
 
     const [visualizacoes, favoritos] = await Promise.all([
-      db.get('SELECT COUNT(*) as total FROM visualizacoes WHERE empresa_id = $1', [empresaId]),
-      db.get('SELECT COUNT(*) as total FROM favoritos WHERE empresa_id = $1', [empresaId]),
+      db.pool.query('SELECT COUNT(*) as total FROM visualizacoes WHERE empresa_id = $1', [empresaId]).then(r => r.rows[0]),
+      db.pool.query('SELECT COUNT(*) as total FROM favoritos WHERE empresa_id = $1', [empresaId]).then(r => r.rows[0]),
     ]);
 
     res.json({
