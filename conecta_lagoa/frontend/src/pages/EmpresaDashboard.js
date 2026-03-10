@@ -310,7 +310,7 @@ export default function EmpresaDashboard() {
             </div>
           ) : (
             <>
-              {tab === 'overview'      && <PanelOverview kpis={kpis} candidates={candidates}/>}
+              {tab === 'overview'      && <PanelOverview/>}
               {tab === 'funnel'        && <PanelFunilCRM/>}
               {tab === 'talent'        && <PanelTalent/>}
               {tab === 'ai'            && <PanelAI/>}
@@ -325,7 +325,6 @@ export default function EmpresaDashboard() {
       </div>
 
       <Modal open={modal} onClose={() => setModal(false)}/>
-      <ModalNovaVaga open={modalVaga} onClose={() => setModalVaga(false)} onSaved={fetchData}/>
     </>
   );
 }
