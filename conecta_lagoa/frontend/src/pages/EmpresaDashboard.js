@@ -1,8 +1,9 @@
-// EmpresaDashboard.js — Conecta Lagoa (refatorado)
-import { useState, useEffect, useRef } from 'react';
+// EmpresaDashboard.js — Conecta Lagoa
+// FIX: PanelOverview agora recebe evolucao, funil e alertas como props
+//      (antes só recebia kpis e candidates → gráfico e funil sempre mostravam fallback)
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 
-// ─── PAINÉIS SEPARADOS ────────────────────────────────────────────
 import PanelOverview      from './panels/PanelOverview';
 import PanelTalent        from './panels/PanelTalent';
 import PanelAI            from './panels/PanelAI';
@@ -17,22 +18,30 @@ import { V, BASE_URL }    from './panels/shared';
 
 // ─── MODAL AGENDAMENTO ────────────────────────────────────────────
 function Modal({ open, onClose }) {
-  const [form, setForm] = useState({ candidato:'Ana Lima', vaga:'Dev Sênior Backend', data:'2025-03-10', horario:'14:00', tipo:'Video call (Google Meet)', lembrete:'1 hora antes (Email + WhatsApp)' });
+  const [form, setForm]   = useState({ candidato:'', vaga:'', data:'', horario:'', tipo:'Video Call (Google Meet)', lembrete:'30 min antes' });
   const [saving, setSaving] = useState(false);
   const [toast, setToast]   = useState('');
   const set = (key) => (e) => setForm(prev => ({ ...prev, [key]: e.target.value }));
 
   const handleConfirm = async () => {
+    if (!form.titulo && !form.candidato) { setToast('Preencha ao menos o candidato'); setTimeout(() => setToast(''), 2000); return; }
     setSaving(true);
     try {
       const token = localStorage.getItem('token');
-      const res   = await fetch(`${BASE_URL}/agenda`, {
+      const res = await fetch(`${BASE_URL}/agenda`, {
         method: 'POST',
         headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${token}` },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          titulo: `Entrevista — ${form.candidato}`,
+          candidato_nome: form.candidato,
+          data_hora: form.data && form.horario ? `${form.data}T${form.horario}` : new Date().toISOString(),
+          tipo: form.tipo,
+          formato: form.tipo,
+          observacao: form.lembrete,
+        }),
       });
       if (res.ok) { setToast('Agendado com sucesso! ✓'); setTimeout(() => { setToast(''); onClose(); }, 1500); }
-      else        { setToast('Erro ao agendar. Tente novamente.'); setTimeout(() => setToast(''), 2500); }
+      else        { setToast('Erro ao agendar.'); setTimeout(() => setToast(''), 2500); }
     } catch {
       setToast('Salvo localmente (offline)');
       setTimeout(() => { setToast(''); onClose(); }, 1500);
@@ -45,8 +54,8 @@ function Modal({ open, onClose }) {
       <div style={{ background:V.surface, border:`1px solid ${V.border}`, borderRadius:16, padding:28, width:420, maxWidth:'95vw', animation:'fadeUp 0.3s ease', position:'relative' }}>
         {toast && <div style={{ position:'absolute', top:16, left:'50%', transform:'translateX(-50%)', background:V.accent, color:'white', padding:'6px 18px', borderRadius:20, fontSize:12, fontWeight:500, whiteSpace:'nowrap', zIndex:10 }}>{toast}</div>}
         <div style={{ fontFamily:"'Syne',sans-serif", fontSize:18, fontWeight:700, marginBottom:6, color:V.text }}>Agendar Entrevista / Lembrete</div>
-        <div style={{ fontSize:12, color:V.muted, marginBottom:20 }}>Adicione ao calendário e configure notificações automáticas</div>
-        {[['candidato','Candidato','text','Nome do candidato'],['vaga','Vaga','text','Selecione a vaga']].map(([key,l,t,p]) => (
+        <div style={{ fontSize:12, color:V.muted, marginBottom:20 }}>Adicione ao calendário</div>
+        {[['candidato','Candidato','text','Nome do candidato'],['vaga','Vaga','text','Título da vaga']].map(([key,l,t,p]) => (
           <div key={key} style={{ marginBottom:14 }}>
             <label style={{ fontSize:11, color:V.muted, textTransform:'uppercase', letterSpacing:'0.05em', display:'block', marginBottom:6 }}>{l}</label>
             <input type={t} value={form[key]} onChange={set(key)} placeholder={p} style={{ width:'100%', background:V.surface2, border:`1px solid ${V.border}`, borderRadius:8, padding:'10px 12px', color:V.text, fontSize:13, outline:'none' }}/>
@@ -60,16 +69,16 @@ function Modal({ open, onClose }) {
             </div>
           ))}
         </div>
-        {[['tipo','Tipo'],['lembrete','Lembrete automático']].map(([key,l]) => (
-          <div key={key} style={{ marginBottom:14 }}>
-            <label style={{ fontSize:11, color:V.muted, textTransform:'uppercase', letterSpacing:'0.05em', display:'block', marginBottom:6 }}>{l}</label>
-            <input value={form[key]} onChange={set(key)} style={{ width:'100%', background:V.surface2, border:`1px solid ${V.border}`, borderRadius:8, padding:'10px 12px', color:V.text, fontSize:13, outline:'none' }}/>
-          </div>
-        ))}
+        <div style={{ marginBottom:14 }}>
+          <label style={{ fontSize:11, color:V.muted, textTransform:'uppercase', display:'block', marginBottom:6 }}>Formato</label>
+          <select value={form.tipo} onChange={set('tipo')} style={{ width:'100%', background:V.surface2, border:`1px solid ${V.border}`, borderRadius:8, padding:'10px 12px', color:V.text, fontSize:13, outline:'none' }}>
+            {['Presencial','Video Call (Google Meet)','Microsoft Teams','Telefone'].map(o => <option key={o}>{o}</option>)}
+          </select>
+        </div>
         <div style={{ display:'flex', gap:10, marginTop:20, justifyContent:'flex-end' }}>
           <button onClick={onClose} style={{ background:'none', border:`1px solid ${V.border}`, color:V.muted2, padding:'7px 16px', borderRadius:8, cursor:'pointer', fontSize:12 }}>Cancelar</button>
           <button onClick={handleConfirm} disabled={saving} style={{ background:saving ? V.muted2 : V.accent, border:'none', color:'white', padding:'8px 16px', borderRadius:8, cursor:saving ? 'default' : 'pointer', fontSize:12, fontWeight:500 }}>
-            {saving ? 'Salvando...' : '✓ Confirmar & Notificar'}
+            {saving ? 'Salvando...' : '✓ Confirmar'}
           </button>
         </div>
       </div>
@@ -79,7 +88,7 @@ function Modal({ open, onClose }) {
 
 // ─── MODAL NOVA VAGA ──────────────────────────────────────────────
 function ModalNovaVaga({ open, onClose, onSaved }) {
-  const EMPTY = { titulo:'', area:'Tecnologia', cidade:'', salario:'', prazo:'', descricao:'', local:'', modelo:'Presencial', tipo_contrato:'CLT', pcd:false, ativo:true };
+  const EMPTY = { titulo:'', area:'Tecnologia', cidade:'', salario:'', prazo:'', descricao:'', modelo:'Presencial', tipo_contrato:'CLT', pcd:false };
   const [form, setForm]     = useState(EMPTY);
   const [saving, setSaving] = useState(false);
   const [toast, setToast]   = useState('');
@@ -97,7 +106,13 @@ function ModalNovaVaga({ open, onClose, onSaved }) {
       const res = await fetch(`${BASE_URL}/empresa/vagas`, {
         method: 'POST',
         headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${token}` },
-        body: JSON.stringify({ titulo:form.titulo, descricao:form.descricao, requisitos:'', salario:form.salario, cidade:form.cidade, estado:'', tipo_contrato:form.tipo_contrato, modalidade:form.modelo, area:form.area, pcd:form.pcd, prazo:form.prazo }),
+        body: JSON.stringify({
+          titulo: form.titulo, descricao: form.descricao, requisitos: '',
+          salario: form.salario, cidade: form.cidade, estado: '',
+          tipo_contrato: form.tipo_contrato,
+          modalidade: form.modelo,  // controller espera 'modalidade'
+          area: form.area, pcd: form.pcd, prazo: form.prazo,
+        }),
       });
       if (res.ok) {
         const criada = await res.json();
@@ -126,7 +141,7 @@ function ModalNovaVaga({ open, onClose, onSaved }) {
         <div style={{ display:'flex', gap:10, marginBottom:14 }}>
           <div style={{ flex:1 }}><label style={labelStyle}>Área</label>
             <select value={form.area} onChange={set('area')} style={inputStyle}>
-              {['Tecnologia','Design','Produto','Data','Marketing','Operações','Saúde','Educação','Outros'].map(a => <option key={a}>{a}</option>)}
+              {['Tecnologia','Design','Produto','Data','Marketing','Comercial','Operações','RH','Financeiro','Saúde','Educação','Outros'].map(a => <option key={a}>{a}</option>)}
             </select>
           </div>
           <div style={{ flex:1 }}><label style={labelStyle}>Tipo de contrato</label>
@@ -155,9 +170,7 @@ function ModalNovaVaga({ open, onClose, onSaved }) {
         <div style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>
           <button onClick={onClose} style={{ background:'none', border:`1px solid ${V.border}`, color:V.muted2, padding:'8px 18px', borderRadius:8, cursor:'pointer', fontSize:12 }}>Cancelar</button>
           <button onClick={handleSalvar} disabled={saving}
-            style={{ background:saving ? V.muted2 : V.accent, border:'none', color:'white', padding:'9px 22px', borderRadius:8, cursor:saving ? 'default' : 'pointer', fontSize:13, fontWeight:600 }}
-            onMouseEnter={e => { if (!saving) e.currentTarget.style.background = '#0f2460'; }}
-            onMouseLeave={e => { if (!saving) e.currentTarget.style.background = V.accent; }}>
+            style={{ background:saving ? V.muted2 : V.accent, border:'none', color:'white', padding:'9px 22px', borderRadius:8, cursor:saving ? 'default' : 'pointer', fontSize:13, fontWeight:600 }}>
             {saving ? 'Publicando...' : '🚀 Publicar Vaga'}
           </button>
         </div>
@@ -168,20 +181,21 @@ function ModalNovaVaga({ open, onClose, onSaved }) {
 
 // ─── NAV ─────────────────────────────────────────────────────────
 const ICONS = {
-  overview: <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1" strokeWidth="1.5"/><rect x="14" y="3" width="7" height="7" rx="1" strokeWidth="1.5"/><rect x="3" y="14" width="7" height="7" rx="1" strokeWidth="1.5"/><rect x="14" y="14" width="7" height="7" rx="1" strokeWidth="1.5"/></svg>,
-  funnel:   <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 4h18l-7 8v7l-4-2V12L3 4z" strokeWidth="1.5"/></svg>,
-  talent:   <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" strokeWidth="1.5"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" strokeWidth="1.5"/></svg>,
-  ai:       <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" strokeWidth="1.5"/><path d="M9 12l2 2 4-4" strokeWidth="1.5"/></svg>,
-  agenda:   <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" strokeWidth="1.5"/><path d="M3 9h18M8 2v4M16 2v4" strokeWidth="1.5"/></svg>,
-  reports:  <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" strokeWidth="1.5"/></svg>,
-  history:  <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" strokeWidth="1.5"/></svg>,
+  overview:      <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1" strokeWidth="1.5"/><rect x="14" y="3" width="7" height="7" rx="1" strokeWidth="1.5"/><rect x="3" y="14" width="7" height="7" rx="1" strokeWidth="1.5"/><rect x="14" y="14" width="7" height="7" rx="1" strokeWidth="1.5"/></svg>,
+  funnel:        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 4h18l-7 8v7l-4-2V12L3 4z" strokeWidth="1.5"/></svg>,
+  talent:        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" strokeWidth="1.5"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" strokeWidth="1.5"/></svg>,
+  ai:            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" strokeWidth="1.5"/><path d="M9 12l2 2 4-4" strokeWidth="1.5"/></svg>,
+  agenda:        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" strokeWidth="1.5"/><path d="M3 9h18M8 2v4M16 2v4" strokeWidth="1.5"/></svg>,
+  reports:       <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" strokeWidth="1.5"/></svg>,
+  history:       <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" strokeWidth="1.5"/></svg>,
   indicadores:   <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 8v8M12 11v5M8 14v2M3 20h18M5 20V4l7 3 7-3v16" strokeWidth="1.5"/></svg>,
   colaboradores: <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" strokeWidth="1.5"/><circle cx="9" cy="7" r="4" strokeWidth="1.5"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" strokeWidth="1.5"/></svg>,
+  vagas:         <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" strokeWidth="1.5"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" strokeWidth="1.5"/></svg>,
 };
 
 const TABS = [
   { id:'overview',      label:'Visão Geral'       },
-  { id:'vagas', label:'Vagas' },   
+  { id:'vagas',         label:'Vagas'             },
   { id:'funnel',        label:'Funil CRM'         },
   { id:'talent',        label:'Banco de Talentos' },
   { id:'ai',            label:'Ranking IA'        },
@@ -193,11 +207,11 @@ const TABS = [
 ];
 
 const PAGE_TITLES = {
-  overview:'Visão Geral Executiva', funnel:'Funil de Recrutamento — CRM',
-  talent:'Banco de Talentos', ai:'Ranking Inteligente com IA',
-  agenda:'Agenda & Lembretes', reports:'Relatórios Estratégicos',
-  history:'Histórico de Performance', indicadores:'Indicadores de RH',
-  colaboradores:'Gestão de Colaboradores',
+  overview:'Visão Geral Executiva', vagas:'Gestão de Vagas',
+  funnel:'Funil de Recrutamento — CRM', talent:'Banco de Talentos',
+  ai:'Ranking Inteligente com IA', agenda:'Agenda & Lembretes',
+  reports:'Relatórios Estratégicos', history:'Histórico de Performance',
+  indicadores:'Indicadores de RH', colaboradores:'Gestão de Colaboradores',
 };
 
 // ─── COMPONENTE PRINCIPAL ─────────────────────────────────────────
@@ -206,8 +220,13 @@ export default function EmpresaDashboard() {
   const [tab, setTab]           = useState('overview');
   const [modal, setModal]       = useState(false);
   const [modalVaga, setModalVaga] = useState(false);
+
+  // FIX: adicionados evolucao, funil, alertas — eram undefined no PanelOverview
   const [kpis, setKpis]         = useState([]);
   const [candidates, setCandidates] = useState([]);
+  const [evolucao, setEvolucao] = useState([]);
+  const [funil, setFunil]       = useState([]);
+  const [alertas, setAlertas]   = useState([]);
   const [loading, setLoading]   = useState(true);
 
   const fetchData = async () => {
@@ -218,21 +237,31 @@ export default function EmpresaDashboard() {
         const res = await fetch(`${BASE_URL}${path}`, { headers: { 'Authorization':`Bearer ${token}` } });
         return res.ok ? res.json() : null;
       };
-      const [resumo, cands] = await Promise.all([
+
+      // FIX: busca todos os dados do overview em paralelo
+      const [resumo, cands, evolucaoData, funilData, alertasData] = await Promise.all([
         get('/dashboard/resumo'),
         get('/dashboard/candidatos-recentes'),
+        get('/dashboard/evolucao-mensal'),
+        get('/dashboard/funil'),
+        get('/dashboard/alertas'),
       ]);
+
       const r = resumo?.data || resumo || {};
       setKpis([
-        { icon:'📊', label:'Vagas Ativas',       value:r.vagas_ativas,            delta:`${r.vagas_semana||0} este mês`,          deltaUp:true,  color:V.accent  },
-        { icon:'👥', label:'Candidatos',          value:r.candidaturas,            delta:`${r.candidaturas_hoje||0}% vs mês ant.`, deltaUp:true,  color:V.accent2 },
-        { icon:'🎯', label:'Taxa de Conversão',   value:`${r.taxa_conversao||18}%`,delta:`${r.taxa_variacao||3}pp`,                deltaUp:true,  color:V.green   },
-        { icon:'⏱',  label:'Tempo p/ Contratar', value:`${r.tempo_medio||23}d`,   delta:'5d vs ant.',                             deltaUp:false, color:V.orange  },
-        { icon:'💰', label:'Custo / Contratação', value:`R$${r.custo_medio||'1.8k'}`,delta:'R$200',                               deltaUp:false, color:V.accent3 },
-        { icon:'📈', label:'Contratações/Mês',    value:r.contratacoes||11,        delta:`${r.contratacoes_mes||2} vs ant.`,       deltaUp:true,  color:V.green   },
+        { icon:'📊', label:'Vagas Ativas',        value: r.vagas_ativas,                    delta:`${r.vagas_semana||0} esta semana`,       deltaUp:true,  color:V.accent  },
+        { icon:'👥', label:'Candidatos',           value: r.candidaturas,                    delta:`+${r.candidaturas_hoje||0} hoje`,          deltaUp:true,  color:V.accent2 },
+        { icon:'🎯', label:'Taxa de Conversão',    value: `${r.taxa_conversao||0}%`,          delta:`${r.taxa_variacao >= 0 ? '+' : ''}${r.taxa_variacao||0}pp`, deltaUp:(r.taxa_variacao||0)>=0, color:V.green },
+        { icon:'⏱',  label:'Tempo p/ Contratar',  value: `${r.tempo_medio||'—'}d`,           delta:'vs mês ant.',                            deltaUp:false, color:V.orange  },
+        { icon:'💰', label:'Custo / Contratação',  value: `R$${r.custo_medio||'—'}`,          delta:'vs mês ant.',                            deltaUp:false, color:V.accent3 },
+        { icon:'📈', label:'Contratações/Mês',     value: r.contratacoes_mes||0,              delta:`${r.contratacoes||0} total`,             deltaUp:true,  color:V.green   },
       ]);
+
       const c = cands?.data || cands || [];
       if (c.length > 0) setCandidates(c);
+      if (Array.isArray(evolucaoData)) setEvolucao(evolucaoData);
+      if (Array.isArray(funilData))    setFunil(funilData);
+      if (Array.isArray(alertasData))  setAlertas(alertasData);
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   };
@@ -240,6 +269,7 @@ export default function EmpresaDashboard() {
   useEffect(() => { fetchData(); }, []);
 
   const initials = user?.nome?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'CL';
+  const nAlertas = alertas.filter(a => a.time === 'urgente').length || 0;
 
   return (
     <>
@@ -291,7 +321,7 @@ export default function EmpresaDashboard() {
             </button>
             <div style={{ position:'relative' }}>
               <div style={{ width:32, height:32, background:`linear-gradient(135deg,${V.accent3},${V.accent})`, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, fontWeight:600, color:'white', cursor:'pointer' }}>{initials}</div>
-              <div style={{ position:'absolute', top:-4, right:-4, width:16, height:16, background:V.red, borderRadius:'50%', fontSize:9, fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center', border:`2px solid ${V.bg}`, color:'white' }}>3</div>
+              {nAlertas > 0 && <div style={{ position:'absolute', top:-4, right:-4, width:16, height:16, background:V.red, borderRadius:'50%', fontSize:9, fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center', border:`2px solid ${V.bg}`, color:'white' }}>{nAlertas}</div>}
             </div>
           </div>
         </div>
@@ -312,7 +342,17 @@ export default function EmpresaDashboard() {
             </div>
           ) : (
             <>
-              {tab === 'overview' && (<PanelOverview kpis={kpis}  candidates={candidates} goTo={setTab} />)}
+              {/* FIX: evolucao, funil, alertas agora passados como props */}
+              {tab === 'overview' && (
+                <PanelOverview
+                  kpis={kpis}
+                  candidates={candidates}
+                  evolucao={evolucao}
+                  funil={funil}
+                  alertas={alertas}
+                  goTo={setTab}
+                />
+              )}
               {tab === 'vagas'         && <PanelVagas/>}
               {tab === 'funnel'        && <PanelFunilCRM/>}
               {tab === 'talent'        && <PanelTalent/>}

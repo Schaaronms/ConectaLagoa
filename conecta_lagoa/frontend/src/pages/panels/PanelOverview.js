@@ -1,4 +1,6 @@
-// PanelOverview.jsx — Conecta Lagoa
+// PanelOverview.js — Conecta Lagoa
+// FIX: grid wrapper adicionado ao redor do kpis.map()
+//      (antes cada KpiCard ficava em coluna pois não havia display:grid)
 import { V, Pill, ScoreBar, Card, KpiCard } from './shared';
 
 const PILL_LABEL = {
@@ -11,11 +13,11 @@ const PILL_LABEL = {
 };
 
 const FALLBACK_CANDIDATES = [
-  { n:'Ana Lima',       loc:'São Paulo · SP',      v:'Dev Senior',   s:92, st:'pill-green',  stars:'★★★★★' },
-  { n:'Carlos Mota',    loc:'Rio de Janeiro · RJ', v:'UX Designer',  s:85, st:'pill-purple', stars:'★★★★☆' },
-  { n:'Juliana Rocha',  loc:'Belo Horizonte · MG', v:'Product Mgr',  s:78, st:'pill-orange', stars:'★★★★☆' },
-  { n:'Rafael Souza',   loc:'Porto Alegre · RS',   v:'Dev Backend',  s:91, st:'pill-green',  stars:'★★★★★' },
-  { n:'Fernanda Costa', loc:'Curitiba · PR',        v:'Data Analyst', s:67, st:'pill-cyan',   stars:'★★★☆☆' },
+  { n:'Ana Lima',       loc:'São Paulo · SP',       v:'Dev Senior',   s:92, st:'pill-green',  stars:'★★★★★' },
+  { n:'Carlos Mota',    loc:'Rio de Janeiro · RJ',  v:'UX Designer',  s:85, st:'pill-purple', stars:'★★★★☆' },
+  { n:'Juliana Rocha',  loc:'Belo Horizonte · MG',  v:'Product Mgr',  s:78, st:'pill-orange', stars:'★★★★☆' },
+  { n:'Rafael Souza',   loc:'Porto Alegre · RS',    v:'Dev Backend',  s:91, st:'pill-green',  stars:'★★★★★' },
+  { n:'Fernanda Costa', loc:'Curitiba · PR',         v:'Data Analyst', s:67, st:'pill-cyan',   stars:'★★★☆☆' },
 ];
 
 const BAR_DATA_FALLBACK = [
@@ -36,7 +38,7 @@ const ALERTAS_FALLBACK = [
   { color:V.accent, msg:'Vaga "Dev Senior" expira em 3 dias',   time:'03/mar' },
 ];
 
-export default function PanelOverview({ kpis, candidates, evolucao, funil, alertas, goTo, onModal }) {
+export default function PanelOverview({ kpis, candidates, evolucao, funil, alertas, goTo }) {
   const barData   = evolucao?.length > 0 ? evolucao : BAR_DATA_FALLBACK;
   const funilData = funil?.length    > 0 ? funil    : FUNIL_FALLBACK;
   const alertData = alertas?.length  > 0 ? alertas  : ALERTAS_FALLBACK;
@@ -87,6 +89,7 @@ export default function PanelOverview({ kpis, candidates, evolucao, funil, alert
         <Card title="Funil Geral" sub="Pipeline atual" badge="Ao vivo" badgeColor="green">
           {funilData.map((s, i) => (
             <div key={i} style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 14px', borderRadius:10, background:V.surface2, marginBottom:6, cursor:'pointer', transition:'all 0.2s' }}
+              onClick={() => goTo('funnel')}
               onMouseEnter={e => { e.currentTarget.style.background = 'rgba(26,58,143,0.06)'; }}
               onMouseLeave={e => { e.currentTarget.style.background = V.surface2; }}>
               <div style={{ width:10, height:10, borderRadius:'50%', background:s.color, flexShrink:0 }}/>
@@ -154,7 +157,7 @@ export default function PanelOverview({ kpis, candidates, evolucao, funil, alert
             </div>
           ))}
           {alertData.length === 0 && (
-            <div style={{ textAlign:'center', padding:24, color:V.muted2, fontSize:12 }}>✅ Nenhum alerta</div>
+            <div style={{ textAlign:'center', padding:24, color:V.muted2, fontSize:12 }}>✅ Nenhum alerta no momento</div>
           )}
         </Card>
       </div>

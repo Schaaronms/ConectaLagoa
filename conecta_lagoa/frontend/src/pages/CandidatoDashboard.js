@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+const BASE_URL = process.env.REACT_APP_API_URL || 'https://conectalagoa.onrender.com/api';
+
+
 
 const STATUS_CONFIG = {
   "Enviado":    { bg: "#e0f2fe", color: "#0369a1", icon: "📤" },
@@ -42,9 +45,9 @@ export default function CandidatoDashboard() {
       const headers = { Authorization: `Bearer ${token}` };
 
       const [vagasRes, candidaturasRes, mensagensRes] = await Promise.all([
-        fetch("/api/vagas", { headers }),
-        fetch("/api/vagas/candidato/minhas", { headers }),
-        fetch("/api/vagas/mensagens/minhas", { headers }),
+        fetch(`${BASE_URL}/vagas`, { headers }),
+        fetch(`${BASE_URL}/vagas/candidato/minhas`, { headers }),
+        fetch(`${BASE_URL}/vagas/mensagens/minhas`, { headers }),
       ]);
 
       const [vagasData, candidaturasData, mensagensData] = await Promise.all([
@@ -66,7 +69,7 @@ export default function CandidatoDashboard() {
     setCandidatandoId(vagaId);
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`/api/vagas/${vagaId}/candidatar`, {
+      const res = await fetch(`${BASE_URL}/vagas/${vagaId}/candidatar`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ mensagem_candidato: "" }),
@@ -90,7 +93,7 @@ export default function CandidatoDashboard() {
 
   const marcarLida = async (id) => {
     const token = localStorage.getItem("token");
-    await fetch(`/api/vagas/mensagens/${id}/lida`, {
+    await fetch(`${BASE_URL}/vagas/mensagens/${id}/lida`, {
       method: "PUT",
       headers: { Authorization: `Bearer ${token}` },
     });

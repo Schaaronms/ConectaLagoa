@@ -1,4 +1,5 @@
 // routes/dashboard.js — Dados do dashboard da empresa
+// FIX: 'ativo' → 'ativa' em todas as queries (coluna correta na tabela vagas)
 const express = require('express');
 const router  = express.Router();
 const { pool } = require('../config/db');
@@ -14,8 +15,9 @@ router.get('/resumo', auth, async (req, res) => {
   try {
     const [vagasAtivas, vagasSemana, candidaturas, candidaturasHoje,
            contratacoes, contratacoesMes, candMesAnt, contMesAnt] = await Promise.all([
-      pool.query(`SELECT COUNT(*) AS total FROM vagas WHERE empresa_id = $1 AND ativo = true`, [empresaId]),
-      pool.query(`SELECT COUNT(*) AS total FROM vagas WHERE empresa_id = $1 AND ativo = true AND created_at >= NOW() - INTERVAL '7 days'`, [empresaId]),
+      // FIX: ativo → ativa
+      pool.query(`SELECT COUNT(*) AS total FROM vagas WHERE empresa_id = $1 AND ativa = true`, [empresaId]),
+      pool.query(`SELECT COUNT(*) AS total FROM vagas WHERE empresa_id = $1 AND ativa = true AND created_at >= NOW() - INTERVAL '7 days'`, [empresaId]),
       pool.query(`SELECT COUNT(*) AS total FROM candidaturas c JOIN vagas v ON v.id = c.vaga_id WHERE v.empresa_id = $1`, [empresaId]),
       pool.query(`SELECT COUNT(*) AS total FROM candidaturas c JOIN vagas v ON v.id = c.vaga_id WHERE v.empresa_id = $1 AND c.created_at >= NOW() - INTERVAL '1 day'`, [empresaId]),
       pool.query(`SELECT COUNT(*) AS total FROM candidaturas c JOIN vagas v ON v.id = c.vaga_id WHERE v.empresa_id = $1 AND c.status = 'Aprovado'`, [empresaId]),
@@ -26,10 +28,10 @@ router.get('/resumo', auth, async (req, res) => {
 
     const totalCand = parseInt(candidaturas.rows[0].total) || 0;
     const totalCont = parseInt(contratacoes.rows[0].total) || 0;
-    const taxa = totalCand > 0 ? ((totalCont / totalCand) * 100).toFixed(1) : '0.0';
-    const candAnt = parseInt(candMesAnt.rows[0].total) || 0;
-    const contAnt = parseInt(contMesAnt.rows[0].total) || 0;
-    const taxaAnt = candAnt > 0 ? ((contAnt / candAnt) * 100).toFixed(1) : '0.0';
+    const taxa      = totalCand > 0 ? ((totalCont / totalCand) * 100).toFixed(1) : '0.0';
+    const candAnt   = parseInt(candMesAnt.rows[0].total) || 0;
+    const contAnt   = parseInt(contMesAnt.rows[0].total) || 0;
+    const taxaAnt   = candAnt > 0 ? ((contAnt / candAnt) * 100).toFixed(1) : '0.0';
 
     res.json({
       success: true,
@@ -56,12 +58,14 @@ router.get('/resumo', auth, async (req, res) => {
 router.get('/candidatos-recentes', auth, async (req, res) => {
   const empresaId = req.user.id;
   try {
+    // FIX: tabela candidatos → usuarios (schema real do projeto)
     const { rows } = await pool.query(
-      `SELECT cd.id, cd.nome_completo AS nome, cd.email, cd.cidade,
-              c.status, c.created_at AS criado_em, v.titulo AS vaga_titulo
+      `SELECT u.id, u.nome, u.email, u.cidade,
+              c.status, c.created_at AS criado_em, v.titulo AS vaga_titulo,
+              c.score_ia
        FROM candidaturas c
-       JOIN vagas v       ON v.id = c.vaga_id
-       JOIN candidatos cd ON cd.id = c.candidato_id
+       JOIN vagas    v ON v.id = c.vaga_id
+       JOIN usuarios u ON u.id = c.candidato_id
        WHERE v.empresa_id = $1
        ORDER BY c.created_at DESC
        LIMIT 10`,
@@ -119,13 +123,13 @@ router.get('/funil', auth, async (req, res) => {
        WHERE v.empresa_id = $1`,
       [empresaId]
     );
-    const r = rows[0];
+    const r     = rows[0];
     const total = parseInt(r.total) || 1;
     res.json([
-      { name: 'Recebidos',   count: parseInt(r.recebidos),   pct: Math.round(parseInt(r.recebidos)/total*100),   color: '#1a3a8f' },
-      { name: 'Triados',     count: parseInt(r.triados),     pct: Math.round(parseInt(r.triados)/total*100),     color: '#2d52c4' },
-      { name: 'Entrevistas', count: parseInt(r.entrevistas), pct: Math.round(parseInt(r.entrevistas)/total*100), color: '#e07b00' },
-      { name: 'Contratados', count: parseInt(r.contratados), pct: Math.round(parseInt(r.contratados)/total*100), color: '#059669' },
+      { name:'Recebidos',   count:parseInt(r.recebidos),   pct:Math.round(parseInt(r.recebidos)/total*100),   color:'#1a3a8f' },
+      { name:'Triados',     count:parseInt(r.triados),     pct:Math.round(parseInt(r.triados)/total*100),     color:'#2d52c4' },
+      { name:'Entrevistas', count:parseInt(r.entrevistas), pct:Math.round(parseInt(r.entrevistas)/total*100), color:'#e07b00' },
+      { name:'Contratados', count:parseInt(r.contratados), pct:Math.round(parseInt(r.contratados)/total*100), color:'#059669' },
     ]);
   } catch (err) {
     res.status(500).json({ error: 'Erro ao buscar funil.' });
@@ -140,9 +144,10 @@ router.get('/alertas', auth, async (req, res) => {
   try {
     const [semResposta, vagasExpirando, testesAguardando, aprovados] = await Promise.all([
       pool.query(`SELECT COUNT(*) FROM candidaturas c JOIN vagas v ON v.id=c.vaga_id WHERE v.empresa_id=$1 AND c.updated_at < NOW() - INTERVAL '7 days' AND c.status NOT IN ('Aprovado','Reprovado')`, [empresaId]),
-      pool.query(`SELECT titulo FROM vagas WHERE empresa_id=$1 AND ativo=true AND prazo BETWEEN NOW() AND NOW() + INTERVAL '3 days'`, [empresaId]),
+      // FIX: ativo → ativa
+      pool.query(`SELECT titulo FROM vagas WHERE empresa_id=$1 AND ativa=true AND prazo BETWEEN NOW() AND NOW() + INTERVAL '3 days'`, [empresaId]),
       pool.query(`SELECT COUNT(*) FROM candidaturas c JOIN vagas v ON v.id=c.vaga_id WHERE v.empresa_id=$1 AND c.status='Em Análise'`, [empresaId]),
-      pool.query(`SELECT cd.nome_completo FROM candidaturas c JOIN vagas v ON v.id=c.vaga_id JOIN candidatos cd ON cd.id=c.candidato_id WHERE v.empresa_id=$1 AND c.status='Aprovado' AND c.updated_at >= NOW() - INTERVAL '1 day'`, [empresaId]),
+      pool.query(`SELECT u.nome FROM candidaturas c JOIN vagas v ON v.id=c.vaga_id JOIN usuarios u ON u.id=c.candidato_id WHERE v.empresa_id=$1 AND c.status='Aprovado' AND c.updated_at >= NOW() - INTERVAL '1 day'`, [empresaId]),
     ]);
 
     const alertas = [];
@@ -151,7 +156,7 @@ router.get('/alertas', auth, async (req, res) => {
     vagasExpirando.rows.forEach(v => alertas.push({ color:'#1a3a8f', msg:`Vaga "${v.titulo}" expira em breve`, time:'3 dias' }));
     const ta = parseInt(testesAguardando.rows[0].count);
     if (ta > 0) alertas.push({ color:'#e07b00', msg:`${ta} candidatura${ta>1?'s':''} aguardando análise`, time:'pendente' });
-    aprovados.rows.forEach(a => alertas.push({ color:'#10b981', msg:`${a.nome_completo} foi aprovado! 🎉`, time:'hoje' }));
+    aprovados.rows.forEach(a => alertas.push({ color:'#10b981', msg:`${a.nome} foi aprovado! 🎉`, time:'hoje' }));
 
     res.json(alertas.slice(0, 6));
   } catch (err) {
