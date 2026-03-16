@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import ThreeBackground from "./ThreeBackground";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DADOS MOCK (substitua pelas chamadas reais à sua API)
@@ -446,67 +447,7 @@ function useTilt(strength = 12) {
 // ─────────────────────────────────────────────────────────────────────────────
 // PARTICLE CANVAS BACKGROUND
 // ─────────────────────────────────────────────────────────────────────────────
-function ParticleCanvas() {
-  const ref = useRef(null);
-  useEffect(() => {
-    const canvas = ref.current;
-    if (!canvas) return;
-    const ctx  = canvas.getContext("2d");
-    let w, h, pts, raf;
-
-    const resize = () => {
-      w = canvas.width  = canvas.offsetWidth;
-      h = canvas.height = canvas.offsetHeight;
-    };
-    resize();
-    window.addEventListener("resize", resize);
-
-    pts = Array.from({ length: 55 }, () => ({
-      x: Math.random() * w, y: Math.random() * h,
-      vx: (Math.random() - 0.5) * 0.35,
-      vy: (Math.random() - 0.5) * 0.35,
-      r: Math.random() * 1.8 + 0.6,
-      a: Math.random() * 0.5 + 0.15,
-    }));
-
-    let mx = w / 2, my = h / 2;
-    const mm = (e) => { mx = e.clientX; my = e.clientY - canvas.getBoundingClientRect().top; };
-    window.addEventListener("mousemove", mm);
-
-    const draw = () => {
-      ctx.clearRect(0, 0, w, h);
-      pts.forEach((p) => {
-        p.x += p.vx + (mx - w / 2) * 0.00006;
-        p.y += p.vy + (my - h / 2) * 0.00006;
-        if (p.x < 0) p.x = w; if (p.x > w) p.x = 0;
-        if (p.y < 0) p.y = h; if (p.y > h) p.y = 0;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255,255,255,${p.a})`;
-        ctx.fill();
-      });
-      for (let i = 0; i < pts.length; i++) {
-        for (let j = i + 1; j < pts.length; j++) {
-          const dx = pts[i].x - pts[j].x, dy = pts[i].y - pts[j].y;
-          const d  = Math.sqrt(dx * dx + dy * dy);
-          if (d < 130) {
-            ctx.beginPath();
-            ctx.moveTo(pts[i].x, pts[i].y);
-            ctx.lineTo(pts[j].x, pts[j].y);
-            ctx.strokeStyle = `rgba(255,255,255,${0.18 * (1 - d / 130)})`;
-            ctx.lineWidth   = 0.6;
-            ctx.stroke();
-          }
-        }
-      }
-      raf = requestAnimationFrame(draw);
-    };
-    draw();
-    return () => { cancelAnimationFrame(raf); window.removeEventListener("resize", resize); window.removeEventListener("mousemove", mm); };
-  }, []);
-  return <canvas ref={ref} className="cl-canvas" />;
-}
-
+<ThreeBackground />
 // ─────────────────────────────────────────────────────────────────────────────
 // STAT COUNTER ITEM
 // ─────────────────────────────────────────────────────────────────────────────
@@ -701,7 +642,7 @@ export default function Home() {
       {/* HERO                                                                */}
       {/* ════════════════════════════════════════════════════════════════════ */}
       <section className="cl-hero">
-        <ParticleCanvas />
+       <ThreeBackground />
         <div className="cl-hero-grid" />
         <div className="cl-hero-orb1" />
         <div className="cl-hero-orb2" />
