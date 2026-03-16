@@ -106,6 +106,7 @@ app.use('/api/agenda',   agendaRoutes);
 app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/contato',  require('./routes/email'));
 app.use('/api/talentos', require('./routes/talentos'));
+app.use('/api/usuarios', require('./routes/uploads'));
 // IA & Features Estratégicas
 app.use('/api/ia', require('./routes/ia'));
 app.use('/api', routes); // deve vir por último

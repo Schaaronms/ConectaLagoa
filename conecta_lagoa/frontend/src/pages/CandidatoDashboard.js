@@ -365,7 +365,10 @@ export default function CandidatoDashboard() {
   const renderDashboard = () => (
     <>
       <div style={styles.perfilHeader}>
-        <div style={styles.perfilAvatar}>{getInitials(user?.nome)}</div>
+        {user?.foto_url
+  ? <img src={user.foto_url} style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover' }} alt="foto" />
+  : <div style={styles.perfilAvatar}>{getInitials(user?.nome)}</div>
+}
         <div style={{ flex: 1 }}>
           <div style={styles.perfilName}>Olá, {user?.nome?.split(" ")[0]}! 👋</div>
           <div style={styles.perfilRole}>Candidato · {user?.email}</div>
