@@ -17,6 +17,8 @@ import Vagas from './pages/Vagas';
 import Blog from './pages/Blog';
 import EmpresaDashboard from './pages/EmpresaDashboard';
 import AuthCallback from './pages/AuthCallback';
+import { useState, useEffect, useRef } from 'react';
+import { FaBars } from 'react-icons/fa';
 import './index.css';
 
 // Rota protegida com verificação de tipo
@@ -33,6 +35,7 @@ const PrivateRoute = ({ children, allowedType }) => {
 
   if (!user) {
     return <Navigate to="/login" state={{ from: window.location.pathname }} replace />;
+        
   }
 
   if (allowedType && user.tipo !== allowedType) {
@@ -40,6 +43,8 @@ const PrivateRoute = ({ children, allowedType }) => {
   }
 
   return children;
+
+
 };
 
 function AppContent() {
@@ -94,6 +99,9 @@ function AppContent() {
             <Route path="/empresa/indicadores-rh" element={<Navigate to="/empresa/dashboard" replace />} />
             <Route path="/empresa/agenda"         element={<Navigate to="/empresa/dashboard" replace />} />
             <Route path="/empresa/funil"          element={<Navigate to="/empresa/dashboard" replace />} />
+            <Route path="/empresa/ia"             element={<Navigate to="/empresa/dashboard" replace />} />
+            <Route path="/empresa/relatorios"      element={<Navigate to="/empresa/dashboard" replace />} />
+            <Route path="/empresa/configuracoes"    element={<Navigate to="/empresa/dashboard" replace />} />
 
             {/* Redirecionamentos */}
             <Route path="/empresadashboard" element={<Navigate to="/empresa/dashboard" replace />} />
@@ -101,7 +109,7 @@ function AppContent() {
           </Routes>
         </main>
 
-        {showFooter && <Footer />}
+        
       </div>
     </Router>
   );
