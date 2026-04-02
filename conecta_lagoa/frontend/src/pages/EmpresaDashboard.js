@@ -116,7 +116,65 @@ export default function EmpresaDashboard() {
                   color: active ? '#1A56DB' : '#6B7280',
                   transition: 'background 0.15s, color 0.15s',
                 }}
+                
               >
+                {/* Sidebar */}
+<div className="w-64 bg-white border-r border-gray-200 flex flex-col">
+  <div className="p-6 border-b">
+    <div className="flex items-center gap-3">
+      <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-2xl">CL</div>
+      <div>
+        <h1 className="font-bold text-xl text-gray-900">Conecta Lagoa</h1>
+        <p className="text-xs text-gray-500">Recrutamento Local</p>
+      </div>
+    </div>
+  </div>
+
+  {/* Navegação */}
+  <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+    {sidebarItems.map(item => (
+      <button
+        key={item.id}
+        onClick={() => setActiveTab(item.id)}
+        className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium transition-all ${
+          activeTab === item.id 
+            ? 'bg-blue-50 text-blue-700 font-semibold' 
+            : 'text-gray-600 hover:bg-gray-100'
+        }`}
+      >
+        <span className="text-xl">{item.icon}</span>
+        {item.label}
+      </button>
+    ))}
+  </nav>
+
+  {/* Rodapé com usuário + botão Sair */}
+  <div className="p-4 border-t mt-auto">
+    <div className="flex items-center gap-3 px-4 py-3 bg-gray-100 rounded-2xl mb-3">
+      <div className="w-9 h-9 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+        {initials}
+      </div>
+      <div className="text-sm">
+        <p className="font-medium text-gray-900">{user?.nome || 'Recrutador'}</p>
+        <p className="text-xs text-gray-500">Empresa</p>
+      </div>
+    </div>
+
+    {/* Botão Sair */}
+    <button
+      onClick={() => {
+        if (window.confirm('Deseja realmente sair?')) {
+          localStorage.removeItem('token');
+          window.location.href = '/login';   // ou a rota de login que você usa
+        }
+      }}
+      className="w-full flex items-center justify-center gap-2 px-4 py-3 text-red-600 hover:bg-red-50 rounded-2xl text-sm font-medium transition-all border border-red-100 hover:border-red-200"
+    >
+      <span>🚪</span>
+      Sair do sistema
+    </button>
+  </div>
+</div>
                 <span style={{
                   width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
                   background: active ? '#1A56DB' : '#D1D5DB',
