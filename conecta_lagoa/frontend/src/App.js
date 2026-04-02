@@ -45,14 +45,11 @@ const PrivateRoute = ({ children, allowedType }) => {
 function AppContent() {
   const { user } = useAuth();
 
- const showHeader = !user || (user.tipo !== 'candidato' && user.tipo !== 'empresa');
-  const showFooter = showHeader; // mesma lógica
+  const showFooter = !user || (user.tipo !== 'candidato' && user.tipo !== 'empresa');
 
   return (
     <Router>
       <div className="app min-h-screen flex flex-col">
-        {showHeader && <Header />}  {/* ← adiciona essa condição */}
-         <main className="flex-grow"></main>
         <Header />
 
         <main className="flex-grow">
