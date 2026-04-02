@@ -652,7 +652,7 @@ export class BillingComponent implements OnInit {
   }
 
   onContactSales(): void {
-    const phone = '5512997758008';
+    const phone = '54999393434';
     const message = this.translate.instant('BILLING.WHATSAPP_MESSAGE');
     const text = encodeURIComponent(message);
     window.open(`https://wa.me/${phone}?text=${text}`, '_blank');

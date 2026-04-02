@@ -301,83 +301,9 @@ export default function EmpresaDashboard() {
                   </div>
                 </div>
               )}
-            </div>
+            </div>  
           </div>
         </div>
-
-        {/* Conteúdo */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
-          {loading ? (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh' }}>
-              <div style={{
-                width: 36, height: 36, border: '3px solid #E5E7EB',
-                borderTop: '3px solid #1A56DB', borderRadius: '50%',
-                animation: 'spin 0.8s linear infinite',
-              }} />
-              <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-            </div>
-          ) : activeTab === 'overview' && (
-            <PanelOverview
-              kpis={kpis}
-              candidates={candidates}
-              evolucao={evolucao}
-              funil={funil}
-              alertas={alertas}
-            />
-          )}
-           {/* Conteúdo Principal */}
-
-
-
-<div className="flex-1 overflow-auto p-8">
-  {loading ? (
-    <div className="flex items-center justify-center h-96">
-      <p className="text-gray-500">Carregando dados...</p>
-    </div>
-  ) : (
-    <>
-      {activeTab === 'overview' && <PanelOverview kpis={kpis} />}
-      {activeTab === 'vagas' && <PanelVagas />}
-      {activeTab === 'talent' && <PanelTalent />}
-      {activeTab === 'funnel' && <PanelFunilCRM />}
-      {activeTab === 'agenda' && <PanelAgendaFull />}
-      {activeTab === 'ai' && <PanelAI />}
-      {activeTab === 'reports' && <PanelReports />}
-      {activeTab === 'colaboradores' && <PanelColaboradores />}
-    </>
-  )}
-</div>
-
-      {/* Configurações */}
-      {activeTab === 'configurações' && (
-        <div className="max-w-2xl mx-auto text-center py-20">
-          <div className="mx-auto w-20 h-20 bg-amber-100 rounded-3xl flex items-center justify-center mb-6 text-4xl">
-            ⚙️
-          </div>
-          <h2 className="text-2xl font-semibold text-gray-800 mb-3">Configurações</h2>
-          <p className="text-gray-500">
-            Aqui você poderá configurar perfil da empresa, notificações, integrações e preferências.
-          </p>
-          <p className="text-sm text-gray-400 mt-8">
-            Esta página está em desenvolvimento.
-          </p>
-      </div>
-      )}
-{/* Fallback caso alguma aba não tenha componente */}
-              {!['overview', 'vagas', 'talent', 'funnel', 'agenda', 'ai', 'reports', 'colaboradores', 'configurações'].includes(activeTab) && (
-                <div className="text-center py-20 text-gray-400">
-                  Página não encontrada ou em desenvolvimento
-                </div>
-              )}
-
-           
-          
-        </div>
-      </div>
-    </div>
-  );
-}
-
-
      
-  
+              
+
