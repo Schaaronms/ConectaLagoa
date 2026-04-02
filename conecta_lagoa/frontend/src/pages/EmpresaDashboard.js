@@ -12,7 +12,7 @@ const sidebarItems = [
   { id: 'ai',             label: 'Copiloto IA',        },
   { id: 'reports',        label: 'Relatórios',         },
   { id: 'colaboradores',  label: 'Colaboradores',      },
-  { id: 'configurações',  label: 'Configurações',      },
+  { id: 'configurações',  label: '⚙️ Configurações',      },
 ];
 
 export default function EmpresaDashboard() {

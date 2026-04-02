@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Home from './pages/Home';
@@ -18,39 +19,48 @@ import EmpresaDashboard from './pages/EmpresaDashboard';
 import AuthCallback from './pages/AuthCallback';
 import './index.css';
 
+// Rota protegida com verificação de tipo
 const PrivateRoute = ({ children, allowedType }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="border-4 border-t-blue-600 border-solid rounded-full w-12 h-12 animate-spin"></div>
+        <div className="spinner border-4 border-t-blue-600 border-solid rounded-full w-12 h-12 animate-spin"></div>
       </div>
     );
   }
 
-  if (!user) return <Navigate to="/login" state={{ from: window.location.pathname }} replace />;
-  if (allowedType && user.tipo !== allowedType) return <Navigate to="/" replace />;
+  if (!user) {
+    return <Navigate to="/login" state={{ from: window.location.pathname }} replace />;
+  }
+
+  if (allowedType && user.tipo !== allowedType) {
+    return <Navigate to="/" replace />;
+  }
+
   return children;
 };
 
 function AppContent() {
   const { user } = useAuth();
 
-  // Esconde header e footer para usuários logados (eles têm seus próprios layouts)
-  const isDashboardUser = user && (user.tipo === 'candidato' || user.tipo === 'empresa');
+ const showHeader = !user || (user.tipo !== 'candidato' && user.tipo !== 'empresa');
+  const showFooter = showHeader; // mesma lógica
 
   return (
     <Router>
       <div className="app min-h-screen flex flex-col">
-        {!isDashboardUser && <Header />}
+        {showHeader && <Header />}  {/* ← adiciona essa condição */}
+         <main className="flex-grow"></main>
+        <Header />
 
-        <main className={isDashboardUser ? 'flex-1' : 'flex-grow'}>
+        <main className="flex-grow">
           <Routes>
-            {/* Públicas */}
+            {/* Rotas Públicas */}
             <Route path="/" element={<Home />} />
-            <Route path="/vagas" element={<Vagas />} />
-            <Route path="/login" element={<Login />} />
+            <Route path="/vagas" element={<Vagas/>} />
+            <Route path="/login" element={<Login/>} />
             <Route path="/registro" element={<Registro />} />
             <Route path="/esqueceu-senha" element={<EsqueceuSenha />} />
             <Route path="/redefinir-senha" element={<RedefinirSenha />} />
@@ -64,34 +74,48 @@ function AppContent() {
             <Route path="/empresa/esqueceu-senha" element={<EsqueceuSenha tipo="empresa" />} />
             <Route path="/candidato/redefinir-senha" element={<RedefinirSenha tipo="candidato" />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
+            
 
-            {/* Candidato (protegidas) */}
+            {/* Rotas do Candidato (protegidas) */}
             <Route path="/candidato/onboarding" element={<PrivateRoute allowedType="candidato"><Onboarding /></PrivateRoute>} />
-            <Route path="/candidato/dashboard" element={<PrivateRoute allowedType="candidato"><CandidatoDashboard /></PrivateRoute>} />
-            <Route path="/candidato/editar" element={<PrivateRoute allowedType="candidato"><EditarPerfil /></PrivateRoute>} />
+            <Route path="/candidato/dashboard"  element={<PrivateRoute allowedType="candidato"><CandidatoDashboard /></PrivateRoute>} />
+            <Route path="/candidato/editar"     element={<PrivateRoute allowedType="candidato"><EditarPerfil /></PrivateRoute>} />
 
-            {/* Empresa (protegidas) */}
-            <Route path="/empresa/dashboard" element={<PrivateRoute allowedType="empresa"><EmpresaDashboard /></PrivateRoute>} />
-            <Route path="/empresa/colaboradores" element={<Navigate to="/empresa/dashboard" replace />} />
+            {/* Rota principal da Empresa */}
+            <Route
+              path="/empresa/dashboard"
+              element={
+                <PrivateRoute allowedType="empresa">
+                  <EmpresaDashboard />
+                </PrivateRoute>
+              }
+            />
+
+            {/* Rotas de subpáginas — redirecionam para o dashboard
+                (os painéis agora são abas internas do EmpresaDashboard) */}
+            <Route path="/empresa/colaboradores"  element={<Navigate to="/empresa/dashboard" replace />} />
             <Route path="/empresa/indicadores-rh" element={<Navigate to="/empresa/dashboard" replace />} />
-            <Route path="/empresa/agenda" element={<Navigate to="/empresa/dashboard" replace />} />
-            <Route path="/empresa/funil" element={<Navigate to="/empresa/dashboard" replace />} />
-            <Route path="/empresadashboard" element={<Navigate to="/empresa/dashboard" replace />} />
+            <Route path="/empresa/agenda"         element={<Navigate to="/empresa/dashboard" replace />} />
+            <Route path="/empresa/funil"          element={<Navigate to="/empresa/dashboard" replace />} />
 
+            {/* Redirecionamentos */}
+            <Route path="/empresadashboard" element={<Navigate to="/empresa/dashboard" replace />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
 
-        {!isDashboardUser && <Footer />}
+        {showFooter && <Footer />}
       </div>
     </Router>
   );
 }
 
-export default function App() {
+function App() {
   return (
     <AuthProvider>
       <AppContent />
     </AuthProvider>
   );
 }
+
+export default App;
