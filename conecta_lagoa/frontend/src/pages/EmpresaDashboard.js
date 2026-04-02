@@ -27,6 +27,14 @@ export default function EmpresaDashboard() {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
 
+  const PanelVagas = () => <div>Conteúdo de Vagas</div>;
+  const PanelTalent = () => <div>Conteúdo de Banco de Talentos</div>;
+  const PanelFunilCRM = () => <div>Conteúdo de Funil CRM</div>;
+  const PanelAgendaFull = () => <div>Conteúdo de Agenda</div>;
+  const PanelAI = () => <div>Conteúdo de Copiloto IA</div>;
+  const PanelReports = () => <div>Conteúdo de Relatórios</div>;
+  const PanelColaboradores = () => <div>Conteúdo de Colaboradores</div>;
+
   // Fecha o menu ao clicar fora
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -48,7 +56,11 @@ export default function EmpresaDashboard() {
           const res = await fetch(`${BASE_URL}${path}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
-          return res.ok ? res.json() : null;
+          if (res.status === 401) {
+            localStorage.removeItem('token');
+            window.location.href = '/login';
+            return null;
+}
         };
 
         const [resumo, cands, evolucaoData, funilData, alertasData] = await Promise.all([
@@ -313,19 +325,56 @@ export default function EmpresaDashboard() {
               alertas={alertas}
             />
           ) : (
-            <div style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center',
-              justifyContent: 'center', height: '50vh', gap: 8,
-            }}>
-              <p style={{ fontSize: 32 }}>🚧</p>
-              <p style={{ fontSize: 15, fontWeight: 500, color: '#374151' }}>Em breve</p>
-              <p style={{ fontSize: 13, color: '#9CA3AF' }}>
-                {sidebarItems.find(i => i.id === activeTab)?.label} estará disponível em breve
-              </p>
-            </div>
+           {/* Conteúdo Principal */}
+
+
+
+
+<div className="flex-1 overflow-auto p-8">
+  {loading ? (
+    <div className="flex items-center justify-center h-96">
+      <p className="text-gray-500">Carregando dados...</p>
+    </div>
+  ) : (
+    <>
+      {activeTab === 'overview'      && <PanelOverview kpis={kpis} candidates={candidates} evolucao={evolucao} funil={funil} alertas={alertas} />}
+      {activeTab === 'vagas'         && <PanelVagas />}
+      {activeTab === 'talent'        && <PanelTalent />}
+      {activeTab === 'funnel'        && <PanelFunilCRM />}
+      {activeTab === 'agenda'        && <PanelAgendaFull />}
+      {activeTab === 'ai'            && <PanelAI />}
+      {activeTab === 'reports'       && <PanelReports />}
+      {activeTab === 'colaboradores' && <PanelColaboradores />}
+
+      {/* Configurações */}
+      {activeTab === 'configurações' && (
+        <div className="max-w-2xl mx-auto text-center py-20">
+          <div className="mx-auto w-20 h-20 bg-amber-100 rounded-3xl flex items-center justify-center mb-6 text-4xl">
+            ⚙️
+          </div>
+          <h2 className="text-2xl font-semibold text-gray-800 mb-3">Configurações</h2>
+          <p className="text-gray-500">
+            Aqui você poderá configurar perfil da empresa, notificações, integrações e preferências.
+          </p>
+          <p className="text-sm text-gray-400 mt-8">
+            Esta página está em desenvolvimento.
+          </p>
+      </div>
+
+{/* Fallback caso alguma aba não tenha componente */}
+              {!['overview', 'vagas', 'talent', 'funnel', 'agenda', 'ai', 'reports', 'colaboradores', 'configurações'].includes(activeTab) && (
+                <div className="text-center py-20 text-gray-400">
+                  Página não encontrada ou em desenvolvimento
+                </div>
+              )}
+
+            </>
           )}
         </div>
       </div>
     </div>
   );
 }
+
+     
+  
