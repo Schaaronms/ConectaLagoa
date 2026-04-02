@@ -1,18 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import PanelOverview from './panels/PanelOverview';
 import { BASE_URL } from './panels/shared';
 
 const sidebarItems = [
-  { id: 'overview',       label: 'Painel',            icon: '▪' },
-  { id: 'vagas',          label: 'Vagas',              icon: '▪' },
-  { id: 'talent',         label: 'Banco de Talentos',  icon: '▪' },
-  { id: 'funnel',         label: 'Funil CRM',          icon: '▪' },
-  { id: 'agenda',         label: 'Agenda',             icon: '▪' },
-  { id: 'ai',             label: 'Copiloto IA',        icon: '▪' },
-  { id: 'reports',        label: 'Relatórios',         icon: '▪' },
-  { id: 'colaboradores',  label: 'Colaboradores',      icon: '▪' },
-  { id: 'configurações',  label: 'Configurações',      icon: '▪' },
+  { id: 'overview',       label: 'Painel',            },
+  { id: 'vagas',          label: 'Vagas',              },
+  { id: 'talent',         label: 'Banco de Talentos',  },
+  { id: 'funnel',         label: 'Funil CRM',          },
+  { id: 'agenda',         label: 'Agenda',             },
+  { id: 'ai',             label: 'Copiloto IA',        },
+  { id: 'reports',        label: 'Relatórios',         },
+  { id: 'colaboradores',  label: 'Colaboradores',      },
+  { id: 'configurações',  label: 'Configurações',      },
 ];
 
 export default function EmpresaDashboard() {
@@ -24,6 +24,19 @@ export default function EmpresaDashboard() {
   const [funil, setFunil] = useState([]);
   const [alertas, setAlertas] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  // Fecha o menu ao clicar fora
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -56,10 +69,10 @@ export default function EmpresaDashboard() {
           { label: 'Custo por contratação',   value: `R$ ${r.custo_medio || '—'}`,   delta: 'vs mês ant.',                            up: false },
         ]);
 
-        if (cands)       setCandidates(cands.data || cands);
+        if (cands)        setCandidates(cands.data || cands);
         if (evolucaoData) setEvolucao(evolucaoData);
-        if (funilData)   setFunil(funilData);
-        if (alertasData) setAlertas(alertasData);
+        if (funilData)    setFunil(funilData);
+        if (alertasData)  setAlertas(alertasData);
       } catch (e) {
         console.error(e);
       } finally {
@@ -79,8 +92,18 @@ export default function EmpresaDashboard() {
 
   const firstName = user?.nome?.split(' ')[0] || 'usuário';
 
+  const handleLogout = () => {
+    if (window.confirm('Deseja realmente sair?')) {
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
+  };
+
   return (
-    <div style={{ display: 'flex', height: '100vh', background: '#F5F6FA', overflow: 'hidden', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+    <div style={{
+      display: 'flex', height: '100vh', background: '#F5F6FA',
+      overflow: 'hidden', fontFamily: 'system-ui, -apple-system, sans-serif',
+    }}>
 
       {/* ── Sidebar ── */}
       <aside style={{
@@ -88,7 +111,10 @@ export default function EmpresaDashboard() {
         display: 'flex', flexDirection: 'column', flexShrink: 0,
       }}>
         {/* Logo */}
-        <div style={{ padding: '20px 16px 16px', borderBottom: '1px solid #EAECF0', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{
+          padding: '20px 16px 16px', borderBottom: '1px solid #EAECF0',
+          display: 'flex', alignItems: 'center', gap: 10,
+        }}>
           <div style={{
             width: 34, height: 34, background: '#1A56DB', borderRadius: 8,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -101,7 +127,10 @@ export default function EmpresaDashboard() {
         </div>
 
         {/* Nav */}
-        <nav style={{ flex: 1, padding: '12px 10px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <nav style={{
+          flex: 1, padding: '12px 10px', overflowY: 'auto',
+          display: 'flex', flexDirection: 'column', gap: 2,
+        }}>
           {sidebarItems.map(item => {
             const active = activeTab === item.id;
             return (
@@ -116,90 +145,16 @@ export default function EmpresaDashboard() {
                   color: active ? '#1A56DB' : '#6B7280',
                   transition: 'background 0.15s, color 0.15s',
                 }}
-                
               >
-                {/* Sidebar */}
-<div className="w-64 bg-white border-r border-gray-200 flex flex-col">
-  <div className="p-6 border-b">
-    <div className="flex items-center gap-3">
-      <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-2xl">CL</div>
-      <div>
-        <h1 className="font-bold text-xl text-gray-900">Conecta Lagoa</h1>
-        <p className="text-xs text-gray-500">Recrutamento Local</p>
-      </div>
-    </div>
-  </div>
-
-  {/* Navegação */}
-  <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-    {sidebarItems.map(item => (
-      <button
-        key={item.id}
-        onClick={() => setActiveTab(item.id)}
-        className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium transition-all ${
-          activeTab === item.id 
-            ? 'bg-blue-50 text-blue-700 font-semibold' 
-            : 'text-gray-600 hover:bg-gray-100'
-        }`}
-      >
-        <span className="text-xl">{item.icon}</span>
-        {item.label}
-      </button>
-    ))}
-  </nav>
-
-  {/* Rodapé com usuário + botão Sair */}
-  <div className="p-4 border-t mt-auto">
-    <div className="flex items-center gap-3 px-4 py-3 bg-gray-100 rounded-2xl mb-3">
-      <div className="w-9 h-9 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-        {initials}
-      </div>
-      <div className="text-sm">
-        <p className="font-medium text-gray-900">{user?.nome || 'Recrutador'}</p>
-        <p className="text-xs text-gray-500">Empresa</p>
-      </div>
-    </div>
-
-    {/* Botão Sair */}
-    <button
-      onClick={() => {
-        if (window.confirm('Deseja realmente sair?')) {
-          localStorage.removeItem('token');
-          window.location.href = '/login';   // ou a rota de login que você usa
-        }
-      }}
-      className="w-full flex items-center justify-center gap-2 px-4 py-3 text-red-600 hover:bg-red-50 rounded-2xl text-sm font-medium transition-all border border-red-100 hover:border-red-200"
-    >
-      <span>🚪</span>
-      Sair do sistema
-    </button>
-  </div>
-</div>
                 <span style={{
                   width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
                   background: active ? '#1A56DB' : '#D1D5DB',
-                  transition: 'background 0.15s',
                 }} />
                 {item.label}
               </button>
             );
           })}
         </nav>
-
-        {/* User */}
-        <div style={{ padding: '12px 14px', borderTop: '1px solid #EAECF0', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{
-            width: 32, height: 32, borderRadius: '50%', background: '#DBEAFE',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 11, fontWeight: 600, color: '#1E40AF', flexShrink: 0,
-          }}>{initials}</div>
-          <div style={{ minWidth: 0 }}>
-            <p style={{ fontSize: 12, fontWeight: 500, color: '#111827', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {user?.nome || 'Empresa'}
-            </p>
-            <p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>Recrutador</p>
-          </div>
-        </div>
       </aside>
 
       {/* ── Main ── */}
@@ -237,6 +192,104 @@ export default function EmpresaDashboard() {
             }}>
               + Nova Vaga
             </button>
+
+            {/* ── Avatar + Dropdown ── */}
+            <div ref={menuRef} style={{ position: 'relative' }}>
+              <button
+                onClick={() => setMenuOpen(o => !o)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  background: menuOpen ? '#F3F4F6' : 'transparent',
+                  border: '1px solid #E5E7EB', borderRadius: 8,
+                  padding: '5px 10px', cursor: 'pointer', transition: 'background 0.15s',
+                }}
+              >
+                <div style={{
+                  width: 28, height: 28, borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #1A56DB, #6366F1)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 11, fontWeight: 700, color: '#fff',
+                }}>{initials}</div>
+                <span style={{ fontSize: 13, fontWeight: 500, color: '#111827' }}>
+                  {firstName}
+                </span>
+                <span style={{ fontSize: 10, color: '#9CA3AF' }}>▾</span>
+              </button>
+
+              {/* Dropdown */}
+              {menuOpen && (
+                <div style={{
+                  position: 'absolute', top: 'calc(100% + 8px)', right: 0,
+                  width: 240, background: '#fff', borderRadius: 12,
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.12)', border: '1px solid #E5E7EB',
+                  zIndex: 100, overflow: 'hidden',
+                }}>
+                  {/* Cabeçalho do menu */}
+                  <div style={{
+                    padding: '14px 16px', borderBottom: '1px solid #F3F4F6',
+                    display: 'flex', alignItems: 'center', gap: 10,
+                  }}>
+                    <div style={{
+                      width: 36, height: 36, borderRadius: '50%',
+                      background: 'linear-gradient(135deg, #1A56DB, #6366F1)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 13, fontWeight: 700, color: '#fff', flexShrink: 0,
+                    }}>{initials}</div>
+                    <div style={{ minWidth: 0 }}>
+                      <p style={{ fontSize: 13, fontWeight: 600, color: '#111827', margin: 0 }}>
+                        {user?.nome || 'Usuário'}
+                      </p>
+                      <p style={{
+                        fontSize: 11, color: '#9CA3AF', margin: 0,
+                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                      }}>
+                        {user?.email || 'empresa@email.com'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Itens do menu */}
+                  <div style={{ padding: '6px 0' }}>
+                    {[
+                      { icon: '👤', label: 'Perfil',         action: () => { setActiveTab('configurações'); setMenuOpen(false); } },
+                      { icon: '⚙️', label: 'Configurações',  action: () => { setActiveTab('configurações'); setMenuOpen(false); } },
+                    ].map(item => (
+                      <button
+                        key={item.label}
+                        onClick={item.action}
+                        onMouseEnter={e => e.currentTarget.style.background = '#F9FAFB'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                        style={{
+                          width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                          padding: '9px 16px', border: 'none', background: 'transparent',
+                          fontSize: 13, color: '#374151', cursor: 'pointer', textAlign: 'left',
+                        }}
+                      >
+                        <span style={{ fontSize: 15 }}>{item.icon}</span>
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Divisor + Sair */}
+                  <div style={{ borderTop: '1px solid #F3F4F6', padding: '6px 0' }}>
+                    <button
+                      onClick={handleLogout}
+                      onMouseEnter={e => e.currentTarget.style.background = '#FEF2F2'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                      style={{
+                        width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                        padding: '9px 16px', border: 'none', background: 'transparent',
+                        fontSize: 13, color: '#DC2626', cursor: 'pointer', textAlign: 'left',
+                      }}
+                    >
+                      <span style={{ fontSize: 15 }}>🚪</span>
+                      Sair
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
