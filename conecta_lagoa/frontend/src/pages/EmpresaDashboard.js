@@ -316,7 +316,7 @@ export default function EmpresaDashboard() {
               }} />
               <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
             </div>
-          ) : activeTab === 'overview' ? (
+          ) : activeTab === 'overview' && (
             <PanelOverview
               kpis={kpis}
               candidates={candidates}
@@ -324,9 +324,8 @@ export default function EmpresaDashboard() {
               funil={funil}
               alertas={alertas}
             />
-          ) : (
+          )}
            {/* Conteúdo Principal */}
-
 
 
 
@@ -337,14 +336,17 @@ export default function EmpresaDashboard() {
     </div>
   ) : (
     <>
-      {activeTab === 'overview'      && <PanelOverview kpis={kpis} candidates={candidates} evolucao={evolucao} funil={funil} alertas={alertas} />}
-      {activeTab === 'vagas'         && <PanelVagas />}
-      {activeTab === 'talent'        && <PanelTalent />}
-      {activeTab === 'funnel'        && <PanelFunilCRM />}
-      {activeTab === 'agenda'        && <PanelAgendaFull />}
-      {activeTab === 'ai'            && <PanelAI />}
-      {activeTab === 'reports'       && <PanelReports />}
+      {activeTab === 'overview' && <PanelOverview kpis={kpis} />}
+      {activeTab === 'vagas' && <PanelVagas />}
+      {activeTab === 'talent' && <PanelTalent />}
+      {activeTab === 'funnel' && <PanelFunilCRM />}
+      {activeTab === 'agenda' && <PanelAgendaFull />}
+      {activeTab === 'ai' && <PanelAI />}
+      {activeTab === 'reports' && <PanelReports />}
       {activeTab === 'colaboradores' && <PanelColaboradores />}
+    </>
+  )}
+</div>
 
       {/* Configurações */}
       {activeTab === 'configurações' && (
@@ -360,7 +362,7 @@ export default function EmpresaDashboard() {
             Esta página está em desenvolvimento.
           </p>
       </div>
-
+      )}
 {/* Fallback caso alguma aba não tenha componente */}
               {!['overview', 'vagas', 'talent', 'funnel', 'agenda', 'ai', 'reports', 'colaboradores', 'configurações'].includes(activeTab) && (
                 <div className="text-center py-20 text-gray-400">
@@ -368,13 +370,14 @@ export default function EmpresaDashboard() {
                 </div>
               )}
 
-            </>
-          )}
+           
+          
         </div>
       </div>
     </div>
   );
 }
+
 
      
   
