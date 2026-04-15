@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import PanelOverview     from './panels/PanelOverview';
@@ -40,74 +40,264 @@ const sidebarItems = [
   { id: 'config',        label: 'Configurações',     icon: '⚙️' },
 ];
 
-// ── Painel de Configurações inline ───────────────────────────────
+// ── Painel de Configurações da Empresa ───────────────────────────
 function PanelConfig({ user }) {
   const { logout } = useAuth();
   const navigate   = useNavigate();
-  const [form, setForm]   = useState({ nome: user?.nome || '', email: user?.email || '', telefone: user?.telefone || '', cidade: user?.cidade || '' });
-  const [saved, setSaved] = useState(false);
-  const [saving, setSaving] = useState(false);
 
-  const set = k => e => setForm(p => ({ ...p, [k]: e.target.value }));
-  const s = {
-    card:  { background: '#fff', borderRadius: 16, padding: 28, border: '1px solid #E4E8F0', marginBottom: 20 },
-    label: { fontSize: 11, fontWeight: 600, color: '#8A93B2', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 6 },
-    input: { width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #E4E8F0', fontSize: 14, color: '#1A1D2E', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' },
-    row:   { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 },
-    title: { fontSize: 15, fontWeight: 700, color: '#1A1D2E', marginBottom: 20, borderBottom: '1px solid #F0F3FA', paddingBottom: 12 },
-    btn:   { padding: '10px 24px', borderRadius: 8, border: 'none', fontWeight: 600, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' },
+  const [form, setForm]         = useState({ nome: '', cnpj: '', telefone: '', cidade: '', estado: '', descricao: '' });
+  const [logoUrl, setLogoUrl]   = useState(null);
+  const [logoPreview, setLogoPreview] = useState(null);
+  const [logoFile, setLogoFile] = useState(null);
+  const [loadingData, setLoadingData] = useState(true);
+  const [saving, setSaving]     = useState(false);
+  const [toast, setToast]       = useState({ msg: '', ok: true });
+  const fileRef                 = useRef(null);
+
+  const apiUrl = (process.env.REACT_APP_API_URL || 'https://conectalagoa.onrender.com/api')
+    .replace('/api', '');
+
+  const showToast = (msg, ok = true) => {
+    setToast({ msg, ok });
+    setTimeout(() => setToast({ msg: '', ok: true }), 3500);
   };
 
+  // Carrega perfil real da empresa
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`${BASE_URL}/empresa/meu-perfil`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const e = data.empresa || data.data || data;
+          setForm({
+            nome:      e.nome      || user?.nome || '',
+            cnpj:      e.cnpj      || '',
+            telefone:  e.telefone  || '',
+            cidade:    e.cidade    || '',
+            estado:    e.estado    || '',
+            descricao: e.descricao || '',
+          });
+          if (e.logo_url) setLogoUrl(e.logo_url);
+        }
+      } catch (err) {
+        console.error('[config] Erro ao carregar perfil:', err);
+        setForm(f => ({ ...f, nome: user?.nome || '' }));
+      } finally {
+        setLoadingData(false);
+      }
+    };
+    load();
+  }, [user]);
+
+  const set = k => e => setForm(p => ({ ...p, [k]: e.target.value }));
+
+  // Seleciona arquivo de logo
+  const handleLogoSelect = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { showToast('Apenas imagens (JPG, PNG, WebP)', false); return; }
+    if (file.size > 5 * 1024 * 1024)    { showToast('Imagem deve ter no máximo 5 MB', false); return; }
+    setLogoFile(file);
+    setLogoPreview(URL.createObjectURL(file));
+  };
+
+  // Salva tudo: primeiro faz upload do logo (se mudou), depois salva dados
   const handleSave = async () => {
     setSaving(true);
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`${BASE_URL}/usuarios/dados`, {
-        method: 'PATCH',
+
+      // 1. Upload do logo (se um novo arquivo foi selecionado)
+      if (logoFile) {
+        const fd = new FormData();
+        fd.append('logo', logoFile);
+        const logoRes = await fetch(`${BASE_URL}/empresa/logo`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: fd,
+        });
+        if (logoRes.ok) {
+          const logoData = await logoRes.json();
+          setLogoUrl(logoData.logo_url || logoData.url || null);
+          setLogoFile(null);
+          setLogoPreview(null);
+        } else {
+          showToast('Erro ao salvar o logo. Verifique o formato.', false);
+          setSaving(false);
+          return;
+        }
+      }
+
+      // 2. Salva os dados textuais via PUT /empresa/perfil
+      const perfRes = await fetch(`${BASE_URL}/empresa/perfil`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ nome: form.nome, telefone: form.telefone, cidade: form.cidade }),
+        body: JSON.stringify(form),
       });
-      if (res.ok) { setSaved(true); setTimeout(() => setSaved(false), 3000); }
-    } catch (e) { console.error(e); }
-    finally { setSaving(false); }
+
+      if (perfRes.ok) {
+        showToast('✓ Perfil atualizado com sucesso!', true);
+      } else {
+        const err = await perfRes.json().catch(() => ({}));
+        showToast(err.message || 'Erro ao salvar dados', false);
+      }
+    } catch (err) {
+      showToast('Erro de conexão', false);
+    } finally {
+      setSaving(false);
+    }
   };
 
+  const s = {
+    card:  { background: '#fff', borderRadius: 14, padding: '22px 24px', border: '1px solid #E4E8F0', marginBottom: 16 },
+    title: { fontSize: 13, fontWeight: 700, color: '#1A1D2E', marginBottom: 18, borderBottom: '1px solid #F0F3FA', paddingBottom: 10 },
+    label: { fontSize: 11, fontWeight: 600, color: '#8A93B2', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: 5 },
+    input: { width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid #E4E8F0', fontSize: 13, color: '#1A1D2E', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box', transition: 'border-color 0.15s' },
+    row2:  { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 },
+    row3:  { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14, marginBottom: 14 },
+    btn:   (bg, color, border) => ({ padding: '9px 22px', borderRadius: 8, border: border || 'none', fontWeight: 600, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', background: bg, color }),
+  };
+
+  const logoSrc = logoPreview || (logoUrl ? (logoUrl.startsWith('http') ? logoUrl : `${apiUrl}${logoUrl}`) : null);
+  const initials = (form.nome || user?.nome || 'CL').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+
+  if (loadingData) return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200, color: '#6B7280', gap: 10 }}>
+      <div style={{ width: 24, height: 24, border: '2px solid #E4E8F0', borderTop: '2px solid #1A56DB', borderRadius: '50%', animation: 'clSpin 0.8s linear infinite' }} />
+      Carregando perfil...
+    </div>
+  );
+
   return (
-    <div style={{ maxWidth: 700 }}>
+    <div style={{ maxWidth: 720 }}>
+
+      {/* Toast */}
+      {toast.msg && (
+        <div style={{ marginBottom: 16, padding: '10px 18px', borderRadius: 9, fontSize: 13, fontWeight: 600, background: toast.ok ? '#DCFCE7' : '#FEE2E2', color: toast.ok ? '#15803D' : '#DC2626', border: `1px solid ${toast.ok ? '#86EFAC' : '#FECACA'}` }}>
+          {toast.msg}
+        </div>
+      )}
+
+      {/* Logo + Identidade */}
+      <div style={s.card}>
+        <div style={s.title}>🖼️ Logo da Empresa</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+
+          {/* Preview do logo */}
+          <div style={{ position: 'relative', flexShrink: 0 }}>
+            <div style={{ width: 88, height: 88, borderRadius: 16, border: '2px dashed #E4E8F0', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F8FAFF', cursor: 'pointer' }}
+              onClick={() => fileRef.current?.click()}>
+              {logoSrc
+                ? <img src={logoSrc} alt="logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #1A56DB, #2d52c4)', color: '#fff', fontSize: 22, fontWeight: 700 }}>{initials}</div>
+              }
+            </div>
+            {/* Botão de câmera */}
+            <div style={{ position: 'absolute', bottom: -4, right: -4, width: 26, height: 26, borderRadius: '50%', background: '#1A56DB', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, cursor: 'pointer', boxShadow: '0 2px 6px rgba(26,86,219,0.4)' }}
+              onClick={() => fileRef.current?.click()}>
+              📷
+            </div>
+          </div>
+
+          {/* Info e botão */}
+          <div>
+            <p style={{ fontSize: 13, fontWeight: 600, color: '#1A1D2E', marginBottom: 4 }}>
+              {logoFile ? `📎 ${logoFile.name}` : logoSrc ? 'Logo atual' : 'Nenhum logo definido'}
+            </p>
+            <p style={{ fontSize: 12, color: '#6B7280', marginBottom: 12, lineHeight: 1.5 }}>
+              JPG, PNG ou WebP · Máximo 5 MB<br/>Recomendado: 200×200px ou maior
+            </p>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button style={s.btn('#1A56DB', '#fff')} onClick={() => fileRef.current?.click()}>
+                {logoFile ? '↺ Trocar arquivo' : '⬆ Carregar logo'}
+              </button>
+              {(logoFile || logoSrc) && (
+                <button style={s.btn('#F8FAFF', '#DC2626', '1px solid #FECACA')}
+                  onClick={() => { setLogoFile(null); setLogoPreview(null); setLogoUrl(null); }}>
+                  Remover
+                </button>
+              )}
+            </div>
+          </div>
+
+          <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleLogoSelect} />
+        </div>
+      </div>
+
       {/* Dados da empresa */}
       <div style={s.card}>
         <div style={s.title}>🏢 Dados da Empresa</div>
-        <div style={s.row}>
-          <div><label style={s.label}>Nome / Razão Social</label><input style={s.input} value={form.nome} onChange={set('nome')}/></div>
-          <div><label style={s.label}>E-mail</label><input style={s.input} value={form.email} onChange={set('email')}/></div>
+
+        <div style={s.row2}>
+          <div>
+            <label style={s.label}>Nome / Razão Social</label>
+            <input style={s.input} value={form.nome} onChange={set('nome')}
+              onFocus={e => e.target.style.borderColor='#1A56DB'} onBlur={e => e.target.style.borderColor='#E4E8F0'} />
+          </div>
+          <div>
+            <label style={s.label}>CNPJ</label>
+            <input style={s.input} value={form.cnpj} onChange={set('cnpj')} placeholder="00.000.000/0000-00"
+              onFocus={e => e.target.style.borderColor='#1A56DB'} onBlur={e => e.target.style.borderColor='#E4E8F0'} />
+          </div>
         </div>
-        <div style={s.row}>
-          <div><label style={s.label}>Telefone</label><input style={s.input} value={form.telefone} onChange={set('telefone')}/></div>
-          <div><label style={s.label}>Cidade</label><input style={s.input} value={form.cidade} onChange={set('cidade')}/></div>
+
+        <div style={s.row3}>
+          <div>
+            <label style={s.label}>Telefone</label>
+            <input style={s.input} value={form.telefone} onChange={set('telefone')} placeholder="(00) 00000-0000"
+              onFocus={e => e.target.style.borderColor='#1A56DB'} onBlur={e => e.target.style.borderColor='#E4E8F0'} />
+          </div>
+          <div>
+            <label style={s.label}>Cidade</label>
+            <input style={s.input} value={form.cidade} onChange={set('cidade')}
+              onFocus={e => e.target.style.borderColor='#1A56DB'} onBlur={e => e.target.style.borderColor='#E4E8F0'} />
+          </div>
+          <div>
+            <label style={s.label}>Estado (UF)</label>
+            <input style={s.input} value={form.estado} onChange={set('estado')} placeholder="SP"
+              onFocus={e => e.target.style.borderColor='#1A56DB'} onBlur={e => e.target.style.borderColor='#E4E8F0'} />
+          </div>
         </div>
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginTop: 8 }}>
-          <button style={{ ...s.btn, background: '#1A3A8F', color: '#fff' }} onClick={handleSave} disabled={saving}>
-            {saving ? 'Salvando...' : '💾 Salvar Alterações'}
+
+        <div style={{ marginBottom: 14 }}>
+          <label style={s.label}>Descrição / Sobre a empresa</label>
+          <textarea value={form.descricao} onChange={set('descricao')} rows={4}
+            placeholder="Conte sobre sua empresa, cultura, valores..."
+            style={{ ...s.input, resize: 'vertical', lineHeight: 1.6 }}
+            onFocus={e => e.target.style.borderColor='#1A56DB'} onBlur={e => e.target.style.borderColor='#E4E8F0'} />
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button style={{ ...s.btn('#1A56DB', '#fff'), opacity: saving ? 0.7 : 1 }} onClick={handleSave} disabled={saving}>
+            {saving ? '⏳ Salvando...' : '💾 Salvar Alterações'}
           </button>
-          {saved && <span style={{ fontSize: 13, color: '#10b981', fontWeight: 600 }}>✓ Dados atualizados!</span>}
+          <span style={{ fontSize: 12, color: '#9CA3AF' }}>
+            {logoFile ? '📎 Novo logo será enviado junto' : ''}
+          </span>
         </div>
       </div>
 
       {/* Segurança */}
       <div style={s.card}>
         <div style={s.title}>🔒 Segurança</div>
-        <p style={{ fontSize: 13, color: '#6B7280', marginBottom: 16 }}>Para alterar sua senha, clique no botão abaixo. Você receberá um e-mail com as instruções.</p>
-        <button style={{ ...s.btn, background: '#F0F3FA', color: '#1A3A8F', border: '1px solid #E4E8F0' }}
+        <p style={{ fontSize: 13, color: '#6B7280', marginBottom: 14, lineHeight: 1.6 }}>
+          Para alterar sua senha, clique abaixo. Você receberá um e-mail com as instruções de redefinição.
+        </p>
+        <button style={s.btn('#F0F3FA', '#1A3A8F', '1px solid #E4E8F0')}
           onClick={() => navigate('/empresa/esqueceu-senha')}>
-          🔑 Redefinir Senha
+          🔑 Redefinir Senha por E-mail
         </button>
       </div>
 
-      {/* Conta */}
+      {/* Sessão */}
       <div style={s.card}>
         <div style={s.title}>🚪 Sessão</div>
-        <p style={{ fontSize: 13, color: '#6B7280', marginBottom: 16 }}>Encerrar sessão atual neste dispositivo.</p>
-        <button style={{ ...s.btn, background: '#FEE2E2', color: '#DC2626', border: '1px solid #FECACA' }}
+        <p style={{ fontSize: 13, color: '#6B7280', marginBottom: 14 }}>Encerrar sessão atual neste dispositivo.</p>
+        <button style={s.btn('#FEE2E2', '#DC2626', '1px solid #FECACA')}
           onClick={() => { logout(); navigate('/'); }}>
           Sair da conta
         </button>
@@ -194,7 +384,7 @@ export default function EmpresaDashboard() {
       );
     }
     switch (activeTab) {
-      case 'overview':      return <PanelOverview kpis={kpis} candidates={candidates} evolucao={evolucao} funil={funil} alertas={alertas} />;
+      case 'overview':      return <PanelOverview kpis={kpis} candidates={candidates} evolucao={evolucao} funil={funil} alertas={alertas} onNavigate={setActiveTab} />;
       case 'vagas':         return <PanelVagas />;
       case 'talent':        return <PanelTalent />;
       case 'funnel':        return <PanelFunil />;

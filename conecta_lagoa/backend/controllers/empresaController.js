@@ -27,18 +27,15 @@ const atualizarPerfil = async (req, res) => {
 const getMeuPerfil = async (req, res) => {
   try {
     const empresaId = req.user.id;
-
-    const empresa = await db.pool.query(
+    const result = await db.pool.query(
       `SELECT id, nome, cnpj, telefone, endereco, cidade, estado, descricao, logo_url, created_at
        FROM empresas WHERE id = $1`,
       [empresaId]
     );
-
-    if (!empresa) {
+    if (!result.rows.length) {
       return res.status(404).json({ success: false, message: 'Empresa não encontrada' });
     }
-
-    res.json({ success: true, empresa });
+    res.json({ success: true, empresa: result.rows[0] });
   } catch (error) {
     console.error('Erro em getMeuPerfil:', error);
     res.status(500).json({ success: false, message: 'Erro ao buscar perfil' });
@@ -49,18 +46,15 @@ const getMeuPerfil = async (req, res) => {
 const getPerfilPorId = async (req, res) => {
   try {
     const { id } = req.params;
-
-    const empresa = await db.pool.query(
+    const result = await db.pool.query(
       `SELECT id, nome, cnpj, telefone, endereco, cidade, estado, descricao, logo_url, created_at
        FROM empresas WHERE id = $1`,
       [id]
     );
-
-    if (!empresa) {
+    if (!result.rows.length) {
       return res.status(404).json({ success: false, message: 'Empresa não encontrada' });
     }
-
-    res.json({ success: true, empresa });
+    res.json({ success: true, empresa: result.rows[0] });
   } catch (error) {
     console.error('Erro em getPerfilPorId:', error);
     res.status(500).json({ success: false, message: 'Erro ao buscar empresa' });
