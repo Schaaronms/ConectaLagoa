@@ -20,6 +20,7 @@ const NAV_ITEMS = [
   { icon: "📋", label: "Candidaturas", key: "candidaturas" },
   { icon: "💬", label: "Mensagens",    key: "mensagens"    },
   { icon: "👤", label: "Meu Perfil",   key: "perfil"       },
+  { icon: "⚙️", label: "Configurações", key: "config"      },
 ];
 
 const NIVEIS_SENIORIDADE = [
@@ -633,6 +634,99 @@ export default function CandidatoDashboard() {
     </div>
   );
 
+  // ── ABA CONFIGURAÇÕES ──────────────────────────────────────────
+  const [cfgSenha, setCfgSenha]       = useState({ atual: "", nova: "", confirmar: "" });
+  const [cfgSenhaMsg, setCfgSenhaMsg] = useState("");
+  const [cfgSenhaMsgOk, setCfgSenhaMsgOk] = useState(true);
+
+  const handleAlterarSenha = async () => {
+    if (!cfgSenha.nova || cfgSenha.nova !== cfgSenha.confirmar) {
+      setCfgSenhaMsg("As senhas não coincidem."); setCfgSenhaMsgOk(false); return;
+    }
+    if (cfgSenha.nova.length < 6) {
+      setCfgSenhaMsg("A senha deve ter pelo menos 6 caracteres."); setCfgSenhaMsgOk(false); return;
+    }
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${BASE_URL}/usuarios/alterar-senha`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ senha_atual: cfgSenha.atual, nova_senha: cfgSenha.nova }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setCfgSenhaMsg("Senha alterada com sucesso! ✓"); setCfgSenhaMsgOk(true);
+        setCfgSenha({ atual: "", nova: "", confirmar: "" });
+      } else {
+        setCfgSenhaMsg(data.message || "Erro ao alterar senha."); setCfgSenhaMsgOk(false);
+      }
+    } catch { setCfgSenhaMsg("Erro de conexão."); setCfgSenhaMsgOk(false); }
+    setTimeout(() => setCfgSenhaMsg(""), 4000);
+  };
+
+  const renderConfig = () => {
+    const cs = {
+      card: { ...styles.card },
+      label: { ...styles.secaoLabel },
+      input: { ...styles.inputBase, marginBottom: 12 },
+      btn: (cor) => ({
+        padding: "10px 24px", borderRadius: 10, border: "none",
+        background: cor || "linear-gradient(135deg, #1a3a8f, #2d52c4)",
+        color: "white", fontWeight: 700, fontSize: 13, cursor: "pointer",
+        fontFamily: "'Sora', sans-serif",
+      }),
+    };
+    return (
+      <div>
+        {/* Redefinir Senha */}
+        <div style={cs.card}>
+          <div style={styles.cardTitle}>🔒 Segurança — Alterar Senha</div>
+          <div style={{ maxWidth: 400 }}>
+            <div style={cs.label}>Senha Atual</div>
+            <input type="password" style={cs.input} placeholder="••••••••"
+              value={cfgSenha.atual} onChange={e => setCfgSenha(p => ({ ...p, atual: e.target.value }))} />
+            <div style={cs.label}>Nova Senha</div>
+            <input type="password" style={cs.input} placeholder="Mínimo 6 caracteres"
+              value={cfgSenha.nova} onChange={e => setCfgSenha(p => ({ ...p, nova: e.target.value }))} />
+            <div style={cs.label}>Confirmar Nova Senha</div>
+            <input type="password" style={cs.input} placeholder="Repita a nova senha"
+              value={cfgSenha.confirmar} onChange={e => setCfgSenha(p => ({ ...p, confirmar: e.target.value }))} />
+            <button style={cs.btn()} onClick={handleAlterarSenha}>🔑 Alterar Senha</button>
+            {cfgSenhaMsg && (
+              <div style={{ marginTop: 12, fontSize: 13, fontWeight: 600, color: cfgSenhaMsgOk ? "#16a34a" : "#dc2626" }}>
+                {cfgSenhaMsg}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Preferências */}
+        <div style={cs.card}>
+          <div style={styles.cardTitle}>🔔 Notificações</div>
+          <p style={{ fontSize: 13, color: "#888", marginBottom: 16 }}>
+            Receba avisos quando novas vagas compatíveis com o seu perfil forem publicadas.
+          </p>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, cursor: "pointer" }}>
+              <input type="checkbox" defaultChecked style={{ width: 16, height: 16, accentColor: "#1a3a8f" }} />
+              Notificações de novas vagas por e-mail
+            </label>
+          </div>
+        </div>
+
+        {/* Sair */}
+        <div style={cs.card}>
+          <div style={styles.cardTitle}>🚪 Sessão</div>
+          <p style={{ fontSize: 13, color: "#888", marginBottom: 16 }}>Encerrar sua sessão neste dispositivo.</p>
+          <button style={cs.btn("linear-gradient(135deg,#ef4444,#dc2626)")}
+            onClick={() => { logout(); navigate("/"); }}>
+            Sair da conta
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   const renderContent = () => {
     if (loading) return (
       <div style={{ textAlign: "center", padding: 60, color: "#aaa" }}>
@@ -645,13 +739,18 @@ export default function CandidatoDashboard() {
       case "candidaturas": return renderCandidaturas();
       case "mensagens":    return renderMensagens();
       case "perfil":       return renderPerfil();
+      case "config":       return renderConfig();
       default: return null;
     }
   };
 
   const tabTitles = {
-    dashboard: "Dashboard", vagas: "Vagas Disponíveis",
-    candidaturas: "Minhas Candidaturas", mensagens: "Mensagens", perfil: "Meu Perfil",
+    dashboard:    "Dashboard",
+    vagas:        "Vagas Disponíveis",
+    candidaturas: "Minhas Candidaturas",
+    mensagens:    "Mensagens",
+    perfil:       "Meu Perfil",
+    config:       "Configurações",
   };
 
   return (
@@ -705,6 +804,7 @@ export default function CandidatoDashboard() {
                activeTab === "candidaturas" ? `${candidaturas.length} candidaturas` :
                activeTab === "mensagens"    ? `${msgNaoLidas} não lidas` :
                activeTab === "perfil"       ? `${perfilPct}% completo · ${skills.length} skills` :
+               activeTab === "config"       ? "Segurança e preferências" :
                `Bem-vindo, ${user?.nome?.split(" ")[0]}!`}
             </div>
           </div>
