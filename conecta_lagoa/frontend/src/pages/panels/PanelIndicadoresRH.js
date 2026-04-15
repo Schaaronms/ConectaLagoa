@@ -119,9 +119,9 @@ export default function PanelIndicadoresRH() {
         });
         if (!res.ok) throw new Error();
         const json = await res.json();
-        if (!json.headcount || json.headcount.total === 0) { setData(RH_MOCK); setIsMock(true); }
+        if (!json.headcount || json.headcount.total === 0) { setData(null); }
         else { setData(json); setIsMock(false); }
-      } catch { setData(RH_MOCK); setIsMock(true); }
+      } catch { setData(null); }
       finally { setLoading(false); }
     };
     load();
@@ -131,6 +131,14 @@ export default function PanelIndicadoresRH() {
     <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:300, flexDirection:'column', gap:16 }}>
       <div style={{ width:36, height:36, border:`3px solid ${V.border}`, borderTop:`3px solid ${V.accent}`, borderRadius:'50%', animation:'clSpin 0.8s linear infinite' }}/>
       <p style={{ color:V.muted, fontSize:14 }}>Carregando indicadores...</p>
+    </div>
+  );
+
+  if (!data) return (
+    <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:300, flexDirection:'column', gap:12, background:'#fff', borderRadius:12, border:`1px solid ${V.border}` }}>
+      <span style={{ fontSize:36, opacity:0.3 }}>📈</span>
+      <div style={{ fontWeight:600, fontSize:14, color:V.text }}>Nenhum dado de RH disponível</div>
+      <div style={{ fontSize:12, color:V.muted, textAlign:'center', lineHeight:1.6 }}>Os indicadores aparecerão aqui quando houver<br/>colaboradores cadastrados na plataforma.</div>
     </div>
   );
 

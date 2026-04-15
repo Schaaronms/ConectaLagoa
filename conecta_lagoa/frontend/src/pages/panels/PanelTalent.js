@@ -8,14 +8,7 @@ const V = {
   text:'#1a1f36', muted:'#6b7280', muted2:'#9ca3af',
 };
 
-const TALENTS_INIT = [
-  { id:1,  name:'Ana Lima',       role:'Dev Sênior Backend',  city:'São Paulo',      area:'Tecnologia', tags:['Node.js','AWS','Python'],         fav:true,  score:92, color:V.accent  },
-  { id:2,  name:'Carlos Mota',    role:'UX Designer Sênior',  city:'Rio de Janeiro', area:'Design',     tags:['Figma','Prototyping','Research'], fav:false, score:85, color:V.accent3 },
-  { id:3,  name:'Sofia Ramos',    role:'Dev Frontend',         city:'Curitiba',       area:'Tecnologia', tags:['React','TypeScript','CSS'],       fav:true,  score:94, color:V.accent2 },
-  { id:4,  name:'Juliana Rocha',  role:'Product Manager',      city:'Belo Horizonte', area:'Produto',    tags:['Agile','OKRs','Analytics'],      fav:false, score:78, color:'#c96a00'  },
-  { id:5,  name:'Rafael Souza',   role:'Dev Backend',          city:'Porto Alegre',   area:'Tecnologia', tags:['Java','Spring','Docker'],         fav:true,  score:91, color:V.green   },
-  { id:6,  name:'Fernanda Costa', role:'Data Analyst',         city:'Florianópolis',  area:'Data',       tags:['SQL','Python','Tableau'],         fav:false, score:67, color:V.red     },
-];
+// Sem dados mock — carrega apenas da API
 
 function ModalConvidar({ talent, onClose }) {
   const [msg, setMsg]         = useState(`Olá ${talent?.name?.split(' ')[0]}, temos uma oportunidade alinhada ao seu perfil. Podemos conversar?`);
@@ -77,7 +70,7 @@ function ModalConvidar({ talent, onClose }) {
 }
 
 export default function PanelTalent() {
-  const [talents, setTalents]       = useState(TALENTS_INIT);
+  const [talents, setTalents]       = useState([]);
   const [loading, setLoading]       = useState(true);
   const [query, setQuery]           = useState('');
   const [filterArea, setFilterArea] = useState('Todos');
@@ -110,7 +103,7 @@ export default function PanelTalent() {
           color: [V.accent,V.accent2,V.accent3,V.green,'#c96a00','#7c3aed'][(t.nome||t.name||'').charCodeAt(0)%6],
           favAt: t.fav_at || null,
         })));
-      } catch { /* mantém mocks */ }
+      } catch { /* mantém lista vazia — sem mock */ }
       finally { setLoading(false); }
     };
     load();
@@ -192,10 +185,16 @@ export default function PanelTalent() {
           <div style={{ width:32, height:32, border:`3px solid ${V.border}`, borderTop:`3px solid ${V.accent}`, borderRadius:'50%', animation:'clSpin 0.8s linear infinite', margin:'0 auto 12px' }}/>
           Carregando talentos...
         </div>
+      ) : !loading && talents.length === 0 ? (
+        <div style={{ textAlign:'center', padding:'48px 24px', color:V.muted2, background:V.surface, borderRadius:12, border:`1px solid ${V.border}` }}>
+          <div style={{ fontSize:36, marginBottom:12, opacity:0.35 }}>🌟</div>
+          <div style={{ fontWeight:600, fontSize:14, color:V.text, marginBottom:6 }}>Nenhum candidato cadastrado ainda</div>
+          <div style={{ fontSize:12, color:V.muted, lineHeight:1.6 }}>Quando candidatos criarem contas na plataforma, eles aparecerão aqui para você convidar.</div>
+        </div>
       ) : displayed.length === 0 ? (
         <div style={{ textAlign:'center', padding:40, color:V.muted2 }}>
           <div style={{ fontSize:32, marginBottom:10 }}>🔍</div>
-          Nenhum talento encontrado.
+          Nenhum talento encontrado com esses filtros.
           <br/>
           <button onClick={()=>{ setQuery(''); setFilterArea('Todos'); setScoreMin(0); }}
             style={{ marginTop:12, background:V.accent, border:'none', color:'white', padding:'8px 18px', borderRadius:8, cursor:'pointer', fontSize:12 }}>

@@ -74,15 +74,15 @@ export function Card({ title, sub, badge, badgeColor = 'blue', children, style =
     ? { bg:'rgba(224,123,0,0.12)', color:V.orange }
     : { bg:'rgba(26,58,143,0.1)', color:V.accent };
   return (
-    <div style={{ background:V.surface, border:`1px solid ${V.border}`, borderRadius:14, padding:22, animation:'fadeUp 0.5s ease both', ...style }}>
+    <div style={{ background:V.surface, border:`1px solid ${V.border}`, borderRadius:12, padding:'18px 20px', animation:'fadeUp 0.4s ease both', ...style }}>
       {(title || badge) && (
-        <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:18 }}>
+        <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:14 }}>
           <div>
-            {title && <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:14, color:V.text }}>{title}</div>}
+            {title && <div style={{ fontWeight:700, fontSize:13, color:V.text }}>{title}</div>}
             {sub   && <div style={{ fontSize:11, color:V.muted, marginTop:2 }}>{sub}</div>}
           </div>
           {badge && (
-            <span style={{ fontSize:10, padding:'3px 10px', borderRadius:20, fontWeight:600, background:bc.bg, color:bc.color, marginLeft:12, flexShrink:0 }}>
+            <span style={{ fontSize:10, padding:'2px 8px', borderRadius:20, fontWeight:600, background:bc.bg, color:bc.color, marginLeft:12, flexShrink:0 }}>
               {badge}
             </span>
           )}
@@ -95,14 +95,16 @@ export function Card({ title, sub, badge, badgeColor = 'blue', children, style =
 
 export function KpiCard({ icon, label, value, delta, deltaUp = true, color, delay = 0 }) {
   return (
-    <div style={{ background:V.surface, border:`1px solid ${V.border}`, borderRadius:14, padding:20, position:'relative', overflow:'hidden', animation:`fadeUp 0.5s ease ${delay}s both`, transition:'all 0.3s', cursor:'default' }}
-      onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(26,58,143,0.12)'; e.currentTarget.style.borderColor = 'rgba(26,58,143,0.25)'; }}
-      onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = ''; e.currentTarget.style.borderColor = V.border; }}>
-      <div style={{ position:'absolute', top:-30, right:-30, width:80, height:80, borderRadius:'50%', background:color, opacity:0.08, pointerEvents:'none' }}/>
-      <div style={{ width:36, height:36, borderRadius:9, background:`${color}22`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, marginBottom:14 }}>{icon}</div>
-      <div style={{ fontSize:11, color:V.muted, textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:6 }}>{label}</div>
-      <div style={{ fontFamily:"'Syne',sans-serif", fontSize:28, fontWeight:800, lineHeight:1, color:V.text }}>{value ?? '—'}</div>
-      <div style={{ display:'inline-flex', alignItems:'center', gap:4, fontSize:11, fontWeight:500, marginTop:8, padding:'2px 8px', borderRadius:20, background:deltaUp ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)', color:deltaUp ? V.green : V.red }}>
+    <div style={{ background:V.surface, border:`1px solid ${V.border}`, borderRadius:12, padding:'16px 18px', position:'relative', overflow:'hidden', animation:`fadeUp 0.4s ease ${delay}s both`, transition:'all 0.25s', cursor:'default' }}
+      onMouseEnter={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 6px 24px rgba(26,58,143,0.1)'; e.currentTarget.style.borderColor='rgba(26,58,143,0.2)'; }}
+      onMouseLeave={e => { e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow=''; e.currentTarget.style.borderColor=V.border; }}>
+      <div style={{ position:'absolute', top:-24, right:-24, width:64, height:64, borderRadius:'50%', background:color, opacity:0.07, pointerEvents:'none' }}/>
+      <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:10 }}>
+        <div style={{ width:30, height:30, borderRadius:8, background:`${color}18`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:14 }}>{icon}</div>
+        <div style={{ fontSize:11, color:V.muted, textTransform:'uppercase', letterSpacing:'0.04em', fontWeight:500 }}>{label}</div>
+      </div>
+      <div style={{ fontSize:22, fontWeight:700, lineHeight:1, color:V.text, marginBottom:8 }}>{value ?? '—'}</div>
+      <div style={{ display:'inline-flex', alignItems:'center', gap:3, fontSize:10, fontWeight:500, padding:'2px 7px', borderRadius:20, background:deltaUp?'rgba(16,185,129,0.1)':'rgba(239,68,68,0.1)', color:deltaUp?V.green:V.red }}>
         {deltaUp ? '▲' : '▼'} {delta}
       </div>
     </div>

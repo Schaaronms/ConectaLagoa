@@ -805,7 +805,7 @@ export default function CandidatoDashboard() {
                activeTab === "mensagens"    ? `${msgNaoLidas} não lidas` :
                activeTab === "perfil"       ? `${perfilPct}% completo · ${skills.length} skills` :
                activeTab === "config"       ? "Segurança e preferências" :
-               `Bem-vindo, ${user?.nome?.split(" ")[0]}!`}
+               `Bem-vindo, ${user?.nome?.split(" ")[0]}\!`}
             </div>
           </div>
           {activeTab === "vagas" && (
