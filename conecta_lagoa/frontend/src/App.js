@@ -1,7 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Home from './pages/Home';
@@ -17,8 +16,8 @@ import Vagas from './pages/Vagas';
 import Blog from './pages/Blog';
 import EmpresaDashboard from './pages/EmpresaDashboard';
 import AuthCallback from './pages/AuthCallback';
-import { useState, useEffect, useRef } from 'react';
-import { FaBars } from 'react-icons/fa';
+import Termos from './pages/Termos';
+import Privacidade from './pages/Privacidade';
 import './index.css';
 
 // Rota protegida com verificação de tipo
@@ -48,10 +47,6 @@ const PrivateRoute = ({ children, allowedType }) => {
 };
 
 function AppContent() {
-  const { user } = useAuth();
-
-  const showFooter = !user || (user.tipo !== 'candidato' && user.tipo !== 'empresa');
-
   return (
     <Router>
       <div className="app min-h-screen flex flex-col">
@@ -60,13 +55,15 @@ function AppContent() {
         <main className="flex-grow">
           <Routes>
             {/* Rotas Públicas */}
-            <Route path="/" element={<Home />} />
+            <Route path="/" element={<><Home /><Footer /></>} />
             <Route path="/vagas" element={<Vagas/>} />
             <Route path="/login" element={<Login/>} />
             <Route path="/registro" element={<Registro />} />
             <Route path="/esqueceu-senha" element={<EsqueceuSenha />} />
             <Route path="/redefinir-senha" element={<RedefinirSenha />} />
             <Route path="/sobre" element={<Sobre />} />
+            <Route path="/termos" element={<Termos />} />
+            <Route path="/privacidade" element={<Privacidade />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/candidato/registro" element={<Registro tipo="candidato" />} />
             <Route path="/empresa/registro" element={<Registro tipo="empresa" />} />

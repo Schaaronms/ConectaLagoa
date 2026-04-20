@@ -1,7 +1,9 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import ThreeBackground from "./ThreeBackground";
+
+const API_BASE = process.env.REACT_APP_API_URL || "https://conectalagoa.onrender.com/api";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DADOS MOCK (substitua pelas chamadas reais à sua API)
@@ -531,49 +533,21 @@ export default function Home() {
     return () => clearInterval(t);
   }, []);
 
-  // ── Fetch companies (empresas com vagas ativas) ────────────────────────────
-  useEffect(() => {
-    const fetchCompanies = async () => {
-      try {
-        // ── INTEGRAÇÃO REAL ──────────────────────────────────────────────────
-        // Ajuste o endpoint para o da sua API.
-        // Esperamos um array de objetos com pelo menos:
-        //   { id, name|nomeEmpresa, logoUrl|logo, area|setor, vagasCount }
-        // Exemplos de endpoint possíveis:
-        //   GET /api/empresas/destaques
-        //   GET /api/empresas?hasVagas=true&limit=8
-        // ────────────────────────────────────────────────────────────────────
-        const res  = await fetch("/api/empresas/destaques");
-        const data = await res.json();
-        setCompanies(Array.isArray(data) ? data : data.empresas || []);
-      } catch {
-        // Fallback visual para evitar tela vazia
-        setCompanies([]);
-      } finally {
-        setLoadingCompanies(false);
-      }
-    };
-    fetchCompanies();
-  }, []);
-
   // ── Fetch jobs (vagas publicadas e ativas) ─────────────────────────────────
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        // ── INTEGRAÇÃO REAL ──────────────────────────────────────────────────
-        // Esperamos um array de objetos com pelo menos:
-        //   { id, titulo|title, empresa|company, tipo|type, cidade|location, createdAt|time }
-        // Exemplos de endpoint possíveis:
-        //   GET /api/vagas?status=ativa&limit=20
-        //   GET /api/vagas/recentes
-        // ────────────────────────────────────────────────────────────────────
-        const res  = await fetch("/api/vagas?status=ativa&limit=20");
+        const res  = await fetch(`${API_BASE}/vagas`);
         const data = await res.json();
-        setJobs(Array.isArray(data) ? data : data.vagas || []);
+        const list = Array.isArray(data) ? data : data.vagas || [];
+        setJobs(list);
+        setCompanies(buildCompaniesFromJobs(list));
       } catch {
         setJobs([]);
+        setCompanies([]);
       } finally {
         setLoadingJobs(false);
+        setLoadingCompanies(false);
       }
     };
     fetchJobs();
@@ -595,11 +569,31 @@ export default function Home() {
   const normalizeJob = (j) => ({
     id:       j.id || j._id,
     title:    j.titulo    || j.title,
-    company:  j.empresa   || j.company    || j.nomeEmpresa || "—",
-    type:     j.tipo      || j.type       || j.tipoContrato || "CLT",
+    company:  j.empresa_nome || j.empresa || j.company || j.nomeEmpresa || "—",
+    type:     j.tipo_contrato || j.tipo || j.type || j.tipoContrato || "CLT",
     location: j.cidade    || j.location   || j.municipio    || "",
-    time:     j.createdAt || j.time       || j.dataPublicacao,
+    time:     j.created_at || j.createdAt || j.time || j.dataPublicacao,
   });
+
+  const buildCompaniesFromJobs = (jobsList) => {
+    const grouped = jobsList.reduce((acc, raw) => {
+      const companyName = raw.empresa_nome || raw.empresa || raw.company || raw.nomeEmpresa;
+      if (!companyName) return acc;
+      if (!acc[companyName]) {
+        acc[companyName] = {
+          id: raw.empresa_id || raw.company_id || companyName,
+          nome: companyName,
+          area: raw.area || "",
+          vagasCount: 0,
+          logoUrl: raw.logo_url || raw.logo || null,
+        };
+      }
+      acc[companyName].vagasCount += 1;
+      return acc;
+    }, {});
+
+    return Object.values(grouped).sort((a, b) => b.vagasCount - a.vagasCount).slice(0, 8);
+  };
 
   const normalizeCompany = (c) => ({
     id:         c.id    || c._id,
@@ -734,7 +728,7 @@ export default function Home() {
                     <div
                       key={c.id || i}
                       className={`cl-company-card cl-reveal cl-reveal-d${(i % 4) + 1}`}
-                      onClick={() => navigate(`/empresa/${c.id}`)}
+                      onClick={() => c.id && navigate(`/empresa/${c.id}`)}
                     >
                       <CompanyLogo company={c} />
                       <div>
