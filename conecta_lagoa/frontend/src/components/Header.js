@@ -370,7 +370,7 @@ const Header = () => {
               <>
                 <Link to="/sobre"  className={`hdr-nav-link${isActive('/sobre') ?' active':''}`}>Sobre</Link>
                 <Link to="/vagas"  className={`hdr-nav-link${isActive('/vagas') ?' active':''}`}>Vagas</Link>
-                <Link to="/empresas" className={`hdr-nav-link${isActive('/empresas')?' active':''}`}>Empresas</Link>
+                <Link to="/empresa/registro" className={`hdr-nav-link${isActive('/empresa/registro')?' active':''}`}>Empresas</Link>
                 <Link to="/blog"   className={`hdr-nav-link${isActive('/blog')  ?' active':''}`}>Blog</Link>
               </>
             ) : isCandidato() ? (
@@ -382,8 +382,8 @@ const Header = () => {
             ) : isEmpresa() ? (
               <>
                 <Link to="/empresa/dashboard"   className={`hdr-nav-link${isActive('/empresa/dashboard') ?' active':''}`}>Dashboard</Link>
-                <Link to="/empresa/candidatos"  className={`hdr-nav-link${isActive('/empresa/candidatos')?' active':''}`}>Buscar Talentos</Link>
-                <Link to="/empresa/favoritos"   className={`hdr-nav-link${isActive('/empresa/favoritos') ?' active':''}`}>Favoritos</Link>
+                <Link to="/vagas"               className={`hdr-nav-link${isActive('/vagas') ?' active':''}`}>Vagas Públicas</Link>
+                <Link to="/sobre"               className={`hdr-nav-link${isActive('/sobre') ?' active':''}`}>Sobre</Link>
               </>
             ) : null}
           </nav>
@@ -428,7 +428,7 @@ const Header = () => {
             <>
               <Link to="/sobre"    className={`hdr-mobile-link${isActive('/sobre')   ?' active':''}`}>Sobre</Link>
               <Link to="/vagas"    className={`hdr-mobile-link${isActive('/vagas')   ?' active':''}`}>Vagas</Link>
-              <Link to="/empresas" className={`hdr-mobile-link${isActive('/empresas')?' active':''}`}>Empresas</Link>
+              <Link to="/empresa/registro" className={`hdr-mobile-link${isActive('/empresa/registro')?' active':''}`}>Empresas</Link>
               <Link to="/blog"     className={`hdr-mobile-link${isActive('/blog')    ?' active':''}`}>Blog</Link>
               <div className="hdr-mobile-divider"/>
               <Link to="/login"    className="hdr-mobile-link">Entrar</Link>
@@ -445,8 +445,8 @@ const Header = () => {
           ) : isEmpresa() ? (
             <>
               <Link to="/empresa/dashboard"  className="hdr-mobile-link">Dashboard</Link>
-              <Link to="/empresa/candidatos" className="hdr-mobile-link">Buscar Talentos</Link>
-              <Link to="/empresa/favoritos"  className="hdr-mobile-link">Favoritos</Link>
+              <Link to="/vagas" className="hdr-mobile-link">Vagas Públicas</Link>
+              <Link to="/sobre"  className="hdr-mobile-link">Sobre</Link>
               <div className="hdr-mobile-divider"/>
               <button onClick={handleLogout} className="hdr-btn-sair" style={{ width:'100%', justifyContent:'center' }}>Sair</button>
             </>

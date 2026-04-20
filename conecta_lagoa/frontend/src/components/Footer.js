@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 // ================================================
 // MODAL DE CONTATO
@@ -134,28 +135,28 @@ export default function Footer() {
     {
       titulo: "Candidatos",
       links: [
-        { label: "Criar Perfil",      href: "/candidatos/cadastro" },
-        { label: "Buscar Vagas",      href: "/vagas" },
-        { label: "Política de Privacidade",     href: "/politica-privacidade" },
-        { label: "Dicas de Carreira", href: "/blog/carreira" },
+        { label: "Criar Perfil", href: "/candidato/registro" },
+        { label: "Buscar Vagas", href: "/vagas" },
+        { label: "Termos de Uso", href: "/termos" },
+        { label: "Política de Privacidade", href: "/privacidade" },
       ],
     },
     {
       titulo: "Empresas",
       links: [
-        { label: "Publicar Vaga",       href: "/empresas/publicar-vaga" },
-        { label: "Buscar Candidatos",   href: "/empresas/candidatos" },
-        { label: "Planos",              href: "/planos" },
-        { label: "Cases de Sucesso",    href: "/cases" },
+        { label: "Criar Conta Empresa", href: "/empresa/registro" },
+        { label: "Entrar como Empresa", href: "/empresa/login" },
+        { label: "Publicar Vaga", href: "/empresa/registro" },
+        { label: "Buscar Talentos", href: "/empresa/login" },
       ],
     },
     {
       titulo: "Institucional",
       links: [
-        { label: "Sobre Nós",   href: "/sobre" },
-        { label: "Blog",        href: "/blog" },
-        { label: "Parceiros",   href: "/parceiros" },
-        { label: "Contato",     href: null, onClick: () => setModalAberto(true) },
+        { label: "Sobre Nós", href: "/sobre" },
+        { label: "Blog", href: "/blog" },
+        { label: "Vagas", href: "/vagas" },
+        { label: "Contato", href: null, onClick: () => setModalAberto(true) },
       ],
     },
   ];
@@ -186,9 +187,9 @@ export default function Footer() {
                         {link.label}
                       </button>
                     ) : (
-                      <a href={link.href} style={styles.link}>
+                      <Link to={link.href} style={styles.link}>
                         {link.label}
-                      </a>
+                      </Link>
                     )}
                   </li>
                 ))}
